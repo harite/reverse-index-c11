@@ -39,7 +39,7 @@ extern "C"
 		 * Method:    create
 		 * Signature: (II)V
 		 */
-		JNIEXPORT void JNICALL Java_org_jkuang_qstardb_Native_00024I2BMap_create(JNIEnv *, jclass, jint index, jint mode)
+		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024I2BMap_create(JNIEnv *, jclass, jint index, jint mode)
 		{
 			maplock.wrlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -59,7 +59,7 @@ extern "C"
 		 * Method:    destroy
 		 * Signature: (I)V
 		 */
-		JNIEXPORT void JNICALL Java_org_jkuang_qstardb_Native_00024I2BMap_destroy(JNIEnv *, jclass, jint index)
+		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024I2BMap_destroy(JNIEnv *, jclass, jint index)
 		{
 			maplock.wrlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -81,7 +81,7 @@ extern "C"
 		 * Method:    put
 		 * Signature: (IJ[B)I
 		 */
-		JNIEXPORT jint JNICALL Java_org_jkuang_qstardb_Native_00024I2BMap_put(JNIEnv * env, jclass, jint index, jlong key, jbyteArray value)
+		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024I2BMap_put(JNIEnv * env, jclass, jint index, jlong key, jbyteArray value)
 		{
 			maplock.rdlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -104,7 +104,7 @@ extern "C"
 		 * Method:    get
 		 * Signature: (IJ)[B
 		 */
-		JNIEXPORT jbyteArray JNICALL Java_org_jkuang_qstardb_Native_00024I2BMap_get(JNIEnv * env, jclass, jint index, jlong key)
+		JNIEXPORT jbyteArray JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024I2BMap_get(JNIEnv * env, jclass, jint index, jlong key)
 		{
 			maplock.rdlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -123,7 +123,7 @@ extern "C"
 			return createbyteArray(env, null, 0);
 		}
 
-		JNIEXPORT jbyteArray JNICALL Java_org_jkuang_qstardb_Native_00024I2BMap_gets(JNIEnv * env, jclass, jint index, jlongArray array)
+		JNIEXPORT jbyteArray JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024I2BMap_gets(JNIEnv * env, jclass, jint index, jlongArray array)
 		{
 			maplock.rdlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -148,7 +148,7 @@ extern "C"
 				return env->NewByteArray(4);
 			}
 		}
-		JNIEXPORT int JNICALL Java_org_jkuang_qstardb_Native_00024I2BMap_delhalf(JNIEnv * env, jclass, jint index)
+		JNIEXPORT int JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024I2BMap_delhalf(JNIEnv * env, jclass, jint index)
 		{
 			maplock.rdlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -161,7 +161,7 @@ extern "C"
 			maplock.unrdlock();
 			return 0;
 		}
-		JNIEXPORT int JNICALL Java_org_jkuang_qstardb_Native_00024I2BMap_size(JNIEnv * env, jclass, jint index)
+		JNIEXPORT int JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024I2BMap_size(JNIEnv * env, jclass, jint index)
 		{
 			maplock.rdlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -180,7 +180,7 @@ extern "C"
 		 * Method:    remove
 		 * Signature: (IJ)[B
 		 */
-		JNIEXPORT jint JNICALL Java_org_jkuang_qstardb_Native_00024I2BMap_remove(JNIEnv * env, jclass, jint index, jlong key)
+		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024I2BMap_remove(JNIEnv * env, jclass, jint index, jlong key)
 		{
 
 			maplock.rdlock();
@@ -194,7 +194,7 @@ extern "C"
 			return 0;
 		}
 
-		JNIEXPORT jboolean JNICALL Java_org_jkuang_qstardb_Native_00024I2BMap_load(JNIEnv * env, jclass, jint index, jstring file)
+		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024I2BMap_load(JNIEnv * env, jclass, jint index, jstring file)
 		{
 			maplock.rdlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -211,7 +211,7 @@ extern "C"
 			return false;
 		}
 
-		JNIEXPORT jboolean JNICALL Java_org_jkuang_qstardb_Native_00024I2BMap_dump(JNIEnv *env, jclass, jint index, jstring file)
+		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024I2BMap_dump(JNIEnv *env, jclass, jint index, jstring file)
 		{
 			maplock.rdlock();
 			if (i2bmap->find(index) != i2bmap->end())
