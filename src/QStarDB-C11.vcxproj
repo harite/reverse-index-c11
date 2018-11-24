@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="classdef.h" />
+    <ClInclude Include="datacache.h" />
     <ClInclude Include="dataindex.h" />
     <ClInclude Include="dataqueue.h" />
     <ClInclude Include="datastore.h" />
