@@ -161,6 +161,7 @@
     <ClInclude Include="dicmapi2i.h" />
     <ClInclude Include="dichashset.h" />
     <ClInclude Include="dicmapi2s.h" />
+    <ClInclude Include="nativebase.h" />
     <ClInclude Include="nativedics2s.h" />
     <ClInclude Include="nativedici2i.h" />
     <ClInclude Include="nativeindex.h" />

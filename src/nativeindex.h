@@ -16,7 +16,7 @@ extern "C"
 	namespace qstardb
 	{
 		static rwsyslock reverseRWlock;
-		static map<int, enginedb*>* indexs = new map<int, enginedb*>();
+		static map<int, reverseindex*>* indexs = new map<int, reverseindex*>();
 		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RIndex_create(JNIEnv *, jclass, jint index, jboolean ignoreCase, jboolean compress,
 				jbyteArray bytes)
 		{
@@ -30,7 +30,7 @@ extern "C"
 			}
 			else
 			{
-				(*indexs)[index] = new enginedb(ignoreCase, compress);
+				(*indexs)[index] = new reverseindex(ignoreCase, compress);
 				reverseRWlock.unwrlock();
 				cout << "create index:" << index << endl;
 				return 1;

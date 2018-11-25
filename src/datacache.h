@@ -251,10 +251,13 @@ namespace cache {
 
 	class kvcache
 	{
-		qstardb::seq64to32 seqmap;
 		seqcache cache;
+		qstardb::seq64to32 seqmap;
+		
 
 	public:
+		kvcache() =default;
+		~kvcache() = default;
 		int insert(int64 key,char* ch,int length)
 		{
 			uint innerseq;

@@ -102,6 +102,9 @@
     <ClInclude Include="datacache.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="nativebase.h">
+      <Filter>jni</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="QStarDB.cpp">

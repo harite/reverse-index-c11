@@ -13,7 +13,9 @@
 #include "stopencoder.h"
 #include "exeplan.h"
 #include  "dicmapi2s.h"
+#include  "datacache.h"
 #include <mutex>    
+
 using namespace std;
 namespace qstardb
 {
@@ -577,14 +579,14 @@ namespace qstardb
 
 	};
 
-	class enginedb
+	class reverseindex
 	{
 	private:
 		bool compress;
 		stardb<char> *chdb { null };
 		stardb<uint> *uintdb { null };
 	public:
-		enginedb(bool ignoreCase, bool compress)
+		reverseindex(bool ignoreCase, bool compress)
 		{
 			this->compress = compress;
 			if (this->compress)
@@ -596,7 +598,7 @@ namespace qstardb
 				uintdb = new stardb<uint>(ignoreCase);
 			}
 		}
-		~enginedb()
+		~reverseindex()
 		{
 			compress ? delete chdb : delete uintdb;
 		}
@@ -628,6 +630,94 @@ namespace qstardb
 		searchstats& query(const string& syntax, int64 _s_sort_, int64 _e_sort_, bool desc, searchstats& stat)
 		{
 			return compress ? chdb->query(syntax, _s_sort_, _e_sort_, desc, stat) : uintdb->query(syntax, _s_sort_, _e_sort_, desc, stat);
+		}
+	};
+
+
+	class reversedb
+	{
+	private:
+		bool compress;
+		stardb<char> *chdb{ null };
+		stardb<uint> *uintdb{ null };
+		cache::kvcache* datastore{null};
+	public:
+		reversedb(bool ignoreCase, bool compress)
+		{
+			this->compress = compress;
+			if (this->compress)
+			{
+				chdb = new stardb<char>(ignoreCase);
+			}
+			else
+			{
+				uintdb = new stardb<uint>(ignoreCase);
+			}
+		}
+		~reversedb()
+		{
+			compress ? delete chdb : delete uintdb;
+		}
+		void add(int64 key, int64 sort, vector<string> &terms,char* data,int length)
+		{
+			this->datastore->insert(key,data,length);
+			compress ? chdb->add(key, sort, terms) : uintdb->add(key, sort, terms);
+		}
+
+		bool remove(int64 key)
+		{
+			this->datastore->remove(key);
+			return compress ? chdb->remove(key) : uintdb->remove(key);
+		}
+
+		charwriter& query(vector<int64>& keys, searchstats& stat, charwriter& writer)
+		{
+			searchstats&  temp = compress ? chdb->query(keys, stat) : uintdb->query(keys, stat);
+			 vector<int64>& keys = temp.result();
+			 int length = keys.size();
+			 writer.writeInt(length);
+			 for (size_t i = 0; i < length; i++)
+			 {
+				 writer.writeInt64(keys.at(i));
+				 int datalength = 0;
+				 const char* data = datastore->get(keys.at(i), datalength);
+				 if (data != nullptr && datalength > 0)
+				 {
+					 writer.writeInt(datalength);
+					 writer.write(data, datalength);
+				 }
+				 else
+				 {
+					 //发生异常，已经找不到数据
+					 writer.writeInt(0);
+				 }
+			 }
+			 return writer;
+		}
+
+		charwriter& query(const string& syntax, int64 _s_sort_, int64 _e_sort_, bool desc, searchstats& stat, charwriter& writer)
+		{
+			searchstats&  temp=	compress ? chdb->query(syntax, _s_sort_, _e_sort_, desc, stat) : uintdb->query(syntax, _s_sort_, _e_sort_, desc, stat);
+			vector<int64>& keys = temp.result();
+			int length = keys.size();
+			writer.writeInt(length);
+			for (size_t i = 0; i < length; i++)
+			{
+				writer.writeInt64(keys.at(i));
+				int datalength = 0;
+				const char* data=datastore->get(keys.at(i), datalength);
+				if (data != nullptr && datalength >0)
+				{
+					writer.writeInt(datalength);
+					writer.write(data,datalength);
+				}
+				else
+				{
+					//发生异常，已经找不到数据
+					writer.writeInt(0);
+				}
+			}
+			return writer;
 		}
 	};
 }
