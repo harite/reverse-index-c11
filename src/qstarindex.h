@@ -309,7 +309,7 @@ namespace qstardb
 			{
 				char len = reader.readChar();
 				reader.read(temp, len);
-				dmap.insert(i, (signed char*) temp, len);
+				dmap.insert(i, (signed char*)temp, len);
 				dicindexs[i] = -1;
 			}
 			uint* tempindexs = new uint[1024 * 32];
@@ -347,13 +347,13 @@ namespace qstardb
 							{
 								cout << "get word error!" << endl;
 							}
-						/*	if (pos < 1000)
-							{
-								if (word.at(0) != 'T') {
-									cout << word << " OR ";
-								}
-							
-							}*/
+							/*	if (pos < 1000)
+								{
+									if (word.at(0) != 'T') {
+										cout << word << " OR ";
+									}
+
+								}*/
 						}
 						tempindexs[j] = dicindexs[pos];
 						if (j > 0 && tempindexs[j] <= tempindexs[j - 1])
@@ -583,8 +583,8 @@ namespace qstardb
 	{
 	private:
 		bool compress;
-		stardb<char> *chdb { null };
-		stardb<uint> *uintdb { null };
+		stardb<char> *chdb{ null };
+		stardb<uint> *uintdb{ null };
 	public:
 		reverseindex(bool ignoreCase, bool compress)
 		{
@@ -637,79 +637,70 @@ namespace qstardb
 	class reversedb
 	{
 	private:
-		bool compress;
-		stardb<char> *chdb{ null };
-		stardb<uint> *uintdb{ null };
-		cache::kvcache* datastore{null};
+		reverseindex* index;
+		cache::kvcache* cache;;
 	public:
 		reversedb(bool ignoreCase, bool compress)
 		{
-			this->compress = compress;
-			if (this->compress)
-			{
-				chdb = new stardb<char>(ignoreCase);
-			}
-			else
-			{
-				uintdb = new stardb<uint>(ignoreCase);
-			}
+			this->cache = new cache::kvcache();
+			this->index = new reverseindex(ignoreCase, compress);
 		}
 		~reversedb()
 		{
-			compress ? delete chdb : delete uintdb;
-		}
-		void add(int64 key, int64 sort, vector<string> &terms,char* data,int length)
-		{
-			this->datastore->insert(key,data,length);
-			compress ? chdb->add(key, sort, terms) : uintdb->add(key, sort, terms);
+			delete index;
+			delete cache;
 		}
 
-		bool remove(int64 key)
+		void add(int64 key, int64 sort, vector<string> &terms, char* data, int length)
 		{
-			this->datastore->remove(key);
-			return compress ? chdb->remove(key) : uintdb->remove(key);
+			this->index->add(key, sort, terms);
+			this->cache->add(key, data, length);
 		}
 
-		charwriter& query(vector<int64>& keys, searchstats& stat, charwriter& writer)
+		void remove(int64 key)
 		{
-			searchstats&  temp = compress ? chdb->query(keys, stat) : uintdb->query(keys, stat);
-			 vector<int64>& keys = temp.result();
-			 int length = keys.size();
-			 writer.writeInt(length);
-			 for (size_t i = 0; i < length; i++)
-			 {
-				 writer.writeInt64(keys.at(i));
-				 int datalength = 0;
-				 const char* data = datastore->get(keys.at(i), datalength);
-				 if (data != nullptr && datalength > 0)
-				 {
-					 writer.writeInt(datalength);
-					 writer.write(data, datalength);
-				 }
-				 else
-				 {
-					 //发生异常，已经找不到数据
-					 writer.writeInt(0);
-				 }
-			 }
-			 return writer;
+			this->index->remove(key);
+			this->cache->remove(key);
 		}
 
-		charwriter& query(const string& syntax, int64 _s_sort_, int64 _e_sort_, bool desc, searchstats& stat, charwriter& writer)
+		charwriter& query(vector<int64>& _keys, searchstats& stat, charwriter& writer)
 		{
-			searchstats&  temp=	compress ? chdb->query(syntax, _s_sort_, _e_sort_, desc, stat) : uintdb->query(syntax, _s_sort_, _e_sort_, desc, stat);
-			vector<int64>& keys = temp.result();
+			vector<int64>& keys = this->index->query(_keys, stat).result();
 			int length = keys.size();
 			writer.writeInt(length);
 			for (size_t i = 0; i < length; i++)
 			{
 				writer.writeInt64(keys.at(i));
 				int datalength = 0;
-				const char* data=datastore->get(keys.at(i), datalength);
-				if (data != nullptr && datalength >0)
+				const char* data = cache->get(keys.at(i), datalength);
+				if (data != nullptr && datalength > 0)
 				{
 					writer.writeInt(datalength);
-					writer.write(data,datalength);
+					writer.write(data, datalength);
+				}
+				else
+				{
+					//发生异常，已经找不到数据
+					writer.writeInt(0);
+				}
+			}
+			return writer;
+		}
+
+		charwriter& query(const string& syntax, int64 _s_sort_, int64 _e_sort_, bool desc, searchstats& stat, charwriter& writer)
+		{
+			vector<int64>& keys = this->index->query(syntax, _s_sort_, _e_sort_, desc, stat).result();
+			int length = keys.size();
+			writer.writeInt(length);
+			for (size_t i = 0; i < length; i++)
+			{
+				writer.writeInt64(keys.at(i));
+				int datalength = 0;
+				const char* data = cache->get(keys.at(i), datalength);
+				if (data != nullptr && datalength > 0)
+				{
+					writer.writeInt(datalength);
+					writer.write(data, datalength);
 				}
 				else
 				{

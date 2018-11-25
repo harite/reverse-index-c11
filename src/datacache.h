@@ -28,19 +28,16 @@ namespace cache {
 	class page
 	{
 		char* datas;
-		int delsize;
-		int datasize;
 		int datalength;
-		int   nodenum;
+		int delsize{0};
+		int datasize{0};
+		int   nodenum{0};
 		node  nodes[pagesize];
 	public:
 		page()
 		{
-			this->delsize = 0;
-			this->datasize = 0;
-			this->nodenum = 0;
 			this->datalength = 128 * pagesize;
-			this->datas = new char[datalength];
+			this->datas = new char[this->datalength];
 		}
 		~page()
 		{
@@ -48,9 +45,12 @@ namespace cache {
 		}
 		void allocate(char* ch, int pos, int length)
 		{
-			int newlength = this->datasize - this->delsize + length * (pagesize - this->nodenum + 1);
-			char* temp = new char[newlength];
+			this->datalength = this->datasize - this->delsize + length * (pagesize - this->nodenum + 1);
+			char* temp = new char[this->datalength];
+
+			//reset datasize
 			this->datasize = 0;
+			//优化存储结构，重新调整数据结构
 			for (int i = 0; i < pagesize; i++)
 			{
 				if (i == pos)
@@ -72,9 +72,8 @@ namespace cache {
 				}
 			}
 			delete[] datas;
-			this->datas = temp;
 			this->delsize = 0;
-			this->datalength = newlength;
+			this->datas = temp;
 		}
 
 		const char* get(uint index, int& length)
@@ -91,43 +90,39 @@ namespace cache {
 				return nullptr;
 			}
 		}
-		inline int insert(uint index, char* ch, int length)
+
+		//插入输入，如果是update，返回false，如果是新增，则返回true
+		inline bool add(uint index, char* ch, int length)
 		{
 			int pos = xpos(index);
+			bool update = this->nodes[pos].length > 0;
 			//数据已经存在
-				//数据已经存在
 			if (this->nodes[pos].length > 0)
 			{
-
-				//数据操作为update
+				//数据操作为update且更新的数据小于等于原数据，则可直接覆盖原数据
 				if (this->nodes[pos].length >= length)
 				{
 					this->delsize += this->nodes[pos].length - length;
 					this->nodes[pos].length = length;
 					memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
 				}
+				//数据发生update，新数据要比原来的占用空间大，当预申请空间足够时候直接分配
 				else if (this->datasize + length < this->datalength)
 				{
+					
 					this->delsize += this->nodes[pos].length;
 					this->nodes[pos].offset = this->datasize;
 					this->nodes[pos].length = length;
 					this->datasize += length;
 					memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
 				}
-				// 该条数据为该页的最后一条数据
-				else if (this->delsize >= length && this->nodenum == pagesize)//内存不足
-				{
-					this->allocate(ch, pos, length);
-				}
-				//标记删除的空间达到一半
-				else if (this->delsize > length && this->delsize * 2 > this->datasize) {
-					this->allocate(ch, pos, length);
-				}
+				// 数据发生update，新数据要比原来的占用空间大，当预申请空间不足，需要重新申请、整理内存
 				else
 				{
 					this->allocate(ch, pos, length);
 				}
 			}
+			//如果该条数据之前被删除过，还没有复用，且空间足够
 			else if (-this->nodes[pos].length >= length)
 			{
 
@@ -135,7 +130,8 @@ namespace cache {
 				this->delsize -= length;
 				this->nodes[pos].length = length;
 				memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
-			}      //内存充足，则直接分配
+			}
+			//内存充足，则直接分配
 			else if (this->datasize + length < this->datalength)
 			{
 				this->nodenum++;
@@ -150,14 +146,23 @@ namespace cache {
 				this->nodenum++;
 				this->allocate(ch, pos, length);
 			}
+
 			if (this->nodenum == pagesize && this->delsize > 1024)
 			{
 				this->allocate(ch, -1, length);
 			}
-		
-			return 1;
+			if (update)
+			{
+				return 0;
+			}
+			else 
+			{
+				return 1;
+			}
 		}
-		inline int remove(uint index)
+
+		//删除数据，如果数据存在，则返回true，如果数据不存在活已经被删除，则直接返回false
+		inline bool remove(uint index)
 		{
 			int _xpos = xpos(index);
 			if (this->nodes[_xpos].length > 0)
@@ -165,11 +170,11 @@ namespace cache {
 				this->delsize += this->nodes[_xpos].length;
 				this->nodes[_xpos].length = -this->nodes[_xpos].length;
 				this->nodenum--;
-				return 1;
+				return true;
 			}
 			else
 			{
-				return -1;
+				return false;
 			}
 		}
 	};
@@ -198,7 +203,7 @@ namespace cache {
 		const char* get(uint index, int& length)
 		{
 			int _ypos = ypos(index);
-			if (_ypos > pagenum)
+			if (_ypos >= pagenum)
 			{
 				length = 0;
 				return nullptr;
@@ -208,14 +213,14 @@ namespace cache {
 				return pages[_ypos]->get(index,length);
 			}
 		}
-		inline int insert(uint index, char* doc, int& length)
+		inline bool add(uint index, char* doc, int& length)
 		{
 			int _ypos = ypos(index);
 			if (_ypos >= pagenum)
 			{
 				if (_ypos > pagenum )
 				{
-					return -1;
+					return false;
 				}
 				else
 				{
@@ -225,25 +230,28 @@ namespace cache {
 					delete[] this->pages;
 					this->pages = temp;
 					this->pagenum++;
-					return pages[_ypos]->insert(index, doc, length);
+					pages[_ypos]->add(index, doc, length);
+					return true;
 				}
 			}
 			else
 			{
-				return pages[_ypos]->insert(index,doc,length);
+				 pages[_ypos]->add(index,doc,length);
+				 return true;
 			}
 
 		}
-		inline int remove(uint index)
+		inline bool remove(uint index)
 		{
 			int _ypos = ypos(index);
 			if (_ypos >= pagenum)
 			{
-				return -1;
+				return false;
 			}
 			else
 			{
-				return this->pages[_ypos]->remove(index);
+				this->pages[_ypos]->remove(index);
+				return true;
 			}
 		}
 
@@ -258,11 +266,11 @@ namespace cache {
 	public:
 		kvcache() =default;
 		~kvcache() = default;
-		int insert(int64 key,char* ch,int length)
+		int add(int64 key,char* ch,int length)
 		{
 			uint innerseq;
 			bool insert=seqmap.create(key,innerseq);
-			this->cache.insert(innerseq,ch,length);
+			this->cache.add(innerseq,ch,length);
 			if (insert) {
 				//insert
 				return 0;
@@ -278,8 +286,8 @@ namespace cache {
 			uint innerseq;
 			if (seqmap.exists(key, innerseq))
 			{
-				this->cache.remove(innerseq);
-				return true;
+				
+				return this->cache.remove(innerseq);
 			}
 			else 
 			{
