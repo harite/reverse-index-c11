@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2050
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "reversedb-c11", "reversedb-c11.vcxproj", "{3666CD5A-820B-481D-A580-BCDF051C9BF7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3666CD5A-820B-481D-A580-BCDF051C9BF7}.Debug|x64.ActiveCfg = Debug|x64
+		{3666CD5A-820B-481D-A580-BCDF051C9BF7}.Debug|x64.Build.0 = Debug|x64
+		{3666CD5A-820B-481D-A580-BCDF051C9BF7}.Debug|x86.ActiveCfg = Debug|Win32
+		{3666CD5A-820B-481D-A580-BCDF051C9BF7}.Debug|x86.Build.0 = Debug|Win32
+		{3666CD5A-820B-481D-A580-BCDF051C9BF7}.Release|x64.ActiveCfg = Release|x64
+		{3666CD5A-820B-481D-A580-BCDF051C9BF7}.Release|x64.Build.0 = Release|x64
+		{3666CD5A-820B-481D-A580-BCDF051C9BF7}.Release|x86.ActiveCfg = Release|Win32
+		{3666CD5A-820B-481D-A580-BCDF051C9BF7}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {08BB66D8-D3DA-4EA0-ABB9-CCC409357E0B}
+	EndGlobalSection
+EndGlobal
