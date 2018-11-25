@@ -6,7 +6,7 @@
  */
 #include <jni.h>
 #include "jni.h"
-#include "qstarindex.h"
+#include "reversebase.h"
 #ifndef _Included_org_jkuang_qstardb_Native_RIndex
 #define _Included_org_jkuang_qstardb_Native_RIndex
 #ifdef __cplusplus
@@ -16,7 +16,7 @@ extern "C"
 	namespace qstardb
 	{
 		static rwsyslock reverseRWlock;
-		static map<int, reverseindex*>* indexs = new map<int, reverseindex*>();
+		static map<int, reverse::rmindex*>* indexs = new map<int, reverse::rmindex*>();
 		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RIndex_create(JNIEnv *, jclass, jint index, jboolean ignoreCase, jboolean compress,
 				jbyteArray bytes)
 		{
@@ -30,7 +30,7 @@ extern "C"
 			}
 			else
 			{
-				(*indexs)[index] = new reverseindex(ignoreCase, compress);
+				(*indexs)[index] = new reverse::rmindex(ignoreCase, compress);
 				reverseRWlock.unwrlock();
 				cout << "create index:" << index << endl;
 				return 1;

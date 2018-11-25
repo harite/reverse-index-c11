@@ -167,7 +167,8 @@
     <ClInclude Include="nativeindex.h" />
     <ClInclude Include="nativedici2b.h" />
     <ClInclude Include="nativeintset.h" />
-    <ClInclude Include="qstarindex.h" />
+    <ClInclude Include="reverseindex.h" />
+    <ClInclude Include="reversebase.h" />
     <ClInclude Include="rwsyslock.h" />
     <ClInclude Include="dicmaps2b.h" />
     <ClInclude Include="searchstats.h" />
