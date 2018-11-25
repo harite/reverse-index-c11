@@ -43,7 +43,7 @@ namespace cache {
 		{
 			delete[] this->datas;
 		}
-		void allocate(char* ch, int pos, int length)
+		void allocate(const char* ch, int pos, int length)
 		{
 			this->datalength = this->datasize - this->delsize + length * (pagesize - this->nodenum + 1);
 			char* temp = new char[this->datalength];
@@ -92,7 +92,7 @@ namespace cache {
 		}
 
 		//插入输入，如果是update，返回false，如果是新增，则返回true
-		inline bool add(uint index, char* ch, int length)
+		inline bool add(uint index,const char* ch, int length)
 		{
 			int pos = xpos(index);
 			bool update = this->nodes[pos].length > 0;
@@ -213,7 +213,7 @@ namespace cache {
 				return pages[_ypos]->get(index,length);
 			}
 		}
-		inline bool add(uint index, char* doc, int& length)
+		inline bool add(uint index,const char* doc, int& length)
 		{
 			int _ypos = ypos(index);
 			if (_ypos >= pagenum)
@@ -266,7 +266,7 @@ namespace cache {
 	public:
 		kvcache() =default;
 		~kvcache() = default;
-		int add(int64 key,char* ch,int length)
+		int add(int64 key,const char* ch,int length)
 		{
 			uint innerseq;
 			bool insert=seqmap.create(key,innerseq);

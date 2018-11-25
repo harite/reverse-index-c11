@@ -4,6 +4,7 @@
 #include "nativedici2i.h"
 #include "nativeintset.h"
 #include "nativeindex.h"
+#include "nativebase.h"
 #include<sstream>
 #include <string.h>
 #include <atomic>
@@ -35,14 +36,14 @@ bool read1(filereader& reader, dictionary* dic)
 }
 atomic<long long> exeCount { 0 };
 
-reverseindex* add(bool ignoreCase, bool compress, string dumpfile)
+reverse::rmindex* add(bool ignoreCase, bool compress, string dumpfile)
 {
-	reverseindex* index101 = new reverseindex(ignoreCase, compress);
+	reverse::rmindex* index101 = new  reverse::rmindex(ignoreCase, compress);
 	index101->load(dumpfile);
 	return index101;
 }
 
-int test2(string testfile, reverseindex* index101)
+int test2(string testfile, reverse::rmindex* index101)
 {
 	filereader reader(testfile);
 	long long sum = 0;
@@ -82,7 +83,7 @@ int test2(string testfile, reverseindex* index101)
 	return count;
 }
 
-int test3(string testfile, reverseindex* index101, string outfile)
+int test3(string testfile, reverse::rmindex* index101, string outfile)
 {
 	filereader reader(testfile);
 	int count = 0;
@@ -128,7 +129,7 @@ int main()
 	string outfile("d:/dumpbin/out.bin");
 	auto start = system_clock::now(); // @suppress("Function cannot be resolved")
 
-	reverseindex* index101 = add(true, false, dumpfile);
+	reverse::rmindex* index101 = add(true, false, dumpfile);
 	auto end = system_clock::now();
 
 	auto duration = duration_cast < seconds > (end - start);

@@ -85,7 +85,7 @@ namespace reverse {
 			delete cache;
 		}
 
-		void add(int64 key, int64 sort, vector<string> &terms, char* data, int length)
+		void add(int64 key, int64 sort, vector<string> &terms,const char* data, int length)
 		{
 			this->index->add(key, sort, terms);
 			this->cache->add(key, data, length);
@@ -97,8 +97,9 @@ namespace reverse {
 			this->cache->remove(key);
 		}
 
-		charwriter& query(vector<int64>& _keys, searchstats& stat, charwriter& writer)
+		charwriter& query(vector<int64>& _keys,  charwriter& writer)
 		{
+			searchstats stat(0, 0, 0);
 			vector<int64>& keys = this->index->query(_keys, stat).result();
 			int length = keys.size();
 			writer.writeInt(length);

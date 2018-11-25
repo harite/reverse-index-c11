@@ -279,6 +279,12 @@ namespace qstardb
 			this->capacity = size;
 			this->buffer = new char[size];
 		}
+		charwriter()
+		{
+			this->offset = 0;
+			this->capacity = 16*1024;
+			this->buffer = new char[this->capacity];
+		}
 		int size()
 		{
 			return offset;
