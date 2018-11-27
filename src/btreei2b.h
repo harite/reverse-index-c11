@@ -17,7 +17,7 @@ namespace btree
 		int64 key{ 0 };
 		int offset{ 0 };
 		int length{ 0 };
-		void set(int64 key,int offset,int length)
+		void set(int64 key, int offset, int length)
 		{
 			this->key = key;
 			this->offset = offset;
@@ -42,10 +42,13 @@ namespace btree
 		//数据存放空间
 		char* datas;
 	public:
-		page()
+		page(int nodelength, int datalength)
 		{
-			this->datas = new char[datalength];
-			this->nodes = new node[nodelength];
+			this->nodelength = nodelength;
+			this->datalength = datalength;
+			this->nodes = new node[this->nodelength];
+			this->datas = new char[this->datalength];
+			
 		}
 		~page()
 		{
@@ -56,10 +59,12 @@ namespace btree
 			return key1 == key2 ? 0 : key1 > key2 ? 1 : -1;
 		}
 
-		void ensureCapacity(int nodeCapacity,int dataCapacity)
+
+
+		void ensureCapacity(int nodeCapacity, int dataCapacity)
 		{
 			//节点数量不足了
-			
+
 			int oldCapacity = this->nodelength;
 			int minCapacity = this->nodesize + nodeCapacity;
 			if (minCapacity > oldCapacity)
@@ -82,7 +87,7 @@ namespace btree
 			{
 				int usedCapacity = this->useddatasize - this->deldatasize;
 				int extcapacity = usedCapacity >> 1;
-				this->nodelength = usedCapacity + (extcapacity > 64*1024 ? 64 * 1024 : extcapacity);
+				this->nodelength = usedCapacity + (extcapacity > 64 * 1024 ? 64 * 1024 : extcapacity);
 				if (this->nodelength < usedCapacity + dataCapacity)
 				{
 					this->nodelength = usedCapacity + dataCapacity;
@@ -95,7 +100,7 @@ namespace btree
 					this->useddatasize = 0;
 					for (int i = 0; i < nodesize; i++)
 					{
-						memcpy(tempdata + useddatasize,datas+ nodes[i].offset, sizeof(char) * this->nodes[i].length);
+						memcpy(tempdata + useddatasize, datas + nodes[i].offset, sizeof(char) * this->nodes[i].length);
 						useddatasize += this->nodes[i].length;
 					}
 				}
@@ -141,8 +146,8 @@ namespace btree
 			if (this->nodesize == 0 || this->compare(key, nodes[this->nodesize - 1].key) > 0)
 			{
 				//确认空间足够
-				ensureCapacity(1,length);
-				this->nodes[this->nodesize].set(key,this->useddatasize,length);
+				ensureCapacity(1, length);
+				this->nodes[this->nodesize].set(key, this->useddatasize, length);
 				memmove(this->datas + this->useddatasize, ch, sizeof(char) * length);
 				this->nodesize++;
 				return true;
@@ -205,6 +210,41 @@ namespace btree
 					return false;
 				}
 			}
+		}
+
+		int countDataSize(int from, int to)
+		{
+			int sum = 0;
+			for (size_t i = from; i < to && i < this->nodesize; i++)
+			{
+				sum += this->nodes[i].length;
+			}
+			return sum;
+		}
+
+		int copyTo( int from, int to, page* page) {
+			for (size_t i = from, j = 0; i < to && i < this->nodesize; i++)
+			{
+				this->nodes[j++].set(this->nodes[i].key, page->useddatasize, this->nodes[i].length);
+				memmove(page->datas + page->useddatasize, this->datas + this->nodes[i].offset, sizeof(char) *  this->nodes[i].length);
+				page->useddatasize += this->nodes[i].length;
+			}
+		}
+
+		page** splitToTwo(bool tail)
+		{
+			page** pages = new page*[2];
+			int mid = (this->nodesize * (tail ? 7 : 5)) / 10;
+			int datasize1 = countDataSize(0, mid) * 11 / 10;
+			pages[0] = new page(mid*11/10, datasize1);
+			pages[0]->nodesize = mid;
+			this->copyTo(0,mid,pages[0]);
+
+			int datasize2 = countDataSize(mid, this->nodesize) * 12 / 10;
+			pages[1] = new page((this->nodesize- mid)*12 /10, datasize2);
+			pages[1]->nodesize = this->nodesize - mid;
+			this->copyTo(mid, this->nodesize, pages[1]);
+			return pages;
 		}
 
 		/*判定页的范围是否包含 key*/
