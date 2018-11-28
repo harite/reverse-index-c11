@@ -5,7 +5,7 @@
 namespace btree
 {
 	typedef long long int64;
-
+	static const int  SHARD_SIZE  = 1024 * 1024 * 4;
 	enum type
 	{
 		type_insert, type_index, type_ceil, type_floor
@@ -27,29 +27,43 @@ namespace btree
 	class page
 	{
 	private:
-		//元素个数
-		int nodesize{ 0 };
+
 		//元素空间总长度
 		int nodelength{ 1024 };
-		//数据已经被删除
-		int deldatasize{ 0 };
-		//已经使用的数据
-		int useddatasize{ 0 };
 		//数据空间总长度
 		int datalength{ 1024 * 128 };
 		//node节点
-		node* nodes;
-		//数据存放空间
-		char* datas;
+	
 		//数据交换空间，临时数据空间
 		char* shardData;
 		//临时数据空间长度
 		int shardLength{ 0 };
 	public:
-		page(int nodelength, int datalength)
+		//已经使用的数据
+		int useddatasize{ 0 };
+		//元素个数
+		int nodesize{ 0 };
+
+		//数据已经被删除
+		int deldatasize{ 0 };
+
+		//元素个数
+		int nodesize{ 0 };
+
+		node* nodes;
+		//数据存放空间
+		char* datas;
+		int dataSize()
+		{
+			return this->useddatasize - this->deldatasize;
+		}
+	public:
+		page(int nodelength, int datalength,char* shardData,int shardLength)
 		{
 			this->nodelength = nodelength;
 			this->datalength = datalength;
+			this->shardData = shardData;
+			this->shardLength = shardLength;
 			this->nodes = new node[this->nodelength];
 			this->datas = new char[this->datalength];
 			
@@ -57,6 +71,10 @@ namespace btree
 		~page()
 		{
 			delete[] this->nodes;
+		}
+		inline int size()
+		{
+			return this->nodesize;
 		}
 		inline int compare(int64 key1, int64 key2)
 		{
@@ -66,7 +84,6 @@ namespace btree
 		void ensureCapacity(int nodeCapacity, int dataCapacity)
 		{
 			//节点数量不足了
-
 			int oldCapacity = this->nodelength;
 			int minCapacity = this->nodesize + nodeCapacity;
 			if (minCapacity > oldCapacity)
@@ -212,10 +229,22 @@ namespace btree
 						this->nodes[index].set(key, this->useddatasize, length);
 						memmove(this->datas + this->useddatasize, ch, sizeof(char) * length);
 					}
+					return false;
 				}
 				
 			}
 
+		}
+		const char* find(int64 key,int& length)
+		{
+			int index = indexof(nodes,key,this->nodesize,type_index);
+			if (index >= 0) {
+				length = this->nodes[index].length;
+				return this->datas + this->nodes[index].offset;
+			}
+			else {
+				return nullptr;
+			}
 		}
 		inline bool contains(int64 key)
 		{
@@ -277,12 +306,12 @@ namespace btree
 			page** pages = new page*[2];
 			int mid = (this->nodesize * (tail ? 7 : 5)) / 10;
 			int datasize1 = countDataSize(0, mid) * 11 / 10;
-			pages[0] = new page(mid*11/10, datasize1);
+			pages[0] = new page(mid*11/10, datasize1, this->shardData, this->shardLength);
 			pages[0]->nodesize = mid;
 			this->copyTo(0,mid,pages[0]);
 
 			int datasize2 = countDataSize(mid, this->nodesize) * 12 / 10;
-			pages[1] = new page((this->nodesize- mid)*12 /10, datasize2);
+			pages[1] = new page((this->nodesize- mid)*12 /10, datasize2,this->shardData,this->shardLength);
 			pages[1]->nodesize = this->nodesize - mid;
 			this->copyTo(mid, this->nodesize, pages[1]);
 			return pages;
@@ -306,13 +335,50 @@ namespace btree
 	class block
 	{
 		int size;
+		//每个页最大多少条数据
+		int page_avg_num;
+		//每条数据的平均大小
+		int node_avg_size;
 		page** pages;
+		int max_page_num;
+		char shardData[SHARD_SIZE];
+	private:
+		inline int indexof(page** pages, int64 key, int size, type _type)
+		{
+			int fromIndex = 0;
+			int toIndex = size - 1;
+			while (fromIndex <= toIndex)
+			{
+				int mid = (fromIndex + toIndex) >> 1;
+				int cmp = pages[mid]->rangecontains(key);
+				if (cmp < 0)
+					fromIndex = mid + 1;
+				else if (cmp > 0)
+					toIndex = mid - 1;
+				else
+					return _type == type_insert ? -(mid + 1) : mid; // key
+			}
+			switch (_type)
+			{
+			case type_insert:
+				return fromIndex > size ? size : fromIndex;
+			case type_ceil:
+				return fromIndex;
+			case type_index:
+				return -(fromIndex + 1);
+			default:
+				return toIndex;
+			}
+		}
 	public:
-		block()
+		block(int num_per_page,int page_avg_num,int node_avg_size)
 		{
 			this->size = 1;
 			this->pages = new page*[1];
-			this->pages[0] = new page();
+			this->max_page_num = 1024 * 8;
+			this->page_avg_num= page_avg_num;
+			this->node_avg_size = node_avg_size;
+			this->pages[0] = new page(page_avg_num, node_avg_size*node_avg_size, shardData, SHARD_SIZE);
 		}
 		~block()
 		{
@@ -321,6 +387,153 @@ namespace btree
 				delete pages[i];
 			}
 			delete[] pages;
+		}
+
+		void insertAndSplit(int index, int64 key, char* data, int length)
+		{
+			this->pages[index]->insert(key,data,length);
+			if (this->pages[index]->size()>this->max_page_num)
+			{
+				page** temp = this->pages[index]->splitToTwo(index==this->size-1);
+				page** newpages = new page*[this->size + 1];
+		
+				if (index > 0)
+				{
+					memmove(newpages,this->pages,sizeof(page*)*index);
+				}
+				int moveNum = this->size - index - 1;
+				if (moveNum > 0)
+				{
+					memmove(newpages + index + 2, this->pages + index + 1, sizeof(page*) * moveNum);
+				}
+				newpages[index] = temp[0];
+				newpages[index+1] = temp[1];
+				delete pages[index];
+				delete[] temp;
+				delete[] this->pages;
+				this->pages = newpages;
+				this->size++;
+			}
+		}
+
+		void insert(int64 key,char* data,int length)
+		{
+			if (this->size == 1 || this->pages[0]->rangecontains(key) >= 0)
+			{
+				this->insertAndSplit(0, key, data, length);
+			}
+			if (this->pages[this->size - 1]->rangecontains(key) <= 0)
+			{
+				this->insertAndSplit(this->size - 1, key, data, length);
+			}
+			else
+			{
+				int pageno = indexof( this->pages, key,  this->size, type_ceil);
+				this->insertAndSplit(pageno, key, data, length);
+			}
+		}
+
+		bool combine(int index0, int index1)
+		{
+			int size0 = this->pages[index0]->size();
+			int size1 = this->pages[index1]->size();
+			int datasize0 = this->pages[index0]->dataSize();
+			int datasize1 = this->pages[index1]->dataSize();
+			page* newpage = new page(size0 + size1, datasize0 + datasize1, shardData, SHARD_SIZE);
+			page* temp0 = this->pages[index0];
+			if (this->pages[index0]->deldatasize > 0)
+			{
+				for (size_t i = 0; i < temp0->nodesize; i++)
+				{
+					newpage->nodes[i].set(temp0->nodes[i].key, newpage->useddatasize, temp0->nodes[i].length);
+					memccpy(newpage->datas+newpage->useddatasize, temp0->datas, temp0->nodes[i].offset,sizeof(char)*temp0->nodes[i].length);
+					newpage->useddatasize += temp0->nodes[i].length;
+				}
+			}
+			else
+			{
+				memccpy(newpage->datas + newpage->useddatasize, temp0->datas,0, sizeof(char)*temp0->useddatasize);
+			}
+			page* temp1 = this->pages[index1];
+			for (size_t i = 0; i < temp1->nodesize; i++)
+			{
+				newpage->nodes[i+ temp0->nodesize].set(temp1->nodes[i].key, newpage->useddatasize, temp1->nodes[i].length);
+				memccpy(newpage->datas + newpage->useddatasize, temp1->datas, temp1->nodes[i].offset, sizeof(char)*temp1->nodes[i].length);
+				newpage->useddatasize += temp1->nodes[i].length;
+			}
+			//设置新也的数据量
+			newpage->nodesize = temp1->nodesize + temp1->nodesize;
+			//释放原数据页1
+			delete temp0;
+			//释放原数据页2
+			delete temp1;
+			//将新页数据放到 index0的位置
+			this->pages[index0] = newpage;
+			//将空白页删除
+			int moveNum = this->size - index1-1;
+			if (moveNum > 0)
+			{
+				memmove(this->pages + index1 , this->pages+index1+1 , sizeof(page*)*moveNum);
+			}
+			this->size--;
+		}
+
+		bool combine(int index)
+		{
+			if (this->size == 1)
+			{
+				return false;
+			}
+			//如果数据页内的数据小于规定最大数据量的32分之一，则合并数据页
+			else if (this->pages[index]->size() < (this->max_page_num/32))
+			{
+				//如果是第一页，则将第二页的合并到第一页
+				if (index == 0)
+				{
+					combine(0,1);
+				}
+				else//其他情况则将数据将与前一页合并
+				{
+					combine(index-1, index );
+				}
+			}
+			else 
+			{
+				return false;
+			}
+		}
+
+
+
+		void remove(int64 key)
+		{
+			if (this->pages[this->size - 1]->rangecontains(key) == 0)
+			{
+				this->pages[this->size - 1]->remove(key);
+				this->combine(this->size - 1);	
+			}
+			else
+			{
+				int pageno = indexof( this->pages, key,  this->size, type_index);
+				if (pageno >= 0)
+				{
+					this->pages[pageno]->remove(key);
+					this->combine(pageno);
+				}
+			}
+		}
+
+		const char* find(int64 key,int& length)
+		{
+			int pageno = indexof(this->pages, key, this->size, type_index);
+			if (pageno >= 0)
+			{
+				return this->pages[pageno]->find(key,length);
+			}
+			else 
+			{
+				return nullptr;
+			}
 		}
 	};
 
