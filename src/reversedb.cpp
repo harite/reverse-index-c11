@@ -127,22 +127,18 @@ int main()
 	cout << "endl------------------;" << endl;
 	
 	
-	for (size_t i = 0; i < 1024000; i++)
+	for (size_t i = 0; i < 102400; i++)
 	{
 		if (i == 4)
 		{
 			cout << "i--" << i << endl;
-		}cout << "i--" << i << endl;
+		}//cout << "i--" << i << endl;
 		//cout << "i--" << i << endl;
-		string str("haha,wo shi ceshi_");
-		str.append(tostring(i % 10245));
+		string str("_");
+		str.append(tostring(i));
+		str.append("_");
 		const char* ch = str.c_str();
-		if (i / 10234 % 2 == 0) {
-			_block.insert(i % 10245, ch, str.length());
-		}
-		else {
-			_block.remove(i % 10245);
-		}
+		_block.insert(i % 1000, ch, str.length());
 		
 	}
 	for (size_t i = 0; i < 1024; i++)

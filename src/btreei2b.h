@@ -64,6 +64,7 @@ namespace btree
 		~page()
 		{
 			delete[] this->nodes;
+			delete[] this->datas;
 		}
 		inline int size()
 		{
@@ -89,7 +90,7 @@ namespace btree
 					this->nodelength = minCapacity;
 				}
 				node* temp = new node[this->nodelength];
-				memcpy(temp, nodes, sizeof(node) * this->nodesize);
+				memmove(temp, nodes, sizeof(node) * this->nodesize);
 				delete[] this->nodes;
 				this->nodes = temp;
 			}
@@ -103,16 +104,17 @@ namespace btree
 				if (this->deldatasize >= dataCapacity)
 				{
 					//使用共享空间做为临时存储
-					bool useShardData = this->datalength < this->shardLength;
+					bool useShardData = this->useddatasize < this->shardLength;
 					//临时存储数据空间的地址
-					char* tempData = useShardData ? shardData : new char[this->datalength];
-					memcpy(tempData, datas, sizeof(char) * datalength);
+					char* tempData = useShardData ? shardData : new char[this->useddatasize];
+					memmove(tempData, this->datas, sizeof(char) * this->useddatasize);
 					this->deldatasize = 0;
 					this->useddatasize = 0;
 					//将数据拷贝回原来的地址
-					for (int i = 0; i < nodesize; i++)
+					for (int i = 0; i < this->nodesize; i++)
 					{
-						memcpy(datas + this->useddatasize, tempData + nodes[i].offset, sizeof(char) * this->nodes[i].length);
+						memmove(datas + this->useddatasize, tempData + this->nodes[i].offset, sizeof(char) * this->nodes[i].length);
+						this->nodes[i].set(this->nodes[i].key, this->useddatasize, this->nodes[i].length);
 						this->useddatasize += this->nodes[i].length;
 					}
 					//如果不是使用的共享空间，则释放临时内存
@@ -137,7 +139,8 @@ namespace btree
 					for (int i = 0; i < this->nodesize; i++)
 					{
 						memcpy(tempData + this->useddatasize, datas + nodes[i].offset, sizeof(char) * this->nodes[i].length);
-						this-> useddatasize += this->nodes[i].length;
+						this->nodes[i].set(this->nodes[i].key, this->useddatasize, this->nodes[i].length);
+						this->useddatasize += this->nodes[i].length;
 					}
 					delete[] this->datas;
 					this->datas = tempData;
@@ -215,6 +218,8 @@ namespace btree
 					int index = -pos - 1;
 					if (this->nodes[index].length >= length)
 					{
+						if(this->nodes[index].length > length)
+						cout << "长度变短了？" << endl;
 						this->deldatasize += this->nodes[index].length- length;
 						//数据长度变短了
 						this->nodes[index].set(key, this->nodes[index].offset, length);
@@ -223,7 +228,7 @@ namespace btree
 					else
 					{
 						//空间已经不足，重新分配
-						ensureCapacity(1, length);
+						ensureCapacity(0, length);
 						this->deldatasize += this->nodes[index].length;
 						this->nodes[index].set(key, this->useddatasize, length);
 						memmove(this->datas + this->useddatasize, ch, sizeof(char) * length);
@@ -259,18 +264,16 @@ namespace btree
 			}
 			else
 			{
+				//如果找到数据，则进行操作
 				int index = indexof(nodes, key, this->nodesize, type_index);
 				if (index >= 0)
 				{
+					//标记被删除的数据，讲数据空间纳入回收容量
+					this->deldatasize += this->nodes[index].length;
 					int moveNum = this->nodesize - index - 1;
 					if (moveNum > 0)
 					{
-						this->deldatasize += this->nodes[index].length;
 						memmove(this->nodes + index, this->nodes + index + 1, sizeof(node) * moveNum);
-					}
-					else
-					{
-						this->useddatasize -= this->nodes[index].length;
 					}
 					this->nodesize--;
 					return true;
@@ -392,9 +395,11 @@ namespace btree
 
 		void insertAndSplit(int index, int64 key,const char* data, int length)
 		{
+		
 			this->pages[index]->insert(key,data,length);
 			if (this->pages[index]->size()>this->max_nodenum_per_page)
 			{
+				cout << "insertAndSplit.splitToTwo" << endl;
 				page** temp = this->pages[index]->splitToTwo(index==this->size-1);
 				page** newpages = new page*[this->size + 1];
 				if (index > 0)
@@ -435,13 +440,15 @@ namespace btree
 
 		bool combine(int index0, int index1)
 		{
-			int size0 = this->pages[index0]->size();
-			int size1 = this->pages[index1]->size();
-			int datasize0 = this->pages[index0]->dataSize();
-			int datasize1 = this->pages[index1]->dataSize();
-			page* newpage = new page(size0 + size1, datasize0 + datasize1, shardData, SHARD_SIZE);
 			page* temp0 = this->pages[index0];
-			if (this->pages[index0]->deldatasize > 0)
+			page* temp1 = this->pages[index1];
+			int size0 = temp0->size();
+			int size1 = temp1->size();
+			int datasize0 = temp0->dataSize();
+			int datasize1 = temp1->dataSize();
+			page* newpage = new page(size0 + size1, datasize0 + datasize1, shardData, SHARD_SIZE);
+		
+			if (temp0->deldatasize > 0)
 			{
 				for (size_t i = 0; i < temp0->nodesize; i++)
 				{
@@ -453,8 +460,8 @@ namespace btree
 			else
 			{
 				memmove(newpage->datas + newpage->useddatasize, temp0->datas,sizeof(char)*temp0->useddatasize);
+				newpage->useddatasize += temp0->useddatasize;
 			}
-			page* temp1 = this->pages[index1];
 			for (size_t i = 0; i < temp1->nodesize; i++)
 			{
 				newpage->nodes[i+ temp0->nodesize].set(temp1->nodes[i].key, newpage->useddatasize, temp1->nodes[i].length);
@@ -462,7 +469,7 @@ namespace btree
 				newpage->useddatasize += temp1->nodes[i].length;
 			}
 			//设置新也的数据量
-			newpage->nodesize = temp1->nodesize + temp1->nodesize;
+			newpage->nodesize = temp0->nodesize + temp1->nodesize;
 			//释放原数据页1
 			delete temp0;
 			//释放原数据页2
