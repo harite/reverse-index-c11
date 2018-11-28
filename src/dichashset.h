@@ -15,7 +15,6 @@ namespace setint
 {
 	typedef long long int64;
 	typedef unsigned int uint;
-
 	template<class k> class block
 	{
 	private:
