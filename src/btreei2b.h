@@ -476,6 +476,7 @@ namespace btree
 				memmove(this->pages + index1 , this->pages+index1+1 , sizeof(page*)*moveNum);
 			}
 			this->size--;
+			return true;
 		}
 
 		bool combine(int index)

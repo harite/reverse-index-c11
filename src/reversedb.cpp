@@ -123,18 +123,27 @@ int test3(string testfile, reverse::rmindex* index101, string outfile)
 int main()
 {
 	cout << "endl------------------;" << endl;
-	btree::block _block(4,60);
+	btree::block _block(1024,60);
 	cout << "endl------------------;" << endl;
-	string str("haha,wo shi ceshi");
-	const char* ch = str.c_str();
-	for (size_t i = 0; i < 102400; i++)
+	
+	
+	for (size_t i = 0; i < 1024000; i++)
 	{
 		if (i == 4)
 		{
 			cout << "i--" << i << endl;
-		}
+		}cout << "i--" << i << endl;
 		//cout << "i--" << i << endl;
-		_block.insert(i,ch,str.length());
+		string str("haha,wo shi ceshi_");
+		str.append(tostring(i % 10245));
+		const char* ch = str.c_str();
+		if (i / 10234 % 2 == 0) {
+			_block.insert(i % 10245, ch, str.length());
+		}
+		else {
+			_block.remove(i % 10245);
+		}
+		
 	}
 	for (size_t i = 0; i < 1024; i++)
 	{
