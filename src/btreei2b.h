@@ -41,6 +41,10 @@ namespace btree
 		node* nodes;
 		//数据存放空间
 		char* datas;
+		//数据交换空间，临时数据空间
+		char* shardData;
+		//临时数据空间长度
+		int shardLength{ 0 };
 	public:
 		page(int nodelength, int datalength)
 		{
@@ -58,8 +62,6 @@ namespace btree
 		{
 			return key1 == key2 ? 0 : key1 > key2 ? 1 : -1;
 		}
-
-
 
 		void ensureCapacity(int nodeCapacity, int dataCapacity)
 		{
@@ -85,31 +87,49 @@ namespace btree
 			int minDataCapacity = this->useddatasize + dataCapacity;
 			if (minDataCapacity > oldLength)
 			{
-				int usedCapacity = this->useddatasize - this->deldatasize;
-				int extcapacity = usedCapacity >> 1;
-				this->nodelength = usedCapacity + (extcapacity > 64 * 1024 ? 64 * 1024 : extcapacity);
-				if (this->nodelength < usedCapacity + dataCapacity)
+				//如果被删除的数据空间大于需要分配的空间
+				if (this->deldatasize >= dataCapacity)
 				{
-					this->nodelength = usedCapacity + dataCapacity;
-				}
-				char* tempdata = new char[this->nodelength];
-				//重新申请了内存就重新清理
-				if (this->deldatasize > 0)
-				{
+					//使用共享空间做为临时存储
+					bool useShardData = this->datalength < this->shardLength;
+					//临时存储数据空间的地址
+					char* tempData = useShardData ? shardData : new char[this->datalength];
+					memcpy(tempData, datas, sizeof(char) * datalength);
 					this->deldatasize = 0;
 					this->useddatasize = 0;
+					//将数据拷贝回原来的地址
 					for (int i = 0; i < nodesize; i++)
 					{
-						memcpy(tempdata + useddatasize, datas + nodes[i].offset, sizeof(char) * this->nodes[i].length);
+						memcpy(datas + useddatasize, tempData + nodes[i].offset, sizeof(char) * this->nodes[i].length);
 						useddatasize += this->nodes[i].length;
 					}
+					//如果不是使用的共享空间，则释放临时内存
+					if (!useShardData)
+					{
+						delete[] tempData;
+					}
 				}
-				else
-				{
-					memcpy(tempdata, datas, sizeof(char) * this->useddatasize);
+				else {//直接申请新的存储空间，进行数据扩容
+					int usedCapacity = this->useddatasize - this->deldatasize;
+					int extcapacity = usedCapacity >> 1;
+					this->nodelength = usedCapacity + (extcapacity > 64 * 1024 ? 64 * 1024 : extcapacity);
+					if (this->nodelength < usedCapacity + dataCapacity)
+					{
+						this->nodelength = usedCapacity + dataCapacity;
+					}
+					char* tempData = new char[this->nodelength];
+					//重新申请了内存就重新清理
+					this->deldatasize = 0;
+					this->useddatasize = 0;
+					//将数据拷贝回原来的地址
+					for (int i = 0; i < nodesize; i++)
+					{
+						memcpy(tempData + useddatasize, datas + nodes[i].offset, sizeof(char) * this->nodes[i].length);
+						useddatasize += this->nodes[i].length;
+					}
+					delete[] this->datas;
+					this->datas = tempData;
 				}
-				delete[] this->datas;
-				this->datas = tempdata;
 			}
 		}
 
@@ -164,15 +184,36 @@ namespace btree
 			else
 			{
 				int pos = indexof(this->nodes, key, this->nodesize, type_insert);
-				int numMoved = this->nodesize - pos;
-				if (numMoved > 0)
-				{
-					memmove(this->nodes + pos + 1, this->nodes + pos, sizeof(node) * numMoved);
+				if (pos > 0) {
+					int numMoved = this->nodesize - pos;
+					if (numMoved > 0)
+					{
+						memmove(this->nodes + pos + 1, this->nodes + pos, sizeof(node) * numMoved);
+					}
+					this->nodes[pos].set(key, this->useddatasize, length);
+					memmove(this->datas + this->useddatasize, ch, sizeof(char) * length);
+					this->nodesize++;
+					return true;
 				}
-				this->nodes[pos].set(key, this->useddatasize, length);
-				memmove(this->datas + this->useddatasize, ch, sizeof(char) * length);
-				this->nodesize++;
-				return true;
+				else {//key foud，数据已经存在，则覆盖原数据
+					int index = -pos - 1;
+					if (this->nodes[index].length >= length)
+					{
+						this->deldatasize += this->nodes[index].length- length;
+						//数据长度变短了
+						this->nodes[index].set(key, this->nodes[index].offset, length);
+						memmove(this->datas + this->nodes[index].offset, ch, sizeof(char) * length);
+					}
+					else
+					{
+						//空间已经不足，重新分配
+						ensureCapacity(1, length);
+						this->deldatasize += this->nodes[index].length;
+						this->nodes[index].set(key, this->useddatasize, length);
+						memmove(this->datas + this->useddatasize, ch, sizeof(char) * length);
+					}
+				}
+				
 			}
 
 		}

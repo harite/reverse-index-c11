@@ -77,15 +77,23 @@ namespace qstardb
 			else
 			{
 				int pos = indexof(this, this->keys, key, store, this->size, type_insert);
-				ensureCapacity(this->size + 1);
-				int numMoved = this->size - pos;
-				if (numMoved > 0)
-				{
-					memmove(this->keys + pos + 1, this->keys + pos, sizeof(uint) * numMoved);
+				if (pos >= 0) {
+					ensureCapacity(this->size + 1);
+					int numMoved = this->size - pos;
+					if (numMoved > 0)
+					{
+						memmove(this->keys + pos + 1, this->keys + pos, sizeof(uint) * numMoved);
+					}
+					this->keys[pos] = key;
+					this->size++;
+					return true;
 				}
-				this->keys[pos] = key;
-				this->size++;
-				return true;
+				else
+				{
+					//数据已经存在
+					return false;
+				}
+			
 			}
 		}
 		/*从页中删除数据**/
