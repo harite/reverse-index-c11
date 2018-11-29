@@ -38,27 +38,27 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: QStarDB libQStarDB.so
+all: reversedb libreversedb.so
 
 # Tool invocations
-QStarDB: $(OBJS) $(USER_OBJS)
+reversedb: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++  -o "QStarDB" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++  -o "reversedb" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
-libQStarDB.so: $(OBJS) $(USER_OBJS)
+libreversedb.so: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -shared -o "libQStarDB.so" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -shared -o "libreversedb.so" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(C_UPPER_DEPS)$(CXX_DEPS)$(OBJS)$(CPP_DEPS)$(C_DEPS) QStarDB
-	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(C_UPPER_DEPS)$(CXX_DEPS)$(OBJS)$(CPP_DEPS)$(C_DEPS) libQStarDB.so
+	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(C_UPPER_DEPS)$(CXX_DEPS)$(OBJS)$(CPP_DEPS)$(C_DEPS) reversedb
+	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(C_UPPER_DEPS)$(CXX_DEPS)$(OBJS)$(CPP_DEPS)$(C_DEPS) libreversedb.so
 	-@echo ' '
 
 .PHONY: all clean dependents

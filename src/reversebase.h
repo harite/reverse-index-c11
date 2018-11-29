@@ -2,7 +2,7 @@
 /*
  * qstarindex.h
  *
- *  Created on: 2015Äê2ÔÂ10ÈÕ
+ *  Created on: 2015ï¿½ï¿½2ï¿½ï¿½10ï¿½ï¿½
  *      Author: jkuang
  */
 #ifndef REVERSEBASE_H_
@@ -103,7 +103,7 @@ namespace reverse {
 			vector<int64>& keys = this->index->query(_keys, stat).result();
 			int length = keys.size();
 			writer.writeInt(length);
-			for (size_t i = 0; i < length; i++)
+			for (int i = 0; i < length; i++)
 			{
 				writer.writeInt64(keys.at(i));
 				int datalength = 0;
@@ -115,7 +115,7 @@ namespace reverse {
 				}
 				else
 				{
-					//·¢ÉúÒì³££¬ÒÑ¾­ÕÒ²»µ½Êý¾Ý
+					//ï¿½ï¿½ï¿½ï¿½ï¿½ì³£ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					writer.writeInt(0);
 				}
 			}
@@ -127,7 +127,7 @@ namespace reverse {
 			vector<int64>& keys = this->index->query(syntax, _s_sort_, _e_sort_, desc, stat).result();
 			int length = keys.size();
 			writer.writeInt(length);
-			for (size_t i = 0; i < length; i++)
+			for (int i = 0; i < length; i++)
 			{
 				writer.writeInt64(keys.at(i));
 				int datalength = 0;
@@ -139,7 +139,7 @@ namespace reverse {
 				}
 				else
 				{
-					//·¢ÉúÒì³££¬ÒÑ¾­ÕÒ²»µ½Êý¾Ý
+					//ï¿½ï¿½ï¿½ï¿½ï¿½ì³£ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					writer.writeInt(0);
 				}
 			}

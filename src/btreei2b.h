@@ -1,11 +1,11 @@
-#pragma once
+ï»¿#pragma once
 #ifndef BTREEI2B_H_
 #define BTREEI2B_H_
 #include <string.h>
 namespace btree
 {
 	typedef long long int64;
-	//ÁÙÊ±¹²Ïí¿Õ¼ä£¬ÓÃÓÚÊı¾İÀ¬»øÇåÀíÁÙÊ±´æ´¢Êı¾İ
+	//ä¸´æ—¶å…±äº«ç©ºé—´ï¼Œç”¨äºæ•°æ®åƒåœ¾æ¸…ç†ä¸´æ—¶å­˜å‚¨æ•°æ®
 	static const int  SHARD_SIZE  = 1024 * 1024 * 4;
 	enum type
 	{
@@ -27,24 +27,24 @@ namespace btree
 	class page
 	{
 	private:
-		//ÔªËØ¿Õ¼ä×Ü³¤¶È
+		//å…ƒç´ ç©ºé—´æ€»é•¿åº¦
 		int nodelength{ 1024 };
-		//Êı¾İ¿Õ¼ä×Ü³¤¶È
+		//æ•°æ®ç©ºé—´æ€»é•¿åº¦
 		int datalength{ 1024 * 128 };
-		//Êı¾İ½»»»¿Õ¼ä£¬ÁÙÊ±Êı¾İ¿Õ¼ä
+		//æ•°æ®äº¤æ¢ç©ºé—´ï¼Œä¸´æ—¶æ•°æ®ç©ºé—´
 		char* shardData;
-		//ÁÙÊ±Êı¾İ¿Õ¼ä³¤¶È
+		//ä¸´æ—¶æ•°æ®ç©ºé—´é•¿åº¦
 		int shardLength{ 0 };
 	public:
-		//ÒÑ¾­Ê¹ÓÃµÄÊı¾İ
+		//å·²ç»ä½¿ç”¨çš„æ•°æ®
 		int useddatasize{ 0 };
-		//ÔªËØ¸öÊı
+		//å…ƒç´ ä¸ªæ•°
 		int nodesize{ 0 };
-		//Êı¾İÒÑ¾­±»É¾³ı
+		//æ•°æ®å·²ç»è¢«åˆ é™¤
 		int deldatasize{ 0 };
-		//node½Úµã£¬¼ÇÂ¼Êı¾İµÄÖ÷¼ü£¬value´æ´¢µÄÆ«ÒÆµØÖ·ÒÔ¼°³¤¶È´óĞ¡
+		//nodeèŠ‚ç‚¹ï¼Œè®°å½•æ•°æ®çš„ä¸»é”®ï¼Œvalueå­˜å‚¨çš„åç§»åœ°å€ä»¥åŠé•¿åº¦å¤§å°
 		node* nodes;
-		//Êı¾İ´æ·Å¿Õ¼ä
+		//æ•°æ®å­˜æ”¾ç©ºé—´
 		char* datas;
 		int dataSize()
 		{
@@ -78,12 +78,12 @@ namespace btree
 		{
 			int oldCapacity = this->nodelength;
 			int minCapacity = this->nodesize + nodeCapacity;
-			//Èç¹û½ÚµãÊıÁ¿²»×ã£¬ÔòĞèÒªÀ©Èİ
+			//å¦‚æœèŠ‚ç‚¹æ•°é‡ä¸è¶³ï¼Œåˆ™éœ€è¦æ‰©å®¹
 			if (minCapacity > oldCapacity)
 			{
 				int extcapacity = oldCapacity >> 1;
 				this->nodelength = oldCapacity + (extcapacity > 256 ? 256 : extcapacity) + 32;
-				//À©ÈİÁ¿×î´óÎª256+32ÌõÊı¾İµÄ¿Õ¼ä
+				//æ‰©å®¹é‡æœ€å¤§ä¸º256+32æ¡æ•°æ®çš„ç©ºé—´
 				if (this->nodelength < minCapacity)
 				{
 					this->nodelength = minCapacity;
@@ -96,33 +96,33 @@ namespace btree
 	
 			int oldLength = this->datalength;
 			int minDataCapacity = this->useddatasize + dataCapacity;
-			//Êı¾İ´æ´¢¿Õ¼ä²»×ã£¬ĞèÒª´´ĞÂ·ÖÅäÈİÁ¿
+			//æ•°æ®å­˜å‚¨ç©ºé—´ä¸è¶³ï¼Œéœ€è¦åˆ›æ–°åˆ†é…å®¹é‡
 			if (minDataCapacity > oldLength)
 			{
-				//Èç¹û±»ÒÑÉ¾³ıµÄÕ¼Î»Êı¾İ¿Õ¼ä´óÓÚĞèÒª·ÖÅäµÄ¿Õ¼ä£¬ÔòÇåÀí¿Õ¼ä
+				//å¦‚æœè¢«å·²åˆ é™¤çš„å ä½æ•°æ®ç©ºé—´å¤§äºéœ€è¦åˆ†é…çš„ç©ºé—´ï¼Œåˆ™æ¸…ç†ç©ºé—´
 				if (this->deldatasize >= dataCapacity)
 				{
-					//Ê¹ÓÃ¹²Ïí¿Õ¼ä×öÎªÁÙÊ±´æ´¢
+					//ä½¿ç”¨å…±äº«ç©ºé—´åšä¸ºä¸´æ—¶å­˜å‚¨
 					bool useShardData = this->useddatasize < this->shardLength;
-					//ÁÙÊ±´æ´¢Êı¾İ¿Õ¼äµÄµØÖ·
+					//ä¸´æ—¶å­˜å‚¨æ•°æ®ç©ºé—´çš„åœ°å€
 					char* tempData = useShardData ? shardData : new char[this->useddatasize];
 					memmove(tempData, this->datas, sizeof(char) * this->useddatasize);
 					this->deldatasize = 0;
 					this->useddatasize = 0;
-					//½«Êı¾İ¿½±´»ØÔ­À´µÄµØÖ·
+					//å°†æ•°æ®æ‹·è´å›åŸæ¥çš„åœ°å€
 					for (int i = 0; i < this->nodesize; i++)
 					{
 						memmove(datas + this->useddatasize, tempData + this->nodes[i].offset, sizeof(char) * this->nodes[i].length);
 						this->nodes[i].set(this->nodes[i].key, this->useddatasize, this->nodes[i].length);
 						this->useddatasize += this->nodes[i].length;
 					}
-					//Èç¹û²»ÊÇÊ¹ÓÃµÄ¹²Ïí¿Õ¼ä£¬ÔòÊÍ·ÅÁÙÊ±ÄÚ´æ
+					//å¦‚æœä¸æ˜¯ä½¿ç”¨çš„å…±äº«ç©ºé—´ï¼Œåˆ™é‡Šæ”¾ä¸´æ—¶å†…å­˜
 					if (!useShardData)
 					{
 						delete[] tempData;
 					}
 				}
-				else {//Ö±½ÓÉêÇëĞÂµÄ´æ´¢¿Õ¼ä£¬½øĞĞÊı¾İÀ©Èİ
+				else {//ç›´æ¥ç”³è¯·æ–°çš„å­˜å‚¨ç©ºé—´ï¼Œè¿›è¡Œæ•°æ®æ‰©å®¹
 					int usedCapacity = this->useddatasize - this->deldatasize;
 					int extcapacity = usedCapacity >> 1;
 					this->datalength = usedCapacity + (extcapacity > 64 * 1024 ? 64 * 1024 : extcapacity);
@@ -131,10 +131,10 @@ namespace btree
 						this->datalength = usedCapacity + dataCapacity;
 					}
 					char* tempData = new char[this->datalength];
-					//ÖØĞÂÉêÇëÁËÄÚ´æ¾ÍÖØĞÂÇåÀí
+					//é‡æ–°ç”³è¯·äº†å†…å­˜å°±é‡æ–°æ¸…ç†
 					this->deldatasize = 0;
 					this->useddatasize = 0;
-					//½«Êı¾İ¿½±´»ØÔ­À´µÄµØÖ·
+					//å°†æ•°æ®æ‹·è´å›åŸæ¥çš„åœ°å€
 					for (int i = 0; i < this->nodesize; i++)
 					{
 						memcpy(tempData + this->useddatasize, datas + nodes[i].offset, sizeof(char) * this->nodes[i].length);
@@ -179,7 +179,7 @@ namespace btree
 		{
 			if (this->nodesize == 0 || this->compare(key, nodes[this->nodesize - 1].key) > 0)
 			{
-				//È·ÈÏ¿Õ¼ä×ã¹»
+				//ç¡®è®¤ç©ºé—´è¶³å¤Ÿ
 				ensureCapacity(1, length);
 				this->nodes[this->nodesize].set(key, this->useddatasize, length);
 				memmove(this->datas + this->useddatasize, ch, sizeof(char) * length);
@@ -213,19 +213,19 @@ namespace btree
 					this->nodesize++;
 					return true;
 				}
-				else {//key foud£¬Êı¾İÒÑ¾­´æÔÚ£¬Ôò¸²¸ÇÔ­Êı¾İ
+				else {//key foudï¼Œæ•°æ®å·²ç»å­˜åœ¨ï¼Œåˆ™è¦†ç›–åŸæ•°æ®
 					int index = -pos - 1;
 					if (this->nodes[index].length >= length)
 					{
 						if(this->nodes[index].length > length)
 						this->deldatasize += this->nodes[index].length- length;
-						//Êı¾İ³¤¶È±ä¶ÌÁË
+						//æ•°æ®é•¿åº¦å˜çŸ­äº†
 						this->nodes[index].set(key, this->nodes[index].offset, length);
 						memmove(this->datas + this->nodes[index].offset, ch, sizeof(char) * length);
 					}
 					else
 					{
-						//¿Õ¼äÒÑ¾­²»×ã£¬ÖØĞÂ·ÖÅä
+						//ç©ºé—´å·²ç»ä¸è¶³ï¼Œé‡æ–°åˆ†é…
 						ensureCapacity(0, length);
 						this->deldatasize += this->nodes[index].length;
 						this->nodes[index].set(key, this->useddatasize, length);
@@ -262,11 +262,11 @@ namespace btree
 			}
 			else
 			{
-				//Èç¹ûÕÒµ½Êı¾İ£¬Ôò½øĞĞ²Ù×÷
+				//å¦‚æœæ‰¾åˆ°æ•°æ®ï¼Œåˆ™è¿›è¡Œæ“ä½œ
 				int index = indexof(nodes, key, this->nodesize, type_index);
 				if (index >= 0)
 				{
-					//±ê¼Ç±»É¾³ıµÄÊı¾İ£¬½²Êı¾İ¿Õ¼äÄÉÈë»ØÊÕÈİÁ¿
+					//æ ‡è®°è¢«åˆ é™¤çš„æ•°æ®ï¼Œè®²æ•°æ®ç©ºé—´çº³å…¥å›æ”¶å®¹é‡
 					this->deldatasize += this->nodes[index].length;
 					int moveNum = this->nodesize - index - 1;
 					if (moveNum > 0)
@@ -286,7 +286,7 @@ namespace btree
 		int countDataSize(int from, int to)
 		{
 			int sum = 0;
-			for (size_t i = from; i < to && i < this->nodesize; i++)
+			for (int i = from; i < to && i < this->nodesize; i++)
 			{
 				sum += this->nodes[i].length;
 			}
@@ -294,7 +294,7 @@ namespace btree
 		}
 
 		void copyTo( int from, int to, page* page) {
-			for (size_t i = from, j = 0; i < to && i < this->nodesize; i++)
+			for (int i = from, j = 0; i < to && i < this->nodesize; i++)
 			{
 				page->nodes[j++].set(this->nodes[i].key, page->useddatasize, this->nodes[i].length);
 				memmove(page->datas + page->useddatasize, this->datas + this->nodes[i].offset, sizeof(char) *  this->nodes[i].length);
@@ -318,7 +318,7 @@ namespace btree
 			return pages;
 		}
 
-		/*ÅĞ¶¨Ò³µÄ·¶Î§ÊÇ·ñ°üº¬ key*/
+		/*åˆ¤å®šé¡µçš„èŒƒå›´æ˜¯å¦åŒ…å« key*/
 		int rangecontains(int64 key)
 		{
 			if (this->compare(this->nodes[this->nodesize - 1].key, key) < 0)
@@ -336,9 +336,9 @@ namespace btree
 	class block
 	{
 		int size;
-		//Ã¿¸öÒ³×î´ó¶àÉÙÌõÊı¾İ
+		//æ¯ä¸ªé¡µæœ€å¤§å¤šå°‘æ¡æ•°æ®
 		int max_nodenum_per_page;
-		//Ã¿ÌõÊı¾İµÄÆ½¾ù´óĞ¡
+		//æ¯æ¡æ•°æ®çš„å¹³å‡å¤§å°
 		int avg_node_data_size;
 
 		page** pages;
@@ -447,7 +447,7 @@ namespace btree
 		
 			if (temp0->deldatasize > 0)
 			{
-				for (size_t i = 0; i < temp0->nodesize; i++)
+				for (int i = 0; i < temp0->nodesize; i++)
 				{
 					newpage->nodes[i].set(temp0->nodes[i].key, newpage->useddatasize, temp0->nodes[i].length);
 					memmove(newpage->datas+newpage->useddatasize, temp0->datas+temp0->nodes[i].offset,sizeof(char)*temp0->nodes[i].length);
@@ -459,21 +459,21 @@ namespace btree
 				memmove(newpage->datas + newpage->useddatasize, temp0->datas,sizeof(char)*temp0->useddatasize);
 				newpage->useddatasize += temp0->useddatasize;
 			}
-			for (size_t i = 0; i < temp1->nodesize; i++)
+			for (int i = 0; i < temp1->nodesize; i++)
 			{
 				newpage->nodes[i+ temp0->nodesize].set(temp1->nodes[i].key, newpage->useddatasize, temp1->nodes[i].length);
 				memmove(newpage->datas + newpage->useddatasize, temp1->datas+ temp1->nodes[i].offset, sizeof(char)*temp1->nodes[i].length);
 				newpage->useddatasize += temp1->nodes[i].length;
 			}
-			//ÉèÖÃĞÂÒ²µÄÊı¾İÁ¿
+			//è®¾ç½®æ–°ä¹Ÿçš„æ•°æ®é‡
 			newpage->nodesize = temp0->nodesize + temp1->nodesize;
-			//ÊÍ·ÅÔ­Êı¾İÒ³1
+			//é‡Šæ”¾åŸæ•°æ®é¡µ1
 			delete temp0;
-			//ÊÍ·ÅÔ­Êı¾İÒ³2
+			//é‡Šæ”¾åŸæ•°æ®é¡µ2
 			delete temp1;
-			//½«ĞÂÒ³Êı¾İ·Åµ½ index0µÄÎ»ÖÃ
+			//å°†æ–°é¡µæ•°æ®æ”¾åˆ° index0çš„ä½ç½®
 			this->pages[index0] = newpage;
-			//½«¿Õ°×Ò³É¾³ı
+			//å°†ç©ºç™½é¡µåˆ é™¤
 			int moveNum = this->size - index1-1;
 			if (moveNum > 0)
 			{
@@ -489,18 +489,19 @@ namespace btree
 			{
 				return false;
 			}
-			//Èç¹ûÊı¾İÒ³ÄÚµÄÊı¾İĞ¡ÓÚ¹æ¶¨×î´óÊı¾İÁ¿µÄ32·ÖÖ®Ò»£¬ÔòºÏ²¢Êı¾İÒ³
+			//å¦‚æœæ•°æ®é¡µå†…çš„æ•°æ®å°äºè§„å®šæœ€å¤§æ•°æ®é‡çš„32åˆ†ä¹‹ä¸€ï¼Œåˆ™åˆå¹¶æ•°æ®é¡µ
 			else if (this->pages[index]->size() < (this->max_nodenum_per_page / 64))
 			{
-				//Èç¹ûÊÇµÚÒ»Ò³£¬Ôò½«µÚ¶şÒ³µÄºÏ²¢µ½µÚÒ»Ò³
+				//å¦‚æœæ˜¯ç¬¬ä¸€é¡µï¼Œåˆ™å°†ç¬¬äºŒé¡µçš„åˆå¹¶åˆ°ç¬¬ä¸€é¡µ
 				if (index == 0)
 				{
 					combine(0,1);
 				}
-				else//ÆäËûÇé¿öÔò½«Êı¾İ½«ÓëÇ°Ò»Ò³ºÏ²¢
+				else//å…¶ä»–æƒ…å†µåˆ™å°†æ•°æ®å°†ä¸å‰ä¸€é¡µåˆå¹¶
 				{
 					combine(index-1, index );
 				}
+				return true;
 			}
 			else 
 			{

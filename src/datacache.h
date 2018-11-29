@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #ifndef  DATACACHE_H_
 #define  DATACACHE_H_
 #include "string.h"
@@ -8,7 +8,7 @@ namespace cache {
 	typedef unsigned int uint;
 	typedef long long int64;
 
-	const uint  pagesize = 1024 * 2;
+	const int  pagesize = 1024 * 2;
 	
 	inline uint xpos(uint index)
 	{
@@ -50,7 +50,7 @@ namespace cache {
 
 			//reset datasize
 			this->datasize = 0;
-			//ÓÅ»¯´æ´¢½á¹¹£¬ÖØĞÂµ÷ÕûÊı¾İ½á¹¹
+			//ä¼˜åŒ–å­˜å‚¨ç»“æ„ï¼Œé‡æ–°è°ƒæ•´æ•°æ®ç»“æ„
 			for (int i = 0; i < pagesize; i++)
 			{
 				if (i == pos)
@@ -91,22 +91,22 @@ namespace cache {
 			}
 		}
 
-		//²åÈëÊäÈë£¬Èç¹ûÊÇupdate£¬·µ»Øfalse£¬Èç¹ûÊÇĞÂÔö£¬Ôò·µ»Øtrue
+		//æ’å…¥è¾“å…¥ï¼Œå¦‚æœæ˜¯updateï¼Œè¿”å›falseï¼Œå¦‚æœæ˜¯æ–°å¢ï¼Œåˆ™è¿”å›true
 		inline bool add(uint index,const char* ch, int length)
 		{
 			int pos = xpos(index);
 			bool update = this->nodes[pos].length > 0;
-			//Êı¾İÒÑ¾­´æÔÚ
+			//æ•°æ®å·²ç»å­˜åœ¨
 			if (this->nodes[pos].length > 0)
 			{
-				//Êı¾İ²Ù×÷ÎªupdateÇÒ¸üĞÂµÄÊı¾İĞ¡ÓÚµÈÓÚÔ­Êı¾İ£¬Ôò¿ÉÖ±½Ó¸²¸ÇÔ­Êı¾İ
+				//æ•°æ®æ“ä½œä¸ºupdateä¸”æ›´æ–°çš„æ•°æ®å°äºç­‰äºåŸæ•°æ®ï¼Œåˆ™å¯ç›´æ¥è¦†ç›–åŸæ•°æ®
 				if (this->nodes[pos].length >= length)
 				{
 					this->delsize += this->nodes[pos].length - length;
 					this->nodes[pos].length = length;
 					memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
 				}
-				//Êı¾İ·¢Éúupdate£¬ĞÂÊı¾İÒª±ÈÔ­À´µÄÕ¼ÓÃ¿Õ¼ä´ó£¬µ±Ô¤ÉêÇë¿Õ¼ä×ã¹»Ê±ºòÖ±½Ó·ÖÅä
+				//æ•°æ®å‘ç”Ÿupdateï¼Œæ–°æ•°æ®è¦æ¯”åŸæ¥çš„å ç”¨ç©ºé—´å¤§ï¼Œå½“é¢„ç”³è¯·ç©ºé—´è¶³å¤Ÿæ—¶å€™ç›´æ¥åˆ†é…
 				else if (this->datasize + length < this->datalength)
 				{
 					
@@ -116,13 +116,13 @@ namespace cache {
 					this->datasize += length;
 					memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
 				}
-				// Êı¾İ·¢Éúupdate£¬ĞÂÊı¾İÒª±ÈÔ­À´µÄÕ¼ÓÃ¿Õ¼ä´ó£¬µ±Ô¤ÉêÇë¿Õ¼ä²»×ã£¬ĞèÒªÖØĞÂÉêÇë¡¢ÕûÀíÄÚ´æ
+				// æ•°æ®å‘ç”Ÿupdateï¼Œæ–°æ•°æ®è¦æ¯”åŸæ¥çš„å ç”¨ç©ºé—´å¤§ï¼Œå½“é¢„ç”³è¯·ç©ºé—´ä¸è¶³ï¼Œéœ€è¦é‡æ–°ç”³è¯·ã€æ•´ç†å†…å­˜
 				else
 				{
 					this->allocate(ch, pos, length);
 				}
 			}
-			//Èç¹û¸ÃÌõÊı¾İÖ®Ç°±»É¾³ı¹ı£¬»¹Ã»ÓĞ¸´ÓÃ£¬ÇÒ¿Õ¼ä×ã¹»
+			//å¦‚æœè¯¥æ¡æ•°æ®ä¹‹å‰è¢«åˆ é™¤è¿‡ï¼Œè¿˜æ²¡æœ‰å¤ç”¨ï¼Œä¸”ç©ºé—´è¶³å¤Ÿ
 			else if (-this->nodes[pos].length >= length)
 			{
 
@@ -131,7 +131,7 @@ namespace cache {
 				this->nodes[pos].length = length;
 				memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
 			}
-			//ÄÚ´æ³ä×ã£¬ÔòÖ±½Ó·ÖÅä
+			//å†…å­˜å……è¶³ï¼Œåˆ™ç›´æ¥åˆ†é…
 			else if (this->datasize + length < this->datalength)
 			{
 				this->nodenum++;
@@ -140,7 +140,7 @@ namespace cache {
 				this->datasize += length;
 				memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
 			}
-			// ¿Õ¼ä²»×ã£¬ĞèÒªÖØĞÂ·ÖÅä»òÕßÖØĞÂÉêÇë
+			// ç©ºé—´ä¸è¶³ï¼Œéœ€è¦é‡æ–°åˆ†é…æˆ–è€…é‡æ–°ç”³è¯·
 			else
 			{
 				this->nodenum++;
@@ -161,7 +161,7 @@ namespace cache {
 			}
 		}
 
-		//É¾³ıÊı¾İ£¬Èç¹ûÊı¾İ´æÔÚ£¬Ôò·µ»Øtrue£¬Èç¹ûÊı¾İ²»´æÔÚ»îÒÑ¾­±»É¾³ı£¬ÔòÖ±½Ó·µ»Øfalse
+		//åˆ é™¤æ•°æ®ï¼Œå¦‚æœæ•°æ®å­˜åœ¨ï¼Œåˆ™è¿”å›trueï¼Œå¦‚æœæ•°æ®ä¸å­˜åœ¨æ´»å·²ç»è¢«åˆ é™¤ï¼Œåˆ™ç›´æ¥è¿”å›false
 		inline bool remove(uint index)
 		{
 			int _xpos = xpos(index);
@@ -193,7 +193,7 @@ namespace cache {
 		}
 		~seqcache()
 		{
-			for (size_t i = 0; i < pagenum; i++)
+			for (int i = 0; i < pagenum; i++)
 			{
 				delete this->pages[i];
 			}
@@ -224,7 +224,7 @@ namespace cache {
 				}
 				else
 				{
-					//À©Èİ
+					//æ‰©å®¹
 					page**	temp = new page*[pagenum+1];
 					memmove(temp , pages, sizeof(page*)*pagenum);
 					delete[] this->pages;
