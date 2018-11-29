@@ -4,8 +4,7 @@
  *  Created on: 2017年5月11日
  *      Author: jkuang
  */
-#include <jni.h>
-#include "jni.h"
+#include "nativejni.h"
 #include "reversebase.h"
 #ifndef _Included_org_jkuang_qstardb_Native_RIndex
 #define _Included_org_jkuang_qstardb_Native_RIndex
@@ -121,17 +120,7 @@ extern "C"
 			return 0;
 		}
 
-		jlongArray createlongArray(JNIEnv * env, vector<int64>& result, int64 offset)
-		{
-			jlongArray ids = env->NewLongArray(result.size() + 1);
-			env->SetLongArrayRegion(ids, 0, 1, (const jlong*) &offset);
-			for (size_t i = 0; i < result.size(); i++)
-			{
-				int64 value = result.at(i);
-				env->SetLongArrayRegion(ids, i + 1, 1, (const jlong*) &value);
-			}
-			return ids;
-		}
+
 
 		JNIEXPORT jlongArray JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RIndex_queryByKeys(JNIEnv * env, jclass, jint index, jlongArray array)
 		{
@@ -153,12 +142,12 @@ extern "C"
 				}
 				(*indexs)[index]->query(keys, stat);
 				reverseRWlock.unrdlock();
-				return createlongArray(env, stat.result(), stat.getoffset());
+				return createJLongArray(env, stat.result(), stat.getoffset());
 
 			}
 			reverseRWlock.unrdlock();
 			vector<int64> result;
-			return createlongArray(env, result, 0);
+			return createJLongArray(env, result, 0);
 
 		}
 
@@ -183,11 +172,11 @@ extern "C"
 					(*indexs)[index]->query(syntax, _s_sort_, _e_sort_, desc, stat);
 				}
 				reverseRWlock.unrdlock();
-				return createlongArray(env, stat.result(), stat.getoffset());
+				return createJLongArray(env, stat.result(), stat.getoffset());
 			}
 			reverseRWlock.unrdlock();
 			vector<int64> result;
-			return createlongArray(env, result, 0);
+			return createJLongArray(env, result, 0);
 
 		}
 	}

@@ -59,7 +59,6 @@ namespace btree
 			this->shardLength = shardLength;
 			this->nodes = new node[this->nodelength];
 			this->datas = new char[this->datalength];
-			
 		}
 		~page()
 		{

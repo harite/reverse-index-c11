@@ -111,6 +111,12 @@
     <ClInclude Include="btreei2b.h">
       <Filter>util</Filter>
     </ClInclude>
+    <ClInclude Include="nativebtree.h">
+      <Filter>jni</Filter>
+    </ClInclude>
+    <ClInclude Include="nativejni.h">
+      <Filter>jni</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="reversedb.cpp">

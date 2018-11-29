@@ -5,6 +5,7 @@
 #include "nativeintset.h"
 #include "nativeindex.h"
 #include "nativebase.h"
+#include "nativebtree.h"
 #include<sstream>
 #include <string.h>
 #include <atomic>
@@ -123,7 +124,7 @@ int test3(string testfile, reverse::rmindex* index101, string outfile)
 int main()
 {
 	cout << "endl------------------;" << endl;
-	btree::block _block(1024,60);
+	btree::block _block(200,60);
 	cout << "endl------------------;" << endl;
 	
 	

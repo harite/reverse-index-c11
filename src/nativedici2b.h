@@ -4,7 +4,7 @@
  *  Created on: 2015年3月11日
  *      Author: jkuang
  */
-#include <jni.h>
+#include "nativejni.h"
 #include "dicmapi2b.h"
 #ifndef _Included_org_jkuang_qstardb_I2BMap
 #define _Included_org_jkuang_qstardb_I2BMap
@@ -18,21 +18,6 @@ extern "C"
 		static qstardb::rwsyslock maplock;
 
 		static map<int, mapi2b::dici2b*>* i2bmap = new map<int, mapi2b::dici2b*>();
-
-		jbyteArray createbyteArray(JNIEnv * env, const char* value, int length)
-		{
-			if (value != null)
-			{
-				jbyteArray data = env->NewByteArray(length);
-				env->SetByteArrayRegion(data, 0, length, (const jbyte*) value);
-				return data;
-			}
-			else
-			{
-				jbyteArray data = env->NewByteArray(0);
-				return data;
-			}
-		}
 
 		/*
 		 * Class:     org_jkuang_qstardb_Native_I2BMap
@@ -112,7 +97,7 @@ extern "C"
 				int vlength = 0;
 				char* result = (*i2bmap)[index]->get(key, vlength);
 				maplock.unrdlock();
-				jbyteArray data = createbyteArray(env, result, vlength);
+				jbyteArray data = createJByteArray(env, result, vlength);
 				if (result != null)
 				{
 					delete[] result;
@@ -120,7 +105,7 @@ extern "C"
 				return data;
 			}
 			maplock.unrdlock();
-			return createbyteArray(env, null, 0);
+			return createJByteArray(env, null, 0);
 		}
 
 		JNIEXPORT jbyteArray JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024I2BMap_gets(JNIEnv * env, jclass, jint index, jlongArray array)

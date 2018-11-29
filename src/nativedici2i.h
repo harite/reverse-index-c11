@@ -4,7 +4,6 @@
  *  Created on: 2015年3月11日
  *      Author: jkuang
  */
-#include <jni.h>
 #include "dicmapi2i.h"
 #ifndef _Included_org_jkuang_qstardb_I2IMap
 #define _Included_org_jkuang_qstardb_I2IMap

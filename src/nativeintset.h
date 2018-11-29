@@ -6,7 +6,6 @@
  */
 #ifndef NATIVESET_H_
 #define NATIVESET_H_
-#include <jni.h>
 #include "dichashset.h"
 #ifdef __cplusplus
 extern "C"

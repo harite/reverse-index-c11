@@ -4,8 +4,7 @@
  *  Created on: 2017Äê5ÔÂ11ÈÕ
  *      Author: jkuang
  */
-#include <jni.h>
-#include "jni.h"
+#include "nativejni.h"
 #include "reversebase.h"
 #ifndef _Included_org_jkuang_qstardb_Native_RMDB
 #define _Included_org_jkuang_qstardb_Native_RMDB
@@ -97,12 +96,7 @@ extern "C"
 		}
 
 
-		jbyteArray createbytes(JNIEnv * env, charwriter& writer)
-		{
-			jbyteArray data = env->NewByteArray(writer.size());
-			env->SetByteArrayRegion(data, 0, writer.size(), (const jbyte*)writer.buffer);
-			return data;
-		}
+
 
 		JNIEXPORT jbyteArray JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RMDB_queryByKeys(JNIEnv * env, jclass, jint index, jlongArray array)
 		{
@@ -125,7 +119,7 @@ extern "C"
 				charwriter writer(1024*16);
 				(*rmdbs)[index]->query(keys, writer);
 				rmdblock.unrdlock();
-				return createbytes(env, writer);
+				return createJBytes(env, writer);
 
 			}
 			rmdblock.unrdlock();
@@ -154,7 +148,7 @@ extern "C"
 					(*rmdbs)[index]->query(syntax, _s_sort_, _e_sort_, desc, stat, writer);
 				}
 				rmdblock.unrdlock();
-				return createbytes(env, writer);
+				return createJBytes(env, writer);
 			}
 			rmdblock.unrdlock();
 			return env->NewByteArray(0);
