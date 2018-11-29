@@ -218,7 +218,6 @@ namespace btree
 					if (this->nodes[index].length >= length)
 					{
 						if(this->nodes[index].length > length)
-						cout << "长度变短了？" << endl;
 						this->deldatasize += this->nodes[index].length- length;
 						//数据长度变短了
 						this->nodes[index].set(key, this->nodes[index].offset, length);
