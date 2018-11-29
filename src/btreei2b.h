@@ -398,7 +398,6 @@ namespace btree
 			this->pages[index]->insert(key,data,length);
 			if (this->pages[index]->size()>this->max_nodenum_per_page)
 			{
-				cout << "insertAndSplit.splitToTwo" << endl;
 				page** temp = this->pages[index]->splitToTwo(index==this->size-1);
 				page** newpages = new page*[this->size + 1];
 				if (index > 0)
