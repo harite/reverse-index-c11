@@ -117,6 +117,9 @@
     <ClInclude Include="nativejni.h">
       <Filter>jni</Filter>
     </ClInclude>
+    <ClInclude Include="nativeembtree.h">
+      <Filter>jni</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="reversedb.cpp">

@@ -6,6 +6,7 @@
 #include "nativeindex.h"
 #include "nativebase.h"
 #include "nativebtree.h"
+#include "nativeembtree.h"
 #include<sstream>
 #include <string.h>
 #include <atomic>
