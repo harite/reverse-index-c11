@@ -12,7 +12,7 @@
 extern "C"
 {
 #endif
-	namespace qstardb
+	namespace reverse
 	{
 		static rwsyslock rmdblock;
 		static map<int, reverse::rmdb*>* rmdbs = new map<int, reverse::rmdb*>();

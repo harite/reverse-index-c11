@@ -12,17 +12,17 @@
 extern "C"
 {
 #endif
-	namespace qstardb
+	namespace index
 	{
-		static rwsyslock reverseRWlock;
+		static rwsyslock rwlock;
 		static map<int, reverse::rmindex*>* indexs = new map<int, reverse::rmindex*>();
 		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RIndex_create(JNIEnv *, jclass, jint index, jboolean ignoreCase, jboolean compress,
 				jbyteArray bytes)
 		{
-			reverseRWlock.wrlock();
+			rwlock.wrlock();
 			if (indexs->find(index) != indexs->end())
 			{
-				reverseRWlock.unwrlock();
+				rwlock.unwrlock();
 
 				cout << "index exists,index:" << index << endl;
 				return 0;
@@ -30,7 +30,7 @@ extern "C"
 			else
 			{
 				(*indexs)[index] = new reverse::rmindex(ignoreCase, compress);
-				reverseRWlock.unwrlock();
+				rwlock.unwrlock();
 				cout << "create index:" << index << endl;
 				return 1;
 			}
@@ -38,22 +38,22 @@ extern "C"
 
 		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RIndex_destroy(JNIEnv *, jclass, jint index)
 		{
-			reverseRWlock.wrlock();
+			rwlock.wrlock();
 			if (indexs->find(index) != indexs->end())
 			{
 				delete (*indexs)[index];
 				indexs->erase(index);
-				reverseRWlock.unwrlock();
+				rwlock.unwrlock();
 				cout << "destroy index:" << index << endl;
 				return 1;
 			}
-			reverseRWlock.unwrlock();
+			rwlock.unwrlock();
 			return 0;
 		}
 
 		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RIndex_load(JNIEnv *env, jclass, jint index, jstring file)
 		{
-			reverseRWlock.rdlock();
+			rwlock.rdlock();
 			if (indexs->find(index) != indexs->end())
 			{
 				cout << "load file:" << index << endl;
@@ -63,13 +63,13 @@ extern "C"
 				(*indexs)[index]->load(filename);
 				env->ReleaseStringUTFChars(file, ch);
 			}
-			reverseRWlock.unrdlock();
+			rwlock.unrdlock();
 			return 0;
 		}
 
 		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RIndex_dump(JNIEnv *env, jclass, jint index, jstring file)
 		{
-			reverseRWlock.rdlock();
+			rwlock.rdlock();
 			if (indexs->find(index) != indexs->end())
 			{
 				cout << "dump index:" << index << endl;
@@ -79,13 +79,13 @@ extern "C"
 				(*indexs)[index]->dump(filename);
 				env->ReleaseStringUTFChars(file, ch);
 			}
-			reverseRWlock.unrdlock();
+			rwlock.unrdlock();
 			return 0;
 		}
 
 		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RIndex_addDoc(JNIEnv * env, jclass, jint index, jlong key, jlong sort, jobjectArray terms)
 		{
-			reverseRWlock.rdlock();
+			rwlock.rdlock();
 			if (indexs->find(index) != indexs->end())
 			{
 				vector<string> vl;
@@ -100,23 +100,23 @@ extern "C"
 					env->ReleaseStringUTFChars(obj, ch);
 				}
 				(*indexs)[index]->add(key, sort, vl);
-				reverseRWlock.unrdlock();
+				rwlock.unrdlock();
 				return 1;
 			}
-			reverseRWlock.unrdlock();
+			rwlock.unrdlock();
 			return 0;
 		}
 
 		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RIndex_delDoc(JNIEnv * env, jclass, jint index, jlong key)
 		{
-			reverseRWlock.rdlock();
+			rwlock.rdlock();
 			if (indexs->find(index) != indexs->end())
 			{
 				(*indexs)[index]->remove(key);
-				reverseRWlock.unrdlock();
+				rwlock.unrdlock();
 				return 1;
 			}
-			reverseRWlock.unrdlock();
+			rwlock.unrdlock();
 			return 0;
 		}
 
@@ -124,7 +124,7 @@ extern "C"
 
 		JNIEXPORT jlongArray JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RIndex_queryByKeys(JNIEnv * env, jclass, jint index, jlongArray array)
 		{
-			reverseRWlock.rdlock();
+			rwlock.rdlock();
 			if (indexs->find(index) != indexs->end())
 			{
 				searchstats stat(0, 0, 0);
@@ -141,11 +141,11 @@ extern "C"
 					env->ReleaseLongArrayElements(array, elms, 0);
 				}
 				(*indexs)[index]->query(keys, stat);
-				reverseRWlock.unrdlock();
+				rwlock.unrdlock();
 				return createJLongArray(env, stat.result(), stat.getoffset());
 
 			}
-			reverseRWlock.unrdlock();
+			rwlock.unrdlock();
 			vector<int64> result;
 			return createJLongArray(env, result, 0);
 
@@ -154,7 +154,7 @@ extern "C"
 		JNIEXPORT jlongArray JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RIndex_query(JNIEnv * env, jclass, jint index, jstring jsyntax, jlong _s_sort_,
 				jlong _e_sort_, jint start, jint rows, jint _count, jboolean desc)
 		{
-			reverseRWlock.rdlock();
+			rwlock.rdlock();
 			if (indexs->find(index) != indexs->end())
 			{
 				searchstats stat(start, rows, _count);
@@ -171,10 +171,10 @@ extern "C"
 					env->ReleaseStringUTFChars(jsyntax, ch);
 					(*indexs)[index]->query(syntax, _s_sort_, _e_sort_, desc, stat);
 				}
-				reverseRWlock.unrdlock();
+				rwlock.unrdlock();
 				return createJLongArray(env, stat.result(), stat.getoffset());
 			}
-			reverseRWlock.unrdlock();
+			rwlock.unrdlock();
 			vector<int64> result;
 			return createJLongArray(env, result, 0);
 
