@@ -30,21 +30,9 @@ namespace mapi2s
 			this->offset = offset;
 			this->vlen = vlen;
 		}
-
-		int compare(int64 key)
+		inline int compare(int64 key)
 		{
-			if (this->key < key)
-			{
-				return -1;
-			}
-			else if (this->key > key)
-			{
-				return 1;
-			}
-			else
-			{
-				return 0;
-			}
+			return this->key > key ? 1 : (this->key < key ? -1 : 0);
 		}
 	};
 
@@ -52,47 +40,47 @@ namespace mapi2s
 	{
 	private:
 		char* mems;
-		int delsize;
-		int mensize;
-		int menlength;
+		int delSize;
+		int menSize;
+		int menLength;
 
 		entry* nodes;
-		int nodesize;
-		int nodelength;
+		int nodeSize;
+		int nodeLength;
 
 		void ensureNodeCapacity(int length)
 		{
-			if (length > this->nodelength)
+			if (length > this->nodeLength)
 			{
-				this->nodelength = length + 64;
-				entry* temp = new entry[this->nodelength];
-				memmove(temp, nodes, sizeof(entry) * this->nodesize);
+				this->nodeLength = length + 64;
+				entry* temp = new entry[this->nodeLength];
+				memmove(temp, nodes, sizeof(entry) * this->nodeSize);
 				delete[] this->nodes;
 				this->nodes = temp;
 			}
 		}
 		void ensureDataCapacity(int length)
 		{
-			if (length > this->menlength)
+			if (length > this->menLength)
 			{
-				this->menlength += length + (this->menlength >> 1) + 64;
-				char* temp = new char[this->menlength];
-				if (this->delsize > (length - this->menlength) && this->delsize * 3 > this->mensize)
+				this->menLength += length + (this->menLength >> 1) + 64;
+				char* temp = new char[this->menLength];
+				if (this->delSize > (length - this->menLength) && this->delSize * 3 > this->menSize)
 				{
 					int offset = 0;
-					for (int i = 0; i < nodesize; i++)
+					for (int i = 0; i < nodeSize; i++)
 					{
 
 						memmove(temp + offset, mems + nodes[i].offset, sizeof(char) * nodes[i].vlen);
 						nodes[i].set(nodes[i].key, offset, nodes[i].vlen);
 						offset += nodes[i].vlen;
 					}
-					this->delsize = 0;
-					this->mensize = offset;
+					this->delSize = 0;
+					this->menSize = offset;
 				}
 				else
 				{
-					memmove(temp, mems, sizeof(char) * this->mensize);
+					memmove(temp, mems, sizeof(char) * this->menSize);
 				}
 				delete[] this->mems;
 				this->mems = temp;
@@ -101,13 +89,13 @@ namespace mapi2s
 	public:
 		page()
 		{
-			this->delsize = 0;
-			this->mensize = 0;
-			this->menlength = 128;
-			this->nodesize = 0;
-			this->nodelength = 4;
-			this->mems = new char[this->menlength];
-			this->nodes = new entry[this->nodelength];
+			this->delSize = 0;
+			this->menSize = 0;
+			this->menLength = 128;
+			this->nodeSize = 0;
+			this->nodeLength = 4;
+			this->mems = new char[this->menLength];
+			this->nodes = new entry[this->nodeLength];
 		}
 		~page()
 		{
@@ -118,7 +106,7 @@ namespace mapi2s
 		int indexof(int64 key, qstardb::type _type)
 		{
 			int fromIndex = 0;
-			int toIndex = this->nodesize - 1;
+			int toIndex = this->nodeSize - 1;
 			while (fromIndex <= toIndex)
 			{
 				int mid = (fromIndex + toIndex) >> 1;
@@ -133,7 +121,7 @@ namespace mapi2s
 			switch (_type)
 			{
 				case qstardb::type_insert:
-					return fromIndex > this->nodesize ? this->nodesize : fromIndex;
+					return fromIndex > this->nodeSize ? this->nodeSize : fromIndex;
 				case qstardb::type_ceil:
 					return fromIndex;
 				case qstardb::type_index:
@@ -145,19 +133,19 @@ namespace mapi2s
 
 		void set(entry& node, int64 key, signed char* value, short vlen)
 		{
-			node.set(key, this->mensize, vlen);
-			memmove(mems + this->mensize, value, vlen);
-			this->mensize += vlen;
+			node.set(key, this->menSize, vlen);
+			memmove(mems + this->menSize, value, vlen);
+			this->menSize += vlen;
 		}
 
 		bool insert(int64 key, signed char* value, short vlen)
 		{
-			ensureNodeCapacity(this->nodesize + 1);
-			ensureDataCapacity(this->mensize + vlen);
-			if (this->nodesize == 0 || nodes[this->nodesize - 1].compare(key) < 0)
+			ensureNodeCapacity(this->nodeSize + 1);
+			ensureDataCapacity(this->menSize + vlen);
+			if (this->nodeSize == 0 || nodes[this->nodeSize - 1].compare(key) < 0)
 			{
-				this->set(nodes[this->nodesize], key, value, vlen);
-				this->nodesize++;
+				this->set(nodes[this->nodeSize], key, value, vlen);
+				this->nodeSize++;
 				return true;
 			}
 			else
@@ -168,26 +156,26 @@ namespace mapi2s
 					index = -index - 1;
 					if (nodes[index].vlen >= vlen)
 					{
-						this->delsize += nodes[index].vlen - vlen;
+						this->delSize += nodes[index].vlen - vlen;
 						memmove(mems + nodes[index].offset, value, vlen);
 						nodes[index].set(key, nodes[index].offset, vlen);
 					}
 					else
 					{
-						this->delsize += nodes[index].vlen;
+						this->delSize += nodes[index].vlen;
 						this->set(nodes[index], key, value, vlen);
 					}
 					return false;
 				}
 				else
 				{
-					int moveNum = this->nodesize - index;
+					int moveNum = this->nodeSize - index;
 					if (moveNum > 0)
 					{
 						memmove(nodes + index + 1, nodes + index, sizeof(entry) * moveNum);
 					}
 					this->set(nodes[index], key, value, vlen);
-					this->nodesize++;
+					this->nodeSize++;
 					return true;
 				}
 			}
@@ -195,7 +183,7 @@ namespace mapi2s
 
 		bool remove(int64 key)
 		{
-			if (this->nodesize == 0)
+			if (this->nodeSize == 0)
 			{
 				return false;
 			}
@@ -208,36 +196,36 @@ namespace mapi2s
 				}
 				else
 				{
-					int moveNum = this->nodesize - index - 1;
-					this->delsize -= this->nodes[index].vlen;
+					int moveNum = this->nodeSize - index - 1;
+					this->delSize -= this->nodes[index].vlen;
 					if (moveNum > 0)
 					{
 						memmove(this->nodes + index, this->nodes + index + 1, sizeof(entry) * moveNum);
 					}
-					this->nodesize--;
-					if (this->nodelength > (this->nodesize + 3) * 3)
+					this->nodeSize--;
+					if (this->nodeLength > (this->nodeSize + 3) * 3)
 					{
-						this->nodelength = (this->nodesize + 3) * 2;
-						entry* temp = new entry[this->nodelength];
-						memmove(temp, nodes, sizeof(entry) * this->nodesize);
+						this->nodeLength = (this->nodeSize + 3) * 2;
+						entry* temp = new entry[this->nodeLength];
+						memmove(temp, nodes, sizeof(entry) * this->nodeSize);
 						delete[] nodes;
 						this->nodes = temp;
 					}
 
-					if (this->delsize > this->mensize * 3)
+					if (this->delSize > this->menSize * 3)
 					{
 						int offset = 0;
-						this->menlength = this->mensize * 2;
-						char* temp = new char[this->menlength];
-						for (int i = 0; i < nodesize; i++)
+						this->menLength = this->menSize * 2;
+						char* temp = new char[this->menLength];
+						for (int i = 0; i < nodeSize; i++)
 						{
 							int kvlength = nodes[i].vlen;
 							memmove(temp + offset, mems + nodes[i].offset, sizeof(char) * kvlength);
 							nodes[i].set(key, offset, nodes[i].vlen);
 							offset += kvlength;
 						}
-						this->delsize = 0;
-						this->mensize = offset;
+						this->delSize = 0;
+						this->menSize = offset;
 					}
 					return true;
 				}
@@ -246,7 +234,7 @@ namespace mapi2s
 
 		bool get(int64 key, string& word)
 		{
-			if (this->nodesize == 0)
+			if (this->nodeSize == 0)
 			{
 				return false;
 			}
@@ -265,8 +253,8 @@ namespace mapi2s
 
 		void readall(qstardb::filewriter& writer)
 		{
-			writer.writeInt32(this->nodesize);
-			for (int i = 0; i < this->nodesize; i++)
+			writer.writeInt32(this->nodeSize);
+			for (int i = 0; i < this->nodeSize; i++)
 			{
 				writer.writeInt64(nodes[i].key);
 				writer.writeInt32(nodes[i].vlen);

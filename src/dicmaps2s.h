@@ -35,7 +35,7 @@ namespace maps2s
 			this->vlen = vlen;
 		}
 
-		int compare(char* chs, const char* key, short klen)
+		inline int compare(char* chs, const char* key, short klen)
 		{
 			if (this->klen == klen)
 			{
@@ -68,45 +68,45 @@ namespace maps2s
 	{
 	private:
 		char* mems;
-		int delsize;
-		int mensize;
-		int menlength;
+		int delSize;
+		int menSize;
+		int menLength;
 		entry* nodes;
-		int nodesize;
-		int nodelength;
+		int nodeSize;
+		int nodeLength;
 		void ensurenodecapacity(int length)
 		{
-			if (length > this->nodelength)
+			if (length > this->nodeLength)
 			{
-				this->nodelength = length + 64;
-				entry* temp = new entry[this->nodelength];
-				memmove(temp, nodes, sizeof(entry) * this->nodesize);
+				this->nodeLength = length + 64;
+				entry* temp = new entry[this->nodeLength];
+				memmove(temp, nodes, sizeof(entry) * this->nodeSize);
 				delete[] this->nodes;
 				this->nodes = temp;
 			}
 		}
 		void ensuredatacapacity(int length)
 		{
-			if (length > this->menlength)
+			if (length > this->menLength)
 			{
-				this->menlength = length + (this->menlength / (nodesize + 1)) * 32 + 64;
-				char* temp = new char[this->menlength];
-				if (this->delsize > (length - this->menlength) && this->delsize * 3 > this->mensize)
+				this->menLength = length + (this->menLength / (nodeSize + 1)) * 32 + 64;
+				char* temp = new char[this->menLength];
+				if (this->delSize > (length - this->menLength) && this->delSize * 3 > this->menSize)
 				{
 					int offset = 0;
-					for (int i = 0; i < nodesize; i++)
+					for (int i = 0; i < nodeSize; i++)
 					{
 						int kvlength = nodes[i].klen + nodes[i].vlen;
 						memmove(temp + offset, mems + nodes[i].offset, sizeof(char) * kvlength);
 						nodes[i].set(offset, nodes[i].klen, nodes[i].vlen);
 						offset += kvlength;
 					}
-					this->delsize = 0;
-					this->mensize = offset;
+					this->delSize = 0;
+					this->menSize = offset;
 				}
 				else
 				{
-					memmove(temp, mems, sizeof(char) * this->mensize);
+					memmove(temp, mems, sizeof(char) * this->menSize);
 				}
 				delete[] this->mems;
 				this->mems = temp;
@@ -115,14 +115,14 @@ namespace maps2s
 	public:
 		page()
 		{
-			this->delsize = 0;
-			this->mensize = 0;
-			this->menlength = 128;
+			this->delSize = 0;
+			this->menSize = 0;
+			this->menLength = 128;
 
-			this->nodesize = 0;
-			this->nodelength = 4;
-			this->mems = new char[this->menlength];
-			this->nodes = new entry[this->nodelength];
+			this->nodeSize = 0;
+			this->nodeLength = 4;
+			this->mems = new char[this->menLength];
+			this->nodes = new entry[this->nodeLength];
 		}
 		~page()
 		{
@@ -133,7 +133,7 @@ namespace maps2s
 		int indexof(const char* key, short klen, type _type)
 		{
 			int fromIndex = 0;
-			int toIndex = this->nodesize - 1;
+			int toIndex = this->nodeSize - 1;
 			while (fromIndex <= toIndex)
 			{
 				int mid = (fromIndex + toIndex) >> 1;
@@ -148,7 +148,7 @@ namespace maps2s
 			switch (_type)
 			{
 				case type_insert:
-					return fromIndex > this->nodesize ? this->nodesize : fromIndex;
+					return fromIndex > this->nodeSize ? this->nodeSize : fromIndex;
 				case type_ceil:
 					return fromIndex;
 				case type_index:
@@ -160,21 +160,21 @@ namespace maps2s
 
 		void set(entry& node, const char* key, short klen, const char* value, int vlen)
 		{
-			node.set(this->mensize, klen, vlen);
-			memmove(mems + this->mensize, key, klen);
-			this->mensize += klen;
-			memmove(mems + this->mensize, value, vlen);
-			this->mensize += vlen;
+			node.set(this->menSize, klen, vlen);
+			memmove(mems + this->menSize, key, klen);
+			this->menSize += klen;
+			memmove(mems + this->menSize, value, vlen);
+			this->menSize += vlen;
 		}
 
 		bool insert(const char* key, short klen, const char* value, int vlen)
 		{
-			ensurenodecapacity(this->nodesize + 1);
-			ensuredatacapacity(this->mensize + klen + vlen);
-			if (this->nodesize == 0 || nodes[this->nodesize - 1].compare(mems, key, klen) < 0)
+			ensurenodecapacity(this->nodeSize + 1);
+			ensuredatacapacity(this->menSize + klen + vlen);
+			if (this->nodeSize == 0 || nodes[this->nodeSize - 1].compare(mems, key, klen) < 0)
 			{
-				this->set(nodes[this->nodesize], key, klen, value, vlen);
-				this->nodesize++;
+				this->set(nodes[this->nodeSize], key, klen, value, vlen);
+				this->nodeSize++;
 				return true;
 			}
 			else
@@ -185,26 +185,26 @@ namespace maps2s
 					index = -index - 1;
 					if (nodes[index].vlen >= vlen)
 					{
-						this->delsize += nodes[index].vlen - vlen;
+						this->delSize += nodes[index].vlen - vlen;
 						memmove(mems + nodes[index].offset + nodes[index].klen, value, vlen);
 						nodes[index].vlen = vlen;
 					}
 					else
 					{
-						this->delsize += klen + nodes[index].vlen;
+						this->delSize += klen + nodes[index].vlen;
 						this->set(nodes[index], key, klen, value, vlen);
 					}
 					return false;
 				}
 				else
 				{
-					int moveNum = this->nodesize - index;
+					int moveNum = this->nodeSize - index;
 					if (moveNum > 0)
 					{
 						memmove(nodes + index + 1, nodes + index, sizeof(entry) * moveNum);
 					}
 					this->set(nodes[index], key, klen, value, vlen);
-					this->nodesize++;
+					this->nodeSize++;
 					return true;
 				}
 			}
@@ -212,7 +212,7 @@ namespace maps2s
 
 		bool remove(const char* key, short klen)
 		{
-			if (this->nodesize == 0)
+			if (this->nodeSize == 0)
 			{
 				return false;
 			}
@@ -225,36 +225,36 @@ namespace maps2s
 				}
 				else
 				{
-					int moveNum = this->nodesize - index - 1;
-					this->delsize -= this->nodes[index].klen + this->nodes[index].vlen;
+					int moveNum = this->nodeSize - index - 1;
+					this->delSize -= this->nodes[index].klen + this->nodes[index].vlen;
 					if (moveNum > 0)
 					{
 						memmove(this->nodes + index, this->nodes + index + 1, sizeof(entry) * moveNum);
 					}
-					this->nodesize--;
-					if (this->nodelength > (this->nodesize + 3) * 3)
+					this->nodeSize--;
+					if (this->nodeLength > (this->nodeSize + 3) * 3)
 					{
-						this->nodelength = (this->nodesize + 3) * 2;
-						entry* temp = new entry[this->nodelength];
-						memmove(temp, nodes, sizeof(entry) * this->nodesize);
+						this->nodeLength = (this->nodeSize + 3) * 2;
+						entry* temp = new entry[this->nodeLength];
+						memmove(temp, nodes, sizeof(entry) * this->nodeSize);
 						delete[] nodes;
 						this->nodes = temp;
 					}
 
-					if (this->delsize > this->mensize * 3)
+					if (this->delSize > this->menSize * 3)
 					{
 						int offset = 0;
-						this->menlength = this->mensize * 2;
-						char* temp = new char[this->menlength];
-						for (int i = 0; i < nodesize; i++)
+						this->menLength = this->menSize * 2;
+						char* temp = new char[this->menLength];
+						for (int i = 0; i < nodeSize; i++)
 						{
 							int kvlength = nodes[i].klen + nodes[i].vlen;
 							memmove(temp + offset, mems + nodes[i].offset, sizeof(char) * kvlength);
 							nodes[i].set(offset, nodes[i].klen, nodes[i].vlen);
 							offset += kvlength;
 						}
-						this->delsize = 0;
-						this->mensize = offset;
+						this->delSize = 0;
+						this->menSize = offset;
 					}
 					return true;
 				}
@@ -263,7 +263,7 @@ namespace maps2s
 
 		char* get(const char* key, short klen, int& vlen)
 		{
-			if (this->nodesize == 0)
+			if (this->nodeSize == 0)
 			{
 				vlen = 0;
 				return null;
@@ -286,7 +286,7 @@ namespace maps2s
 
 		bool get(const char* key, short klen, string& word)
 		{
-			if (this->nodesize == 0)
+			if (this->nodeSize == 0)
 			{
 				return false;
 			}
@@ -307,7 +307,7 @@ namespace maps2s
 		int get(const char* key, short klen, qstardb::charwriter& writer)
 		{
 			int hits = 0;
-			if (this->nodesize == 0)
+			if (this->nodeSize == 0)
 			{
 				return hits;
 			}
@@ -324,8 +324,8 @@ namespace maps2s
 		}
 		void readall(qstardb::filewriter& writer)
 		{
-			writer.writeInt32(this->nodesize);
-			for (int i = 0; i < this->nodesize; i++)
+			writer.writeInt32(this->nodeSize);
+			for (int i = 0; i < this->nodeSize; i++)
 			{
 				writer.writeShort(nodes[i].klen);
 				writer.write(mems, nodes[i].offset, nodes[i].klen);
