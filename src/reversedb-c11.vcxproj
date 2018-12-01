@@ -176,6 +176,7 @@
     <ClInclude Include="rwsyslock.h" />
     <ClInclude Include="dicmaps2b.h" />
     <ClInclude Include="searchstats.h" />
+    <ClInclude Include="seqmapi2b.h" />
     <ClInclude Include="sequence.h" />
     <ClInclude Include="stopdecoder.h" />
     <ClInclude Include="stopencoder.h" />
