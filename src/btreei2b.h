@@ -6,7 +6,7 @@ namespace btree
 {
 	typedef long long int64;
 	//临时共享空间，用于数据垃圾清理临时存储数据
-	static const int  SHARD_SIZE  = 1024 * 1024 * 4;
+	static const int  SHARD_SIZE = 1024 * 1024 * 4;
 	enum type
 	{
 		type_insert, type_index, type_ceil, type_floor
@@ -51,7 +51,7 @@ namespace btree
 			return this->usedDataSize - this->delDataSize;
 		}
 	public:
-		page(int nodelength, int datalength,char* shardData,int shardLength)
+		page(int nodelength, int datalength, char* shardData, int shardLength)
 		{
 			this->nodeLength = nodelength;
 			this->dataLength = datalength;
@@ -93,7 +93,7 @@ namespace btree
 				delete[] this->nodes;
 				this->nodes = temp;
 			}
-	
+
 			int oldLength = this->dataLength;
 			int minDataCapacity = this->usedDataSize + dataCapacity;
 			//数据存储空间不足，需要创新分配容量
@@ -217,8 +217,8 @@ namespace btree
 					int index = -pos - 1;
 					if (this->nodes[index].length >= length)
 					{
-						if(this->nodes[index].length > length)
-						this->delDataSize += this->nodes[index].length- length;
+						if (this->nodes[index].length > length)
+							this->delDataSize += this->nodes[index].length - length;
 						//数据长度变短了
 						this->nodes[index].set(key, this->nodes[index].offset, length);
 						memmove(this->datas + this->nodes[index].offset, ch, sizeof(char) * length);
@@ -234,13 +234,13 @@ namespace btree
 					}
 					return false;
 				}
-				
+
 			}
 
 		}
-		const char* find(int64 key,int& length)
+		const char* find(int64 key, int& length)
 		{
-			int index = indexof(nodes,key,this->nodeSize,type_index);
+			int index = indexof(nodes, key, this->nodeSize, type_index);
 			if (index >= 0) {
 				length = this->nodes[index].length;
 				return this->datas + this->nodes[index].offset;
@@ -293,7 +293,7 @@ namespace btree
 			return sum;
 		}
 
-		void copyTo( int from, int to, page* page) {
+		void copyTo(int from, int to, page* page) {
 			for (int i = from, j = 0; i < to && i < this->nodeSize; i++)
 			{
 				page->nodes[j++].set(this->nodes[i].key, page->usedDataSize, this->nodes[i].length);
@@ -307,12 +307,12 @@ namespace btree
 			page** pages = new page*[2];
 			int mid = (this->nodeSize * (tail ? 7 : 5)) / 10;
 			int datasize1 = countDataSize(0, mid) * 11 / 10;
-			pages[0] = new page(mid*11/10, datasize1, this->shardData, this->shardLength);
+			pages[0] = new page(mid * 11 / 10, datasize1, this->shardData, this->shardLength);
 			pages[0]->nodeSize = mid;
-			this->copyTo(0,mid,pages[0]);
+			this->copyTo(0, mid, pages[0]);
 
 			int datasize2 = countDataSize(mid, this->nodeSize) * 12 / 10;
-			pages[1] = new page((this->nodeSize- mid)*12 /10, datasize2,this->shardData,this->shardLength);
+			pages[1] = new page((this->nodeSize - mid) * 12 / 10, datasize2, this->shardData, this->shardLength);
 			pages[1]->nodeSize = this->nodeSize - mid;
 			this->copyTo(mid, this->nodeSize, pages[1]);
 			return pages;
@@ -344,7 +344,7 @@ namespace btree
 		page** pages;
 		char* shardData;
 	private:
-		inline int indexof(page** pages, int64 key, int size, type _type)
+		inline int indexOf(page** pages, int64 key, int size, type _type)
 		{
 			int fromIndex = 0;
 			int toIndex = size - 1;
@@ -372,14 +372,14 @@ namespace btree
 			}
 		}
 	public:
-		block(int max_nodenum_per_page,int avg_node_data_size)
+		block(int max_nodenum_per_page, int avg_node_data_size)
 		{
 			this->size = 1;
 			this->pages = new page*[1];
 			this->shardData = new char[SHARD_SIZE];
 			this->max_nodenum_per_page = max_nodenum_per_page;
 			this->avg_node_data_size = avg_node_data_size;
-			this->pages[0] = new page(max_nodenum_per_page/4, max_nodenum_per_page / 4 * avg_node_data_size, shardData, SHARD_SIZE);
+			this->pages[0] = new page(max_nodenum_per_page / 4, max_nodenum_per_page / 4 * avg_node_data_size, shardData, SHARD_SIZE);
 		}
 		~block()
 		{
@@ -391,17 +391,17 @@ namespace btree
 			delete[] shardData;
 		}
 
-		void insertAndSplit(int index, int64 key,const char* data, int length)
+		bool insertAndSplit(int index, int64 key, const char* data, int length)
 		{
-		
-			this->pages[index]->insert(key,data,length);
-			if (this->pages[index]->size()>this->max_nodenum_per_page)
+
+			bool insertNew = this->pages[index]->insert(key, data, length);
+			if (this->pages[index]->size() > this->max_nodenum_per_page)
 			{
-				page** temp = this->pages[index]->splitToTwo(index==this->size-1);
+				page** temp = this->pages[index]->splitToTwo(index == this->size - 1);
 				page** newpages = new page*[this->size + 1];
 				if (index > 0)
 				{
-					memmove(newpages,this->pages,sizeof(page*)*index);
+					memmove(newpages, this->pages, sizeof(page*)*index);
 				}
 				int moveNum = this->size - index - 1;
 				if (moveNum > 0)
@@ -409,29 +409,30 @@ namespace btree
 					memmove(newpages + index + 2, this->pages + index + 1, sizeof(page*) * moveNum);
 				}
 				newpages[index] = temp[0];
-				newpages[index+1] = temp[1];
+				newpages[index + 1] = temp[1];
 				delete pages[index];
 				delete[] temp;
 				delete[] this->pages;
 				this->pages = newpages;
 				this->size++;
 			}
+			return insertNew;
 		}
 
-		void insert(int64 key,const char* data,int length)
+		bool insert(int64 key, const char* data, int length)
 		{
 			if (this->size == 1 || this->pages[0]->rangecontains(key) >= 0)
 			{
-				this->insertAndSplit(0, key, data, length);
+				return this->insertAndSplit(0, key, data, length);
 			}
 			else if (this->pages[this->size - 1]->rangecontains(key) <= 0)
 			{
-				this->insertAndSplit(this->size - 1, key, data, length);
+				return this->insertAndSplit(this->size - 1, key, data, length);
 			}
 			else
 			{
-				int pageno = indexof( this->pages, key,  this->size, type_ceil);
-				this->insertAndSplit(pageno, key, data, length);
+				int pageno = indexOf(this->pages, key, this->size, type_ceil);
+				return this->insertAndSplit(pageno, key, data, length);
 			}
 		}
 
@@ -444,25 +445,25 @@ namespace btree
 			int datasize0 = temp0->dataSize();
 			int datasize1 = temp1->dataSize();
 			page* newpage = new page(size0 + size1, datasize0 + datasize1, shardData, SHARD_SIZE);
-		
+
 			if (temp0->delDataSize > 0)
 			{
 				for (int i = 0; i < temp0->nodeSize; i++)
 				{
 					newpage->nodes[i].set(temp0->nodes[i].key, newpage->usedDataSize, temp0->nodes[i].length);
-					memmove(newpage->datas+newpage->usedDataSize, temp0->datas+temp0->nodes[i].offset,sizeof(char)*temp0->nodes[i].length);
+					memmove(newpage->datas + newpage->usedDataSize, temp0->datas + temp0->nodes[i].offset, sizeof(char)*temp0->nodes[i].length);
 					newpage->usedDataSize += temp0->nodes[i].length;
 				}
 			}
 			else
 			{
-				memmove(newpage->datas + newpage->usedDataSize, temp0->datas,sizeof(char)*temp0->usedDataSize);
+				memmove(newpage->datas + newpage->usedDataSize, temp0->datas, sizeof(char)*temp0->usedDataSize);
 				newpage->usedDataSize += temp0->usedDataSize;
 			}
 			for (int i = 0; i < temp1->nodeSize; i++)
 			{
-				newpage->nodes[i+ temp0->nodeSize].set(temp1->nodes[i].key, newpage->usedDataSize, temp1->nodes[i].length);
-				memmove(newpage->datas + newpage->usedDataSize, temp1->datas+ temp1->nodes[i].offset, sizeof(char)*temp1->nodes[i].length);
+				newpage->nodes[i + temp0->nodeSize].set(temp1->nodes[i].key, newpage->usedDataSize, temp1->nodes[i].length);
+				memmove(newpage->datas + newpage->usedDataSize, temp1->datas + temp1->nodes[i].offset, sizeof(char)*temp1->nodes[i].length);
 				newpage->usedDataSize += temp1->nodes[i].length;
 			}
 			//设置新也的数据量
@@ -474,10 +475,10 @@ namespace btree
 			//将新页数据放到 index0的位置
 			this->pages[index0] = newpage;
 			//将空白页删除
-			int moveNum = this->size - index1-1;
+			int moveNum = this->size - index1 - 1;
 			if (moveNum > 0)
 			{
-				memmove(this->pages + index1 , this->pages+index1+1 , sizeof(page*)*moveNum);
+				memmove(this->pages + index1, this->pages + index1 + 1, sizeof(page*)*moveNum);
 			}
 			this->size--;
 			return true;
@@ -495,15 +496,15 @@ namespace btree
 				//如果是第一页，则将第二页的合并到第一页
 				if (index == 0)
 				{
-					combine(0,1);
+					combine(0, 1);
 				}
 				else//其他情况则将数据将与前一页合并
 				{
-					combine(index-1, index );
+					combine(index - 1, index);
 				}
 				return true;
 			}
-			else 
+			else
 			{
 				return false;
 			}
@@ -511,34 +512,106 @@ namespace btree
 
 
 
-		void remove(int64 key)
+		bool remove(int64 key)
 		{
 			if (this->pages[this->size - 1]->rangecontains(key) == 0)
 			{
-				this->pages[this->size - 1]->remove(key);
-				this->combine(this->size - 1);	
+				bool deled = this->pages[this->size - 1]->remove(key);
+				this->combine(this->size - 1);
+				return deled;
 			}
 			else
 			{
-				int pageno = indexof( this->pages, key,  this->size, type_index);
+				int pageno = indexOf(this->pages, key, this->size, type_index);
 				if (pageno >= 0)
 				{
-					this->pages[pageno]->remove(key);
+					bool deled = this->pages[pageno]->remove(key);
 					this->combine(pageno);
+					return deled;
 				}
 			}
 		}
 
-		const char* find(int64 key,int& length)
+		const char* find(int64 key, int& length)
 		{
-			int pageno = indexof(this->pages, key, this->size, type_index);
+			int pageno = indexOf(this->pages, key, this->size, type_index);
 			if (pageno >= 0)
 			{
-				return this->pages[pageno]->find(key,length);
+				return this->pages[pageno]->find(key, length);
+			}
+			else
+			{
+				return nullptr;
+			}
+		}
+	};
+
+	class concurrentmap
+	{
+	private:
+		int partition;
+		block** blocks;
+		qstardb::rwsyslock* rwlock;
+		inline int _hash(int64 key)
+		{
+			int _h = key % this->partition;
+			return _h > 0 ? _h : -_h;
+		}
+	public:
+		concurrentmap(int partition, int max_nodenum_per_page, int avg_node_data_size)
+		{
+			this->partition = partition;
+			this->blocks = new block*[this->partition];
+			this->rwlock = new qstardb::rwsyslock[this->partition];
+			for (int i = 0; i < this->partition; i++)
+			{
+				this->blocks[i] = new block(max_nodenum_per_page, avg_node_data_size);
+			}
+		}
+		~concurrentmap()
+		{
+			for (int i = 0; i < this->partition; i++)
+			{
+				delete this->blocks[i];
+			}
+			delete[] this->rwlock;
+			delete[] this->blocks;
+		}
+
+		void insert(int64 key, const char* ch, int length)
+		{
+			int pos = _hash(key);
+			rwlock[pos].wrlock();
+			this->blocks[pos]->insert(key, ch, length);
+			rwlock[pos].unwrlock();
+
+		}
+
+		void remove(int64 key)
+		{
+			int pos = _hash(key);
+			rwlock[pos].wrlock();
+			this->blocks[pos]->remove(key);
+			rwlock[pos].unwrlock();
+		}
+
+		bool find(int64 key, charwriter& writer)
+		{
+			int length;
+			int pos = _hash(key);
+			rwlock[pos].rdlock();
+			const char* temp = this->blocks[pos]->find(key, length);
+			if (temp != nullptr)
+			{
+				writer.writeInt(length);
+				writer.write(temp, length);
+				rwlock[pos].unrdlock();
+				return true;
 			}
 			else 
 			{
-				return nullptr;
+				rwlock[pos].unrdlock();
+				return false;
 			}
 		}
 	};
