@@ -1,8 +1,8 @@
 /*
  * dicmapi2b.h
- *  ÓÃÓÚ´æ´¢Êý¾Ýmap£¬°´ÕÕÖ÷¼üµÄË³Ðò·ÖÅäseqºÅ£¬Í¨¹ýseqºÅÀ´´æ´¢Êý¾Ý
-    ÊÊÓÃÓÚÊý¾ÝÖ÷¼üË³ÐòÔö³¤µÄ»·¾³¡¢½ÏÉÙÐÞ¸ÄÀúÊ·Êý¾Ý³¡¾°
- *  Created on: 2015Äê2ÔÂ11ÈÕ
+ *  ï¿½ï¿½ï¿½Ú´æ´¢ï¿½ï¿½ï¿½ï¿½mapï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½seqï¿½Å£ï¿½Í¨ï¿½ï¿½seqï¿½ï¿½ï¿½ï¿½ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½
+    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸ï¿½ï¿½ï¿½Ê·ï¿½ï¿½ï¿½Ý³ï¿½ï¿½ï¿½
+ *  Created on: 2015ï¿½ï¿½2ï¿½ï¿½11ï¿½ï¿½
  *      Author: jkuang
  */
 #pragma once
@@ -67,7 +67,7 @@ namespace seqmap {
 				return datas + this->nodes[xpos(index)].offset;
 			}
 		}
-		//ÊÍ·ÅÁË¶àÉÙÄÚ´æ¾Í·µ»Ø¶àÉÙ´óÐ¡
+		//ï¿½Í·ï¿½ï¿½Ë¶ï¿½ï¿½ï¿½ï¿½Ú´ï¿½Í·ï¿½ï¿½Ø¶ï¿½ï¿½Ù´ï¿½Ð¡
 		bool remove(int index)
 		{
 			int oldsize = this->nodes[xpos(index)].length;
@@ -133,11 +133,11 @@ namespace seqmap {
 		void insert(int index, const char* ch, int length, bool optimize)
 		{
 			int pos = xpos(index);
-			//Êý¾ÝÒÑ¾­´æÔÚ
+			//ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ï¿½
 			if (this->nodes[pos].length > 0)
 			{
 
-				//Êý¾Ý²Ù×÷Îªupdate
+				//ï¿½ï¿½ï¿½Ý²ï¿½ï¿½ï¿½Îªupdate
 				if (this->nodes[pos].length >= length)
 				{
 					this->delSize += this->nodes[pos].length - length;
@@ -152,12 +152,12 @@ namespace seqmap {
 					this->usedSize += length;
 					memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
 				}
-				// ¸ÃÌõÊý¾ÝÎª¸ÃÒ³µÄ×îºóÒ»ÌõÊý¾Ý
-				else if (this->delSize >= length && this->nodeSize == NODE_MAX_SIZE)//ÄÚ´æ²»×ã
+				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Ò³ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+				else if (this->delSize >= length && this->nodeSize == NODE_MAX_SIZE)//ï¿½Ú´æ²»ï¿½ï¿½
 				{
 					this->allocate(ch, pos, length);
 				}
-				//±ê¼ÇÉ¾³ýµÄ¿Õ¼ä´ïµ½Ò»°ë
+				//ï¿½ï¿½ï¿½É¾ï¿½ï¿½ï¿½Ä¿Õ¼ï¿½ïµ½Ò»ï¿½ï¿½
 				else if (this->delSize > length && this->delSize * 2 > this->usedSize) {
 					this->allocate(ch, pos, length);
 				}
@@ -173,7 +173,7 @@ namespace seqmap {
 				this->delSize -= length;
 				this->nodes[pos].length = length;
 				memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
-			}      //ÄÚ´æ³ä×ã£¬ÔòÖ±½Ó·ÖÅä
+			}      //ï¿½Ú´ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½Ö±ï¿½Ó·ï¿½ï¿½ï¿½
 			else if (this->usedSize + length < this->dataLength)
 			{
 				this->nodeSize++;
@@ -182,7 +182,7 @@ namespace seqmap {
 				this->usedSize += length;
 				memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
 			}
-			// ¿Õ¼ä²»×ã£¬ÐèÒªÖØÐÂ·ÖÅä»òÕßÖØÐÂÉêÇë
+			// ï¿½Õ¼ä²»ï¿½ã£¬ï¿½ï¿½Òªï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			else
 			{
 				this->nodeSize++;
@@ -202,7 +202,7 @@ namespace seqmap {
 		int pageLength{ 1 };
 		page** pages{ nullptr };
 		qstardb::seq64to32 seq;
-		//¸´ÖÆÁÙÊ±¿Õ¼ä
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½Õ¼ï¿½
 		char* shardData;
 		inline int ypos(int index)
 		{
@@ -270,7 +270,7 @@ namespace seqmap {
 			}
 			else
 			{
-				length;
+				length = 0;
 				return nullptr;
 			}
 		}
@@ -287,7 +287,7 @@ namespace seqmap {
 			return _h > 0 ? _h : -_h;
 		}
 	public:
-		//²ÉÓÃ·Ö¶Î·½Ê½
+		//ï¿½ï¿½ï¿½Ã·Ö¶Î·ï¿½Ê½
 		seqcache(int partition)
 		{
 			this->partition = partition;

@@ -12,7 +12,7 @@
 extern "C"
 {
 #endif
-	namespace index
+	namespace indexdb
 	{
 		static rwsyslock rwlock;
 		static map<int, reverse::rmindex*>* indexs = new map<int, reverse::rmindex*>();

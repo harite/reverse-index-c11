@@ -529,6 +529,7 @@ namespace btree
 					this->combine(pageno);
 					return deled;
 				}
+				return false;
 			}
 		}
 
