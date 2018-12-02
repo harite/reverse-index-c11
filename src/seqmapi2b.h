@@ -9,9 +9,11 @@
 using namespace std;
 
 namespace seqmap {
+
 	typedef long long int64;
 	typedef unsigned int uint;
-	const static int maxsize = 1024;
+	const static int NODE_MAX_SIZE = 1024;
+	const static int SHARD_COPY_SIZE = 1024 * 1024;
 	class node
 	{
 	public:
@@ -19,21 +21,25 @@ namespace seqmap {
 		int length{ 0 };
 	};
 	class page {
-		int size{ 0 };
-		int datalength;
-		int delsize{ 0 };
+		int usedSize{ 0 };
+		int delSize{ 0 };
+		int dataLength;
+
 		char* datas{ nullptr };
-		node nodes[maxsize];
-		int nodesize{ 0 };
+		char* shardData;
+		int nodeSize{ 0 };
+		node nodes[NODE_MAX_SIZE];
+
 		inline int xpos(int index)
 		{
-			return index % maxsize;
+			return index % NODE_MAX_SIZE;
 		}
 	public:
-		page()
+		page(char* shardData)
 		{
-			this->datalength = maxsize * 64;
-			this->datas = new char[this->datalength];
+			this->shardData = shardData;
+			this->dataLength = NODE_MAX_SIZE * 64;
+			this->datas = new char[this->dataLength];
 		}
 		~page()
 		{
@@ -58,8 +64,8 @@ namespace seqmap {
 			if (oldsize > 0)
 			{
 				this->nodes[xpos(index)].length = -oldsize;
-				this->delsize += oldsize;
-				this->nodesize--;
+				this->delSize += oldsize;
+				this->nodeSize--;
 				return true;
 			}
 			else
@@ -67,38 +73,54 @@ namespace seqmap {
 				return false;
 			}
 		}
+
 		void allocate(const char* ch, int pos, int length)
 		{
-			int newlength = this->size - this->delsize + length * (maxsize - this->nodesize + 1);
-			char* temp = new char[newlength];
-			this->size = 0;
-			for (int i = 0; i < maxsize; i++)
+			char* tempCopyData;
+			bool useShardData = (this->delSize > length * 10) && (this->usedSize <= SHARD_COPY_SIZE);
+			if (useShardData)
+			{
+				tempCopyData = shardData;
+			}
+			else
+			{
+				this->dataLength = this->usedSize - this->delSize + length * (NODE_MAX_SIZE - this->nodeSize + 1);
+				tempCopyData = new char[this->dataLength];
+			}
+			this->usedSize = 0;
+			this->delSize = 0;
+			for (int i = 0; i < NODE_MAX_SIZE; i++)
 			{
 				if (i == pos)
 				{
-					this->nodes[i].offset = this->size;
+					this->nodes[i].offset = this->usedSize;
 					this->nodes[i].length = length;
-					memmove(temp + this->size, ch, sizeof(char) * this->nodes[i].length);
-					this->size += length;
+					memmove(tempCopyData + this->usedSize, ch, sizeof(char) * this->nodes[i].length);
+					this->usedSize += length;
 				}
 				else if (this->nodes[i].length > 0)
 				{
-					memmove(temp + this->size, datas + this->nodes[i].offset, sizeof(char) * this->nodes[i].length);
-					this->nodes[i].offset = this->size;
-					this->size += this->nodes[i].length;
+					memmove(tempCopyData + this->usedSize, datas + this->nodes[i].offset, sizeof(char) * this->nodes[i].length);
+					this->nodes[i].offset = this->usedSize;
+					this->usedSize += this->nodes[i].length;
 				}
 				else
 				{
 					this->nodes[i].length = 0;
 				}
 			}
-			delete[] datas;
-			this->datas = temp;
-			this->delsize = 0;
-			this->datalength = newlength;
+			if (useShardData)
+			{
+				memmove(datas, tempCopyData, sizeof(char) * this->usedSize);
+			}
+			else
+			{
+				delete[] datas;
+				this->datas = tempCopyData;
+			}
 		}
 
-		void insert(int index,const char* ch, int length, bool optimize)
+		void insert(int index, const char* ch, int length, bool optimize)
 		{
 			int pos = xpos(index);
 			//数据已经存在
@@ -108,25 +130,25 @@ namespace seqmap {
 				//数据操作为update
 				if (this->nodes[pos].length >= length)
 				{
-					this->delsize += this->nodes[pos].length - length;
+					this->delSize += this->nodes[pos].length - length;
 					this->nodes[pos].length = length;
 					memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
 				}
-				else if (this->size + length < this->datalength)
+				else if (this->usedSize + length < this->dataLength)
 				{
-					this->delsize += this->nodes[pos].length;
-					this->nodes[pos].offset = this->size;
+					this->delSize += this->nodes[pos].length;
+					this->nodes[pos].offset = this->usedSize;
 					this->nodes[pos].length = length;
-					this->size += length;
+					this->usedSize += length;
 					memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
 				}
 				// 该条数据为该页的最后一条数据
-				else if (this->delsize >= length && this->nodesize == maxsize)//内存不足
+				else if (this->delSize >= length && this->nodeSize == NODE_MAX_SIZE)//内存不足
 				{
 					this->allocate(ch, pos, length);
 				}
 				//标记删除的空间达到一半
-				else if (this->delsize > length && this->delsize * 2 > this->size) {
+				else if (this->delSize > length && this->delSize * 2 > this->usedSize) {
 					this->allocate(ch, pos, length);
 				}
 				else
@@ -137,26 +159,26 @@ namespace seqmap {
 			else if (-this->nodes[pos].length >= length)
 			{
 
-				this->nodesize++;
-				this->delsize -= length;
+				this->nodeSize++;
+				this->delSize -= length;
 				this->nodes[pos].length = length;
 				memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
 			}      //内存充足，则直接分配
-			else if (this->size + length < this->datalength)
+			else if (this->usedSize + length < this->dataLength)
 			{
-				this->nodesize++;
-				this->nodes[pos].offset = this->size;
+				this->nodeSize++;
+				this->nodes[pos].offset = this->usedSize;
 				this->nodes[pos].length = length;
-				this->size += length;
+				this->usedSize += length;
 				memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
 			}
 			// 空间不足，需要重新分配或者重新申请
 			else
 			{
-				this->nodesize++;
+				this->nodeSize++;
 				this->allocate(ch, pos, length);
 			}
-			if (this->nodesize == maxsize && this->delsize > 1024)
+			if (this->nodeSize == NODE_MAX_SIZE && this->delSize > 1024)
 			{
 				this->allocate(ch, -1, length);
 			}
@@ -166,45 +188,51 @@ namespace seqmap {
 	class block
 	{
 	private:
-		page** pages{ nullptr };
 		int nodeSize{ 0 };
 		int pageLength{ 1 };
+		page** pages{ nullptr };
 		qstardb::seq64to32 seq;
+		//复制临时空间
+		char* shardData;
 		inline int ypos(int index)
 		{
-			return index / maxsize;
+			return index / NODE_MAX_SIZE;
 		}
 	public:
 		block()
 		{
+
 			this->pages = new page*[pageLength];
-			this->pages[0] = new page();
+			this->shardData = new char[SHARD_COPY_SIZE];
+			this->pages[0] = new page(shardData);
+
 		}
 
 		~block()
 		{
 			for (int i = 0; i < pageLength; i++)
 			{
-				delete pages[i];
+				delete this->pages[i];
 			}
-			delete[] pages;
+			delete[] this->pages;
+			delete[] this->shardData;
 		}
 
-		int insert(int64 key,const char* ch, int length)
+		int insert(int64 key, const char* ch, int length)
 		{
 			uint index;
 			seq.create(key, index);
 			int _ypos = this->ypos(index);
 			if (_ypos >= this->pageLength)
 			{
-				page** temp = new page*[this->pageLength+1];
-				memmove(temp,this->pages,sizeof(page*)*this->pageLength);
+				page** temp = new page*[this->pageLength + 1];
+				memmove(temp, this->pages, sizeof(page*)*this->pageLength);
 				this->pageLength++;
-				delete[] pages;
+				delete[] this->pages;
 				this->pages = temp;
-				this->pages[_ypos] = new page();
+				this->pages[_ypos] = new page(shardData);
 			}
-			bool optimize = (index  % maxsize) == maxsize - 1;
+			bool optimize = (index  % NODE_MAX_SIZE) == NODE_MAX_SIZE - 1;
 			this->pages[ypos(index)]->insert(index, ch, length, optimize);
 			return index;
 		}
@@ -221,7 +249,7 @@ namespace seqmap {
 		const char* find(int64 key, int& length)
 		{
 			uint index;
-			if (this->seq.exists(key, index)) 
+			if (this->seq.exists(key, index))
 			{
 				return this->pages[ypos(index)]->find(index, length);
 			}
