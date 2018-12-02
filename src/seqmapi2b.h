@@ -1,3 +1,10 @@
+/*
+ * dicmapi2b.h
+ *  用于存储数据map，按照主键的顺序分配seq号，通过seq号来存储数据
+    适用于数据主键顺序增长的环境、较少修改历史数据场景
+ *  Created on: 2015年2月11日
+ *      Author: jkuang
+ */
 #pragma once
 #ifndef _SEQMAP_H
 #define _SEQMAP_H
@@ -7,7 +14,8 @@
 #include "sequence.h"
 #include "filestream.h"
 using namespace std;
-
+/*
+*/
 namespace seqmap {
 
 	typedef long long int64;
@@ -20,7 +28,8 @@ namespace seqmap {
 		int offset{ 0 };
 		int length{ 0 };
 	};
-	class page {
+	class page 
+	{
 		int usedSize{ 0 };
 		int delSize{ 0 };
 		int dataLength;
@@ -47,7 +56,8 @@ namespace seqmap {
 		}
 		const char* find(int index, int& length)
 		{
-			if (this->nodes[xpos(index)].length <= 0) {
+			if (this->nodes[xpos(index)].length <= 0)
+			{
 				length = 0;
 				return nullptr;
 			}
@@ -290,7 +300,6 @@ namespace seqmap {
 			}
 			delete[] this->rwlock;
 			delete[] this->blocks;
-
 		}
 
 		void insert(int64 key, const char* ch, int length)
