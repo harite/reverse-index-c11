@@ -150,7 +150,6 @@
   <ItemGroup>
     <ClInclude Include="btreei2b.h" />
     <ClInclude Include="classdef.h" />
-    <ClInclude Include="datacache.h" />
     <ClInclude Include="dataindex.h" />
     <ClInclude Include="dataqueue.h" />
     <ClInclude Include="datastore.h" />

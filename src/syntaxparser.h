@@ -17,6 +17,7 @@ namespace qstardb
 	static const char SYNTAX_OK = 1;
 	static const char SYNTAX_NOT = 0;
 	static const char SYNTAX_ERROR = -1;
+
 	static const char left_bracket = '(';
 	static const char right_bracket = ')';
 	static const string _all = "_all:*";

@@ -13,7 +13,6 @@
 #include "stopencoder.h"
 #include "exeplan.h"
 #include  "dicmapi2s.h"
-#include  "datacache.h"
 #include <mutex>    
 
 using namespace std;

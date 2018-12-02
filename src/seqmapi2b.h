@@ -253,7 +253,12 @@ namespace seqmap {
 			if (this->seq.exists(key, index)) {
 				this->pages[ypos(index)]->remove(index);
 				this->seq.remove(key, index);
+				return 1;
 			}
+			else {
+				return 0;
+			}
+
 		}
 
 		const char* find(int64 key, int& length)
@@ -270,7 +275,7 @@ namespace seqmap {
 			}
 		}
 	};
-	class cache
+	class seqcache
 	{
 	private:
 		int partition;
@@ -282,7 +287,8 @@ namespace seqmap {
 			return _h > 0 ? _h : -_h;
 		}
 	public:
-		cache(int partition)
+		//采用分段方式
+		seqcache(int partition)
 		{
 			this->partition = partition;
 			this->blocks = new block*[this->partition];
@@ -292,7 +298,7 @@ namespace seqmap {
 				this->blocks[i] = new block();
 			}
 		}
-		~cache()
+		~seqcache()
 		{
 			for (int i = 0; i < this->partition; i++)
 			{
@@ -302,7 +308,7 @@ namespace seqmap {
 			delete[] this->blocks;
 		}
 
-		void insert(int64 key, const char* ch, int length)
+		void add(int64 key, const char* ch, int length)
 		{
 			int pos = _hash(key);
 			rwlock[pos].wrlock();
@@ -333,6 +339,7 @@ namespace seqmap {
 			}
 			else
 			{
+				writer.writeInt(0);
 				rwlock[pos].unrdlock();
 				return false;
 			}

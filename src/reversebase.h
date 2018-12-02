@@ -9,6 +9,7 @@
 #define REVERSEBASE_H_
 #include "reverseindex.h"
 #include "btreei2b.h"
+#include "seqmapi2b.h"
 using namespace std;
 using namespace qstardb;
 namespace reverse {
@@ -72,12 +73,13 @@ namespace reverse {
 	class rmdb
 	{
 	private:
+		rwsyslock lock;
 		rmindex* index;
-		cache::kvcache* cache;;
+		seqmap::seqcache* cache;;
 	public:
 		rmdb(bool ignoreCase, bool compress)
 		{
-			this->cache = new cache::kvcache();
+			this->cache = new seqmap::seqcache(4);
 			this->index = new rmindex(ignoreCase, compress);
 		}
 		~rmdb()
@@ -88,60 +90,48 @@ namespace reverse {
 
 		void add(int64 key, int64 sort, vector<string> &terms,const char* data, int length)
 		{
+			lock.wrlock();
 			this->index->add(key, sort, terms);
 			this->cache->add(key, data, length);
+			lock.unwrlock();
 		}
 
 		void remove(int64 key)
 		{
+			lock.wrlock();
 			this->index->remove(key);
 			this->cache->remove(key);
+			lock.unwrlock();
 		}
 
 		charwriter& query(vector<int64>& _keys,  charwriter& writer)
 		{
 			searchstats stat(0, 0, 0);
+			lock.rdlock();
 			vector<int64>& keys = this->index->query(_keys, stat).result();
 			int length = keys.size();
 			writer.writeInt(length);
 			for (int i = 0; i < length; i++)
 			{
 				writer.writeInt64(keys.at(i));
-				int datalength = 0;
-				const char* data = cache->get(keys.at(i), datalength);
-				if (data != nullptr && datalength > 0)
-				{
-					writer.writeInt(datalength);
-					writer.write(data, datalength);
-				}
-				else
-				{
-					writer.writeInt(0);
-				}
+				cache->find(keys.at(i), writer);
 			}
+			lock.unrdlock();
 			return writer;
 		}
 
 		charwriter& query(const string& syntax, int64 _s_sort_, int64 _e_sort_, bool desc, searchstats& stat, charwriter& writer)
 		{
+			lock.rdlock();
 			vector<int64>& keys = this->index->query(syntax, _s_sort_, _e_sort_, desc, stat).result();
 			int length = keys.size();
 			writer.writeInt(length);
 			for (int i = 0; i < length; i++)
 			{
 				writer.writeInt64(keys.at(i));
-				int datalength = 0;
-				const char* data = cache->get(keys.at(i), datalength);
-				if (data != nullptr && datalength > 0)
-				{
-					writer.writeInt(datalength);
-					writer.write(data, datalength);
-				}
-				else
-				{
-					writer.writeInt(0);
-				}
+				cache->find(keys.at(i), writer);
 			}
+			lock.unrdlock();
 			return writer;
 		}
 	};
