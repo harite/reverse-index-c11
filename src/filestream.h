@@ -119,20 +119,33 @@ namespace qstardb
 	{
 	private:
 		ifstream in;
-		int offset;
-		int size;
+		int offset{0};
+		int bufferSize{0};
+		int64 usedSize{0};
+		int64 fileLength;
 		char* buffer;
 	public:
 		filereader(string& filename)
 		{
-			this->offset = 0;
-			this->size = 0;
 			this->buffer = new char[RW_BUF_SIZE];
 			this->in.open(filename.c_str(), ios::in | ios::binary);
+			this->in.seekg(0, ios_base::end);
+			if (this->in.is_open()) 
+			{
+				this->fileLength = this->in.tellg();
+			}
+			else
+			{
+				this->fileLength = 0;
+			}
 		}
 		~filereader()
 		{
 			delete[] this->buffer;
+		}
+		int64 size()
+		{
+			return this->fileLength;
 		}
 		bool isOpen()
 		{
@@ -143,6 +156,7 @@ namespace qstardb
 		{
 			if (ensureCapacity(1))
 			{
+				this->usedSize += 1;
 				return buffer[offset++];
 			}
 			else
@@ -197,22 +211,22 @@ namespace qstardb
 				cout << "size > RW_BUF_SIZE" << endl;
 				return false;
 			}
-			else if (this->size - this->offset >= size)
+			else if (this->bufferSize - this->offset >= size)
 			{
 				return true;
 			}
 			else
 			{
-				int moveNun = this->size - this->offset;
+				int moveNun = this->bufferSize - this->offset;
 				if (moveNun > 0)
 				{
 					memmove(buffer, buffer + this->offset, sizeof(char) * moveNun);
 				}
-				this->size -= this->offset;
+				this->bufferSize -= this->offset;
 				this->offset = 0;
-				in.read(buffer + this->size, RW_BUF_SIZE - this->size);
-				this->size += in.gcount();
-				if (this->size > size)
+				in.read(buffer + this->bufferSize, RW_BUF_SIZE - this->bufferSize);
+				this->bufferSize += in.gcount();
+				if (this->bufferSize > size)
 				{
 					return true;
 				}
@@ -227,21 +241,23 @@ namespace qstardb
 
 		void read(char* ch, int len)
 		{
-			if ((this->size - this->offset) >= len)
+			if ((this->bufferSize - this->offset) >= len)
 			{
 				memcpy(ch, buffer + this->offset, sizeof(char) * len);
 				this->offset += len;
+				this->usedSize += len;
 				return;
 			}
 			else
 			{
-				int copylen = this->size - this->offset;
+				int copylen = this->bufferSize - this->offset;
 				if (copylen > 0)
 				{
 					memcpy(ch, buffer + this->offset, sizeof(char) * copylen);
 					this->offset += copylen;
 				}
 				this->in.read(ch + copylen, len - copylen);
+				this->usedSize += len;
 				return;
 			}
 		}
@@ -250,6 +266,7 @@ namespace qstardb
 		{
 			if (getline(in, line))
 			{
+				this->usedSize += line.length();
 				return true;
 			}
 			else
@@ -261,6 +278,11 @@ namespace qstardb
 		void close()
 		{
 			in.close();
+		}
+
+		bool hasmore(int64 length)
+		{
+			return this->usedSize + length <= this->fileLength;
 		}
 
 	};

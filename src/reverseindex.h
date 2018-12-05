@@ -161,7 +161,7 @@ namespace qstardb
 		 *
 		 * @param arr
 		 */
-		inline void bubbleSort(uint* arr, int length)
+		inline uint* bubbleSort(uint* arr, int length)
 		{
 			for (int i = 0; i < length - 1; i++)
 			{
@@ -181,6 +181,7 @@ namespace qstardb
 					break;
 				}
 			}
+			return arr;
 		}
 		int write(char* chs, int& size, int* temp)
 		{
@@ -202,103 +203,9 @@ namespace qstardb
 			}
 			return size;
 		}
-		/*将词典写入dump文件*/
-		void writedic(filewriter& fileout)
-		{
-			int curSeq = this->dic->getCurSeq();
-			fileout.writeInt32(curSeq);
-			for (int i = 0; i < curSeq; i++)
-			{
-				string word;
-				if (this->dic->get(i, word))
-				{
-					fileout.writeChar(word.length());
-					fileout.writeBytes(word.c_str(), word.length());
-				}
-				else
-				{
-					fileout.writeChar(0);
-				}
-			}
-		}
-		/*将数据写入dump文件**/
-		void writedata(filewriter& fileout)
-		{
-			uint index = this->dic->get(_all);
-			datanode s_temp(MIN_VALUE, MIN_VALUE);
-			datanode e_temp(MAX_VALUE, MAX_VALUE);
-			rwlock.rdlock();
-			baseiterator<uint>* iterator = segs->keys(index, &s_temp, &e_temp, false);
-			int* buffer = new int[1024 * 32];
-			while (iterator->hasnext())
-			{
-				uint id = iterator->next();
-				datanode* node = this->store->get(id);
-				uint innerkey = 0;
-				if (this->seq.exists(node->key, innerkey))
-				{
-					int size = 0;
-					c* properties = this->store->get(innerkey, size);
-					if (size > 0)
-					{
-						fileout.writeChar(0);
-						fileout.writeInt64(node->key);
-						fileout.writeInt64(node->sort);
-						int length = write(properties, size, buffer);
-						fileout.writeShort(length);
-						for (int i = 0; i < length; i++)
-						{
-							fileout.writeInt32(buffer[i]);
-						}
-					}
-				}
-				else
-				{
-					cout << "error key:" << node->key << endl;
-				}
-			}
-			rwlock.unrdlock();
-			iterator->free();
-			delete iterator;
-			delete[] buffer;
+	
 
-		}
-
-		bool read0(filereader& reader)
-		{
-			char vtemp[1024];
-			while (true)
-			{
-				char mark = reader.readChar();
-				if (mark == 0 || mark == 1)
-				{
-					int64 key = reader.readInt64();
-					int64 sort = reader.readInt64();
-					int length = reader.readInt32();
-					vector<string> vset;
-					for (int j = 0; j < length; j++)
-					{
-						int size = reader.readChar();
-						reader.read(vtemp, size);
-						string temp(vtemp, size);
-						vset.push_back(temp);
-					}
-					this->add(key, sort, vset);
-				}
-				else if (mark == 2)
-				{
-					int64 key = reader.readInt64();
-					this->remove(key);
-				}
-				else
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-
-		bool read1(filereader& reader)
+		bool read(filereader& reader)
 		{
 			int size = reader.readInt32();
 			int* dicindexs = new int[size];
@@ -314,27 +221,25 @@ namespace qstardb
 			uint* tempindexs = new uint[1024 * 32];
 			long long sum = 0;
 			long long sum1 = 0;
-			for (size_t i = 0; i < 2000000000; i++)
+			int count =0;
+			while(true)
 			{
-
-				if (i % 100000 == 99999)
+				if (count++ % 100000 == 99999)
 				{
-					cout << "add nodes:" << i + 1 << " avg:" << sum1 / 100000 << " allAvg:" << sum / i << endl;
+					cout << "add nodes:" << count << " avg:" << sum1 / 100000 << " allAvg:" << sum / count << endl;
 					sum1 = 0;
 				}
 				char mark = reader.readChar();
-				if (mark == 0)
+				if (mark == NODE_ADD)
 				{
 					int64 key = reader.readInt64();
 					int64 sort = reader.readInt64();
 					short length = reader.readShort();
 					sum += length;
 					sum1 += length;
-					bool resort = false;
 					for (int j = 0; j < length; j++)
 					{
 						int pos = reader.readInt32();
-
 						if (dicindexs[pos] == -1)
 						{
 							string word;
@@ -346,39 +251,24 @@ namespace qstardb
 							{
 								cout << "get word error!" << endl;
 							}
-							/*	if (pos < 1000)
-								{
-									if (word.at(0) != 'T') {
-										cout << word << " OR ";
-									}
-
-								}*/
 						}
 						tempindexs[j] = dicindexs[pos];
-						if (j > 0 && tempindexs[j] <= tempindexs[j - 1])
-						{
-							resort = true;
-						}
+			
 					}
-					if (resort)
-					{
-						bubbleSort(tempindexs, length);
-					}
-					this->add(key, sort, tempindexs, length);
+					this->add(key, sort, bubbleSort(tempindexs, length), length);
 				}
-				else if (mark == 1)
-				{
-					int64 key = reader.readInt64();
-					this->remove(key);
+				else if (mark==FILE_EOF) {
+					delete[] dicindexs;
+					delete[] tempindexs;
+					return true;
 				}
 				else
 				{
 					delete[] dicindexs;
 					delete[] tempindexs;
-					return true;
+					return false;
 					break;
 				}
-
 			}
 			delete[] dicindexs;
 			delete[] tempindexs;
@@ -522,22 +412,9 @@ namespace qstardb
 		bool readfile(string& filename)
 		{
 			filereader reader(filename);
-			return this->readfile(reader);
-		}
-
-		bool readfile(filereader& reader)
-		{
 			if (reader.isOpen())
 			{
-				char type = reader.readChar();
-				if (type == 0)
-				{
-					read0(reader);
-				}
-				else
-				{
-					read1(reader);
-				}
+				read(reader);
 				reader.close();
 				return true;
 			}
@@ -545,6 +422,88 @@ namespace qstardb
 			{
 				reader.close();
 				return false;
+			}
+		}
+
+		bool checkfile(string& filename)
+		{
+			filereader reader(filename);
+		    //int64 HEAD_MARK+ int32 dicsize
+			if (reader.hasmore(12)&& reader.readInt64()==HEAD_MARK)
+			{
+				// check dic
+				char temp[257];
+				int dicSize = reader.readInt32();
+				for (int i = 0; i < dicSize; i++)
+				{
+					if (reader.hasmore(1))
+					{
+						char len = reader.readChar();
+						if (reader.hasmore(len))
+						{
+							reader.read(temp,len);
+						}
+						else {
+							reader.close();
+							return false;
+						}
+					}
+					else {
+						reader.close();
+						return false;
+					}
+				}
+				//check index
+				char* temp = new char[32*1024*4];
+				while (reader.hasmore(9)) 
+				{
+					char mark = reader.readChar();
+					int64 key = reader.readInt64();
+					if (mark == NODE_ADD) {
+						if (reader.hasmore(10))
+						{
+							int64 sort = reader.readInt64();
+							short length = reader.readShort();
+							if (reader.hasmore(length*4))
+							{
+								reader.read(temp,length*4);
+							}
+							else
+							{
+								reader.close();
+								delete[] temp;
+								return true;
+							}
+						}
+						else
+						{
+							reader.close();
+							delete[] temp;
+							return true;
+						}
+					}
+					else if (mark==FILE_EOF &&  key==TAIL_MARK)
+					{
+						reader.close();
+						delete[] temp;
+						return true;
+						
+					}
+					else
+					{
+						reader.close();
+						delete[] temp;
+						return false;
+					}
+				}
+				reader.close();
+				delete[] temp;
+				return false;
+			}
+			else
+			{
+				reader.close();
+				return true;
 			}
 		}
 
@@ -557,25 +516,87 @@ namespace qstardb
 			string temp = filename;
 			temp.append(".temp");
 			filewriter fileout(temp);
-			this->writefile(fileout, filename);
-		}
-
-		void writefile(filewriter& fileout, string& filename)
-		{
-			if (!this->segs->hasSegment())
+			//写入词典部分
+			int dicSize = this->dic->getCurSeq();
+			fileout.writeInt64(HEAD_MARK);
+			fileout.writeInt32(dicSize);
+			for (int i = 0; i < dicSize; i++)
 			{
-				return;
+				string word;
+				if (this->dic->get(i, word))
+				{
+					fileout.writeChar(word.length());
+					fileout.writeBytes(word.c_str(), word.length());
+				}
+				else
+				{
+					fileout.writeChar(0);
+				}
 			}
-			fileout.writeChar(1);
-			writedic(fileout);
-			writedata(fileout);
-			fileout.writeChar(2);
+			//获取全局排序索引,在进行dump的时候，索引可读但不允许写
+			rwlock.rdlock();
+			uint innerkey = 0;
+			uint index = this->dic->get(_all);
+			datanode s_temp(MIN_VALUE, MIN_VALUE);
+			datanode e_temp(MAX_VALUE, MAX_VALUE);
+			baseiterator<uint>* iterator = segs->keys(index, &s_temp, &e_temp, false);
+			int* buffer = new int[1024 * 32];
+			//按照全局排序顺序，依次将数据写入硬盘
+			bool error = false;
+			while (iterator->hasnext())
+			{
+				uint id = iterator->next();
+				datanode* node = this->store->get(id);
+				if (this->seq.exists(node->key, innerkey))
+				{
+					int size = 0;
+					c* properties = this->store->get(innerkey, size);
+					if (size > 0)
+					{
+						fileout.writeChar(NODE_ADD);
+						fileout.writeInt64(node->key);
+						fileout.writeInt64(node->sort);
+						int length = write(properties, size, buffer);
+						fileout.writeShort(length);
+						for (int i = 0; i < length; i++)
+						{
+							fileout.writeInt32(buffer[i]);
+						}
+					}
+					else
+					{
+						cout << "error key:" << node->key << endl;
+						fileout.writeChar(DUMP_ERR);
+						error = true;
+						break;
+					}
+				}
+				else
+				{
+					cout << "error key:" << node->key << endl;
+					fileout.writeChar(DUMP_ERR);
+					error = true;
+					break;
+				}
+			}
+			//释放读锁
+			rwlock.unrdlock();
+			iterator->free();
+			delete iterator;
+			delete[] buffer;
+			//标记文件已经写完
+			fileout.writeChar(FILE_EOF);
+			//给文件盖上结尾标记
+			fileout.writeInt64(TAIL_MARK);
 			fileout.flush();
 			fileout.close();
-			fileout.reNameTo(filename);
-			cout << " end of dump !" << endl;
+			//临时文件写完以后，将临时文件重名为正式名称
+			if (!error)
+			{
+				fileout.reNameTo(filename);
+				cout << " end of dump ,file name:"<< filename << endl;
+			}
 		}
-
 	};
 }
 #endif

@@ -125,6 +125,11 @@ int test3(string testfile, reverse::rmindex* index101, string outfile)
 #include "btreei2b.h"
 int main()
 {
+	string aa("E:/software/³ÌÐò¿ª·¢/workspace.iso");
+	filereader reader(aa);
+	cout << reader.size()<<endl;
+	int abc;
+	cin >> abc;
 	cout << "endl------------------;" << endl;
 	btree::block _block(200,60);
 	cout << "endl------------------;" << endl;

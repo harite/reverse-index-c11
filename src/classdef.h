@@ -33,6 +33,12 @@ namespace qstardb
 	static const long long MIN_VALUE = 0x8000000000000000L;
 	static const long long MAX_VALUE = 0x7fffffffffffffffL;
 
+	static const char DUMP_ERR = 0x00;
+	static const char NODE_ADD = 0x0A;
+	static const char FILE_EOF = 0x0E;
+	static const int64 TAIL_MARK = 0x9876543210;
+	static const int64 HEAD_MARK = 0x0123454321;
+
 	uint _inthash(int64 key)
 	{
 		return key & 0xffffffff;
