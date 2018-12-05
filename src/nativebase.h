@@ -16,7 +16,7 @@ extern "C"
 	{
 		static rwsyslock rmdblock;
 		static map<int, reverse::rmdb*>* rmdbs = new map<int, reverse::rmdb*>();
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RMDB_create(JNIEnv *, jclass, jint index, jboolean ignoreCase, jboolean compress,
+		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024RMDB_create(JNIEnv *, jclass, jint index, jboolean ignoreCase, jboolean compress,
 			jbyteArray bytes)
 		{
 			rmdblock.wrlock();
@@ -36,7 +36,7 @@ extern "C"
 			}
 		}
 
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RMDB_destroy(JNIEnv *, jclass, jint index)
+		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024RMDB_destroy(JNIEnv *, jclass, jint index)
 		{
 			rmdblock.wrlock();
 			if (rmdbs->find(index) != rmdbs->end())
@@ -51,7 +51,7 @@ extern "C"
 			return 0;
 		}
 
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RMDB_addDoc(JNIEnv * env, jclass, jint index, jlong key, jlong sort, jobjectArray terms, jbyteArray data)
+		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024RMDB_addDoc(JNIEnv * env, jclass, jint index, jlong key, jlong sort, jobjectArray terms, jbyteArray data)
 		{
 			rmdblock.rdlock();
 			if (rmdbs->find(index) != rmdbs->end())
@@ -82,7 +82,7 @@ extern "C"
 			return 0;
 		}
 
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RMDB_delDoc(JNIEnv * env, jclass, jint index, jlong key)
+		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024RMDB_delDoc(JNIEnv * env, jclass, jint index, jlong key)
 		{
 			rmdblock.rdlock();
 			if (rmdbs->find(index) != rmdbs->end())
@@ -98,7 +98,7 @@ extern "C"
 
 
 
-		JNIEXPORT jbyteArray JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RMDB_queryByKeys(JNIEnv * env, jclass, jint index, jlongArray array)
+		JNIEXPORT jbyteArray JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024RMDB_queryByKeys(JNIEnv * env, jclass, jint index, jlongArray array)
 		{
 			rmdblock.rdlock();
 			if (rmdbs->find(index) != rmdbs->end())
@@ -127,7 +127,7 @@ extern "C"
 
 		}
 
-		JNIEXPORT jbyteArray JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024RMDB_query(JNIEnv * env, jclass, jint index, jstring jsyntax, jlong _s_sort_,jlong _e_sort_, jint start, jint rows, jint _count, jboolean desc)
+		JNIEXPORT jbyteArray JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024RMDB_query(JNIEnv * env, jclass, jint index, jstring jsyntax, jlong _s_sort_,jlong _e_sort_, jint start, jint rows, jint _count, jboolean desc)
 		{
 			rmdblock.rdlock();
 			if (rmdbs->find(index) != rmdbs->end())

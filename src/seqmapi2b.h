@@ -1,8 +1,7 @@
 /*
  * dicmapi2b.h
- *  ���ڴ洢����map������������˳�����seq�ţ�ͨ��seq�����洢����
-    ��������������˳�������Ļ����������޸���ʷ���ݳ���
- *  Created on: 2015��2��11��
+ *  
+ * 
  *      Author: jkuang
  */
 #pragma once
@@ -67,7 +66,6 @@ namespace seqmap {
 				return datas + this->nodes[xpos(index)].offset;
 			}
 		}
-		//�ͷ��˶����ڴ�ͷ��ض��ٴ�С
 		bool remove(int index)
 		{
 			int oldsize = this->nodes[xpos(index)].length;
@@ -133,11 +131,8 @@ namespace seqmap {
 		void insert(int index, const char* ch, int length, bool optimize)
 		{
 			int pos = xpos(index);
-			//�����Ѿ�����
 			if (this->nodes[pos].length > 0)
 			{
-
-				//���ݲ���Ϊupdate
 				if (this->nodes[pos].length >= length)
 				{
 					this->delSize += this->nodes[pos].length - length;
@@ -152,12 +147,10 @@ namespace seqmap {
 					this->usedSize += length;
 					memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
 				}
-				// ��������Ϊ��ҳ�����һ������
-				else if (this->delSize >= length && this->nodeSize == NODE_MAX_SIZE)//�ڴ治��
+				else if (this->delSize >= length && this->nodeSize == NODE_MAX_SIZE)//
 				{
 					this->allocate(ch, pos, length);
 				}
-				//���ɾ���Ŀռ�ﵽһ��
 				else if (this->delSize > length && this->delSize * 2 > this->usedSize) {
 					this->allocate(ch, pos, length);
 				}
@@ -173,7 +166,7 @@ namespace seqmap {
 				this->delSize -= length;
 				this->nodes[pos].length = length;
 				memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
-			}      //�ڴ���㣬��ֱ�ӷ���
+			}      
 			else if (this->usedSize + length < this->dataLength)
 			{
 				this->nodeSize++;
@@ -182,7 +175,6 @@ namespace seqmap {
 				this->usedSize += length;
 				memmove(datas + this->nodes[pos].offset, ch, sizeof(char) * length);
 			}
-			// �ռ䲻�㣬��Ҫ���·��������������
 			else
 			{
 				this->nodeSize++;
@@ -202,7 +194,6 @@ namespace seqmap {
 		int pageLength{ 1 };
 		page** pages{ nullptr };
 		qstardb::seq64to32 seq;
-		//������ʱ�ռ�
 		char* shardData;
 		inline int ypos(int index)
 		{
@@ -287,7 +278,6 @@ namespace seqmap {
 			return _h > 0 ? _h : -_h;
 		}
 	public:
-		//���÷ֶη�ʽ
 		seqcache(int partition)
 		{
 			this->partition = partition;

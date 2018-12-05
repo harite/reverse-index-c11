@@ -2,7 +2,7 @@
 /*
  * qstarindex.h
  *
- *  Created on: 2015��2��10��
+ * 
  *      Author: jkuang
  */
 #ifndef REVERSEBASE_H_
@@ -79,7 +79,7 @@ namespace reverse {
 	public:
 		rmdb(bool ignoreCase, bool compress)
 		{
-			this->cache = new seqmap::seqcache(4);
+			this->cache = new seqmap::seqcache(8);
 			this->index = new rmindex(ignoreCase, compress);
 		}
 		~rmdb()

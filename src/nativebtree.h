@@ -46,7 +46,7 @@ extern "C"
 		* Method:    create
 		* Signature: (II)V
 		*/
-		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024BTreeMap_create(JNIEnv *, jclass, jint index, jint node_max_num,jint data_avg_size)
+		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024BTreeMap_create(JNIEnv *, jclass, jint index, jint node_max_num,jint data_avg_size)
 		{
 			maplock.wrlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -66,7 +66,7 @@ extern "C"
 		* Method:    destroy
 		* Signature: (I)V
 		*/
-		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024BTreeMap_destroy(JNIEnv *, jclass, jint index)
+		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024BTreeMap_destroy(JNIEnv *, jclass, jint index)
 		{
 			maplock.wrlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -88,7 +88,7 @@ extern "C"
 		* Method:    put
 		* Signature: (IJ[B)I
 		*/
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024BTreeMap_put(JNIEnv * env, jclass, jint index, jlong key, jbyteArray value)
+		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024BTreeMap_put(JNIEnv * env, jclass, jint index, jlong key, jbyteArray value)
 		{
 			maplock.rdlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -113,7 +113,7 @@ extern "C"
 		* Method:    get
 		* Signature: (IJ)[B
 		*/
-		JNIEXPORT jbyteArray JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024BTreeMap_get(JNIEnv * env, jclass, jint index, jlong key)
+		JNIEXPORT jbyteArray JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024BTreeMap_get(JNIEnv * env, jclass, jint index, jlong key)
 		{
 			maplock.rdlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -134,7 +134,7 @@ extern "C"
 		* Method:    remove
 		* Signature: (IJ)[B
 		*/
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024BTreeMap_remove(JNIEnv * env, jclass, jint index, jlong key)
+		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024BTreeMap_remove(JNIEnv * env, jclass, jint index, jlong key)
 		{
 
 			maplock.rdlock();

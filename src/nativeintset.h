@@ -24,7 +24,7 @@ extern "C"
 		 * Method:    create
 		 * Signature: (II)V
 		 */
-		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int32Set_create(JNIEnv *, jclass, jint index, jint mode)
+		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int32Set_create(JNIEnv *, jclass, jint index, jint mode)
 		{
 			rwlock.wrlock();
 			if (int32sets->find(index) != int32sets->end())
@@ -44,7 +44,7 @@ extern "C"
 		 * Method:    destroy
 		 * Signature: (I)V
 		 */
-		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int32Set_destroy(JNIEnv *, jclass, jint index)
+		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int32Set_destroy(JNIEnv *, jclass, jint index)
 		{
 			rwlock.wrlock();
 			if (int32sets->find(index) != int32sets->end())
@@ -65,7 +65,7 @@ extern "C"
 		 * Method:    add
 		 * Signature: (II)Z
 		 */
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int32Set_add(JNIEnv *, jclass, jint index, jint key)
+		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int32Set_add(JNIEnv *, jclass, jint index, jint key)
 		{
 			rwlock.rdlock();
 			if (int32sets->find(index) != int32sets->end())
@@ -83,7 +83,7 @@ extern "C"
 		 * Method:    remove
 		 * Signature: (II)Z
 		 */
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int32Set_remove(JNIEnv *, jclass, jint index, jint key)
+		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int32Set_remove(JNIEnv *, jclass, jint index, jint key)
 		{
 			rwlock.rdlock();
 			if (int32sets->find(index) != int32sets->end())
@@ -101,7 +101,7 @@ extern "C"
 		 * Method:    contains
 		 * Signature: (II)Z
 		 */
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int32Set_contains(JNIEnv *, jclass, jint index, jint key)
+		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int32Set_contains(JNIEnv *, jclass, jint index, jint key)
 		{
 			rwlock.rdlock();
 			if (int32sets->find(index) != int32sets->end())
@@ -119,7 +119,7 @@ extern "C"
 		 * Method:    size
 		 * Signature: (I)I
 		 */
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int32Set_size(JNIEnv *, jclass, jint index)
+		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int32Set_size(JNIEnv *, jclass, jint index)
 		{
 			rwlock.rdlock();
 			if (int32sets->find(index) != int32sets->end())
@@ -131,7 +131,7 @@ extern "C"
 			rwlock.unrdlock();
 			return false;
 		}
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int32Set_load(JNIEnv * env, jclass, jint index, jstring file)
+		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int32Set_load(JNIEnv * env, jclass, jint index, jstring file)
 		{
 			rwlock.rdlock();
 			if (int32sets->find(index) != int32sets->end())
@@ -148,7 +148,7 @@ extern "C"
 			return false;
 		}
 
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int32Set_dump(JNIEnv *env, jclass, jint index, jstring file)
+		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int32Set_dump(JNIEnv *env, jclass, jint index, jstring file)
 		{
 			rwlock.rdlock();
 			if (int32sets->find(index) != int32sets->end())
@@ -170,7 +170,7 @@ extern "C"
 		 * Method:    create
 		 * Signature: (II)V
 		 */
-		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int64Set_create(JNIEnv *, jclass, jint index, jint mode)
+		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int64Set_create(JNIEnv *, jclass, jint index, jint mode)
 		{
 			rwlock.wrlock();
 			if (int64sets->find(index) != int64sets->end())
@@ -190,7 +190,7 @@ extern "C"
 		 * Method:    destroy
 		 * Signature: (I)V
 		 */
-		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int64Set_destroy(JNIEnv *, jclass, jint index)
+		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int64Set_destroy(JNIEnv *, jclass, jint index)
 		{
 
 			rwlock.wrlock();
@@ -212,7 +212,7 @@ extern "C"
 		 * Method:    add
 		 * Signature: (IJ)Z
 		 */
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int64Set_add(JNIEnv *, jclass, jint index, jlong key)
+		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int64Set_add(JNIEnv *, jclass, jint index, jlong key)
 		{
 			rwlock.rdlock();
 			if (int64sets->find(index) != int64sets->end())
@@ -230,7 +230,7 @@ extern "C"
 		 * Method:    remove
 		 * Signature: (IJ)Z
 		 */
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int64Set_remove(JNIEnv *, jclass, jint index, jlong key)
+		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int64Set_remove(JNIEnv *, jclass, jint index, jlong key)
 		{
 			rwlock.rdlock();
 			if (int64sets->find(index) != int64sets->end())
@@ -248,7 +248,7 @@ extern "C"
 		 * Method:    contains
 		 * Signature: (IJ)Z
 		 */
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int64Set_contains(JNIEnv *, jclass, jint index, jlong key)
+		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int64Set_contains(JNIEnv *, jclass, jint index, jlong key)
 		{
 			rwlock.rdlock();
 			if (int64sets->find(index) != int64sets->end())
@@ -261,7 +261,7 @@ extern "C"
 			return false;
 		}
 
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int64Set_load(JNIEnv * env, jclass, jint index, jstring file)
+		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int64Set_load(JNIEnv * env, jclass, jint index, jstring file)
 		{
 			rwlock.rdlock();
 			if (int64sets->find(index) != int64sets->end())
@@ -278,7 +278,7 @@ extern "C"
 			return false;
 		}
 
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int64Set_dump(JNIEnv *env, jclass, jint index, jstring file)
+		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int64Set_dump(JNIEnv *env, jclass, jint index, jstring file)
 		{
 			rwlock.rdlock();
 			if (int64sets->find(index) != int64sets->end())
@@ -299,7 +299,7 @@ extern "C"
 		 * Method:    size
 		 * Signature: (I)I
 		 */
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_index_jni_Native_00024Int64Set_size(JNIEnv *, jclass, jint index)
+		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int64Set_size(JNIEnv *, jclass, jint index)
 		{
 			rwlock.rdlock();
 			if (int64sets->find(index) != int64sets->end())
