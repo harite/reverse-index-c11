@@ -41,11 +41,17 @@ jlongArray createJLongArray(JNIEnv * env, vector<int64>& result, int64 offset)
 
 jstring charToJString(JNIEnv* env, const char* value, int len)
 {
-	jclass strClass = (env)->FindClass("Ljava/lang/String;");
-	jmethodID ctorID = (env)->GetMethodID(strClass, "<init>", "([BLjava/lang/String;)V");
-	jbyteArray bytes = (env)->NewByteArray(len);
-	(env)->SetByteArrayRegion(bytes, 0, len, (jbyte*)value);
-	jstring encoding = (env)->NewStringUTF("UTF8");
-	return (jstring)(env)->NewObject(strClass, ctorID, bytes, encoding);
+	if (value != nullptr&&len > 0) {
+		jclass strClass = (env)->FindClass("Ljava/lang/String;");
+		jmethodID ctorID = (env)->GetMethodID(strClass, "<init>", "([BLjava/lang/String;)V");
+		jbyteArray bytes = (env)->NewByteArray(len);
+		(env)->SetByteArrayRegion(bytes, 0, len, (jbyte*)value);
+		jstring encoding = (env)->NewStringUTF("UTF8");
+		return (jstring)(env)->NewObject(strClass, ctorID, bytes, encoding);
+	}
+	else {
+		return (env)->NewStringUTF("");
+	}
+	
 }
 #endif

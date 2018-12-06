@@ -123,6 +123,9 @@
     <ClInclude Include="seqmapb2i.h">
       <Filter>util</Filter>
     </ClInclude>
+    <ClInclude Include="nativedics2i.h">
+      <Filter>jni</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="reversedb.cpp">

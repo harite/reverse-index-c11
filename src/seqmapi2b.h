@@ -1,7 +1,7 @@
 /*
  * dicmapi2b.h
  *  
- * 
+ *      add 2018-09-08
  *      Author: jkuang
  */
 #pragma once
@@ -13,8 +13,6 @@
 #include "sequence.h"
 #include "filestream.h"
 using namespace std;
-/*
-*/
 namespace seqmap {
 
 	typedef long long int64;
@@ -55,23 +53,25 @@ namespace seqmap {
 		}
 		const char* find(int index, int& length)
 		{
-			if (this->nodes[xpos(index)].length <= 0)
+			int pos = xpos(index);
+			if (this->nodes[pos].length <= 0)
 			{
 				length = 0;
 				return nullptr;
 			}
 			else
 			{
-				length = this->nodes[xpos(index)].length;
-				return datas + this->nodes[xpos(index)].offset;
+				length = this->nodes[pos].length;
+				return datas + this->nodes[pos].offset;
 			}
 		}
 		bool remove(int index)
 		{
-			int oldsize = this->nodes[xpos(index)].length;
+			int pos = xpos(index);
+			int oldsize = this->nodes[pos].length;
 			if (oldsize > 0)
 			{
-				this->nodes[xpos(index)].length = -oldsize;
+				this->nodes[pos].length = -oldsize;
 				this->delSize += oldsize;
 				this->nodeSize--;
 				return true;
@@ -231,7 +231,7 @@ namespace seqmap {
 				this->pages[_ypos] = new page(shardData);
 			}
 			bool optimize = (index  % NODE_MAX_SIZE) == NODE_MAX_SIZE - 1;
-			this->pages[ypos(index)]->insert(index, ch, length, optimize);
+			this->pages[_ypos]->insert(index, ch, length, optimize);
 			return index;
 		}
 
@@ -245,7 +245,7 @@ namespace seqmap {
 			int _ypos = this->ypos(index);
 			if (_ypos < this->pageLength)
 			{
-				return this->pages[ypos(index)]->find(index, length);
+				return this->pages[_ypos]->find(index, length);
 			}
 			else
 			{

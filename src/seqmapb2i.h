@@ -3,6 +3,7 @@
 #define _SEQMAP_B2I_H
 #include "sequence.h"
 #include "seqmapi2b.h"
+//add 2018-09-08
 namespace seqmap 
 {
 	enum type
@@ -189,6 +190,7 @@ namespace seqmap
 		seqblock* _block;
 		b2ipage** pages;
 		qstardb::sequence* seq;
+		qstardb::rwsyslock rwlock;
 		inline int ypos(const char* ch,int len)
 		{
 			int pos =strhash(ch,len)% partition;
@@ -218,39 +220,51 @@ namespace seqmap
 				delete this->pages[i];
 			}
 			delete[] this->pages;
-			delete seq;
+			delete this->seq;
 			delete this->_block;
 		}
 		bool get(int index,string& str)
 		{
 			int length;
+			rwlock.rdlock();
 			const char* temp=this->_block->find(index, length);
 			if (temp != nullptr)
 			{
-				str.append(str,length);
+				str.append(temp,length);
+				rwlock.unrdlock();
 				return true;
 			}
-			else {
+			else
+			{
+				cout << "not found!" << endl;
+				rwlock.unrdlock();
 				return false;
 			}
-			
 		}
 		int get(const char* ch, int len)
 		{
 			int pos = ypos(ch,len);
-			return this->pages[pos]->get(ch,len);
+			rwlock.rdlock();
+			int result= this->pages[pos]->get(ch,len);
+			rwlock.unrdlock();
+			return result;
 		}
 		int add(const char* ch, int len)
 		{
 			int pos = ypos(ch, len);
-			return this->pages[pos]->inset(ch, len);
+			rwlock.wrlock();
+			int result= this->pages[pos]->inset(ch, len);
+			rwlock.unwrlock();
+			return result;
 		}
 		bool remove(const char* ch,int len)
 		{
 			int pos = ypos(ch, len);
-			return this->pages[pos]->remove(ch,len);
+			rwlock.wrlock();
+			int result = this->pages[pos]->remove(ch,len);
+			rwlock.unwrlock();
+			return result;
 		}
-
 	};
 
 }

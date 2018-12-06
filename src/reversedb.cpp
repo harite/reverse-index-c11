@@ -8,6 +8,7 @@
 #include "nativebtree.h"
 #include "nativeembtree.h"
 #include "seqmapi2b.h"
+#include "nativedics2i.h"
 #include<sstream>
 #include <string.h>
 #include <atomic>
@@ -126,47 +127,21 @@ int test3(string testfile, reverse::rmindex* index101, string outfile)
 using namespace std::chrono;
 int main()
 {
-	//string aa("E:/software/³ÌÐò¿ª·¢/workspace.iso");
-	//filereader reader(aa);
-	//cout << reader.size()<<endl;
-	auto time_now = chrono::system_clock::now();
-	auto duration_in_ms = chrono::duration_cast<chrono::milliseconds>(time_now.time_since_epoch());
-
-	cout << duration_in_ms.count() << endl;
-	int abc;
-	cin >> abc;
-	cout << "endl------------------;" << endl;
-	btree::block _block(200,60);
-	cout << "endl------------------;" << endl;
-	
-	
-	for (size_t i = 0; i < 102400; i++)
+	seqmap::b2imap* mp = new seqmap::b2imap(128);
+	for (int i = 0; i < 1024*1024; i++)
 	{
-		if (i == 4)
-		{
-			cout << "i--" << i << endl;
-		}//cout << "i--" << i << endl;
-		//cout << "i--" << i << endl;
-		string str("_");
-		str.append(tostring(i));
-		str.append("_");
-		const char* ch = str.c_str();
-		_block.insert(i % 1000, ch, str.length());
-		
+		string str = tostring(i);
+		mp->add(str.c_str(),str.length());
 	}
-	for (size_t i = 0; i < 1024; i++)
+	for (int i = 0; i < 1024; i++)
 	{
-		int length = 0;
-		
-		const char* temp=_block.find(i,length);
-		if (temp != nullptr) {
-			cout << i <<"---"<<string(temp,length)<<endl;
-		}
+		string str;
+		mp->get(i,str);
+		cout << str << endl;
 	}
-	cout << "endl------------------;" << endl;
+	cout << "ok" << endl;
 	int a;
 	cin >> a;
-
 }
 
 int ___main__()
