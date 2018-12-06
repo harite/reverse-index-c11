@@ -44,7 +44,7 @@ namespace qstardb
 
 		bool remove(uint key, set_int& indexs)
 		{
-			for (int index : indexs)
+			for (uint index : indexs)
 			{
 				this->segs->remove(key, index);
 			}

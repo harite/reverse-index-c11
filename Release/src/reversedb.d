@@ -6,10 +6,11 @@ src/reversedb.d: ../src/reversedb.cpp /usr/local/jdk1.7/include/jni.h \
  ../src/nativeintset.h ../src/dichashset.h ../src/nativeindex.h \
  ../src/reversebase.h ../src/reverseindex.h ../src/searchstats.h \
  ../src/dxtemplate.h ../src/syntaxparser.h ../src/dictionary.h \
- ../src/sequence.h ../src/dataqueue.h ../src/datastore.h \
- ../src/stopdecoder.h ../src/dataindex.h ../src/stopencoder.h \
- ../src/exeplan.h ../src/dicmapi2s.h ../src/btreei2b.h ../src/seqmapi2b.h \
- ../src/nativebase.h ../src/nativebtree.h ../src/nativeembtree.h
+ ../src/seqmapb2i.h ../src/sequence.h ../src/seqmapi2b.h \
+ ../src/dataqueue.h ../src/datastore.h ../src/stopdecoder.h \
+ ../src/dataindex.h ../src/stopencoder.h ../src/exeplan.h \
+ ../src/dicmapi2s.h ../src/btreei2b.h ../src/nativebase.h \
+ ../src/nativebtree.h ../src/nativeembtree.h ../src/nativedics2i.h
 
 /usr/local/jdk1.7/include/jni.h:
 
@@ -53,7 +54,11 @@ src/reversedb.d: ../src/reversedb.cpp /usr/local/jdk1.7/include/jni.h \
 
 ../src/dictionary.h:
 
+../src/seqmapb2i.h:
+
 ../src/sequence.h:
+
+../src/seqmapi2b.h:
 
 ../src/dataqueue.h:
 
@@ -71,10 +76,10 @@ src/reversedb.d: ../src/reversedb.cpp /usr/local/jdk1.7/include/jni.h \
 
 ../src/btreei2b.h:
 
-../src/seqmapi2b.h:
-
 ../src/nativebase.h:
 
 ../src/nativebtree.h:
 
 ../src/nativeembtree.h:
+
+../src/nativedics2i.h:
