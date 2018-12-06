@@ -34,7 +34,7 @@ bool read1(filereader& reader, dictionary* dic)
 		char len = reader.readChar();
 		reader.read(temp, len);
 		string term(temp, len);
-		dic->add(term, -1);
+		dic->add(term);
 	}
 	return true;
 }

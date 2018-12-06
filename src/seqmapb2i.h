@@ -109,7 +109,7 @@ namespace seqmap
 				if (this->size == this->length)
 				{
 					int extSize = this->length >> 1;
-					this->length += extSize > 512 ? 512 : extSize;
+					this->length += extSize > 1024 ? 1024 : extSize;
 					uint* temp = new uint[this->length];
 					memmove(temp, this->keys, sizeof(int)*this->size);
 					delete[] this->keys;
@@ -223,6 +223,10 @@ namespace seqmap
 			delete this->seq;
 			delete this->_block;
 		}
+		int curSeq()
+		{
+			return this->seq->get();
+		}
 		bool get(int index,string& str)
 		{
 			int length;
@@ -236,7 +240,6 @@ namespace seqmap
 			}
 			else
 			{
-				cout << "not found!" << endl;
 				rwlock.unrdlock();
 				return false;
 			}

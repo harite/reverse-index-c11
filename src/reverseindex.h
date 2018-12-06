@@ -513,7 +513,7 @@ namespace qstardb
 								string word;
 								if (dmap.get(pos, word))
 								{
-									dicindexs[pos] = this->dic->add(word, -1);
+									dicindexs[pos] = this->dic->add(word);
 								}
 								else
 								{
@@ -557,7 +557,7 @@ namespace qstardb
 			temp.append(".temp");
 			filewriter fileout(temp);
 			//写入词典部分
-			int dicSize = this->dic->getCurSeq();
+			int dicSize = this->dic->curSeq();
 			fileout.writeInt64(HEAD_MARK);
 			fileout.writeInt64(this->currentTimeMillis());
 			fileout.writeInt32(dicSize);
