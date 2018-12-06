@@ -142,6 +142,7 @@ namespace qstardb
 		{
 			this->add(instance, key, sort, p, len);
 		}
+
 		void add(int64 key, int64 sort, uint* p, int len, c* properties, int plen)
 		{
 			uint intkey;
@@ -152,6 +153,7 @@ namespace qstardb
 			store->insert(intkey, key, sort, properties, plen);
 			insert(intkey, p, len);
 		}
+
 		int addword(string& word, int index)
 		{
 			return this->dic->add(word, index);
@@ -183,6 +185,7 @@ namespace qstardb
 			}
 			return arr;
 		}
+
 		int write(char* chs, int& size, int* temp)
 		{
 			stopdecoder decoder(chs, size, false);
@@ -204,76 +207,13 @@ namespace qstardb
 			return size;
 		}
 	
-
-		bool read(filereader& reader)
+		int64 currentTimeMillis()
 		{
-			int size = reader.readInt32();
-			int* dicindexs = new int[size];
-			mapi2s::dici2s dmap((size / 256) + 16);
-			char temp[128];
-			for (int i = 0; i < size; i++)
-			{
-				char len = reader.readChar();
-				reader.read(temp, len);
-				dmap.insert(i, (signed char*)temp, len);
-				dicindexs[i] = -1;
-			}
-			uint* tempindexs = new uint[1024 * 32];
-			long long sum = 0;
-			long long sum1 = 0;
-			int count =0;
-			while(true)
-			{
-				if (count++ % 100000 == 99999)
-				{
-					cout << "add nodes:" << count << " avg:" << sum1 / 100000 << " allAvg:" << sum / count << endl;
-					sum1 = 0;
-				}
-				char mark = reader.readChar();
-				if (mark == NODE_ADD)
-				{
-					int64 key = reader.readInt64();
-					int64 sort = reader.readInt64();
-					short length = reader.readShort();
-					sum += length;
-					sum1 += length;
-					for (int j = 0; j < length; j++)
-					{
-						int pos = reader.readInt32();
-						if (dicindexs[pos] == -1)
-						{
-							string word;
-							if (dmap.get(pos, word))
-							{
-								dicindexs[pos] = this->dic->add(word, -1);
-							}
-							else
-							{
-								cout << "get word error!" << endl;
-							}
-						}
-						tempindexs[j] = dicindexs[pos];
-			
-					}
-					this->add(key, sort, bubbleSort(tempindexs, length), length);
-				}
-				else if (mark==FILE_EOF) {
-					delete[] dicindexs;
-					delete[] tempindexs;
-					return true;
-				}
-				else
-				{
-					delete[] dicindexs;
-					delete[] tempindexs;
-					return false;
-					break;
-				}
-			}
-			delete[] dicindexs;
-			delete[] tempindexs;
-			return false;
+			auto time_now = chrono::system_clock::now();
+			auto duration_in_ms = chrono::duration_cast<chrono::milliseconds>(time_now.time_since_epoch());
+			return duration_in_ms.count();
 		}
+
 	public:
 		dictionary* dic;
 		stopencoder* encoder;
@@ -411,29 +351,44 @@ namespace qstardb
 
 		bool readfile(string& filename)
 		{
-			filereader reader(filename);
-			if (reader.isOpen())
+			if (checkfile(filename))
 			{
-				read(reader);
-				reader.close();
-				return true;
+				filereader reader(filename);
+				if (reader.isOpen())
+				{
+					bool result=read(reader);
+					reader.close();
+					return result;
+				}
+				else
+				{
+					reader.close();
+					return false;
+				}
 			}
-			else
-			{
-				reader.close();
+			else {
 				return false;
 			}
+	
 		}
+
 
 		bool checkfile(string& filename)
 		{
 			filereader reader(filename);
 		    //int64 HEAD_MARK+ int32 dicsize
-			if (reader.hasmore(12)&& reader.readInt64()==HEAD_MARK)
+			if (reader.hasmore(20)&& reader.readInt64()==HEAD_MARK)
 			{
+				int64 time = reader.readInt64();
+				//dump 已经超过了两天时间
+				if (this->currentTimeMillis() - time > 86400l * 1000l*2)
+				{
+					reader.close();
+					return false;
+				}
+				int dicSize = reader.readInt32();
 				// check dic
 				char temp[257];
-				int dicSize = reader.readInt32();
 				for (int i = 0; i < dicSize; i++)
 				{
 					if (reader.hasmore(1))
@@ -507,6 +462,89 @@ namespace qstardb
 			}
 		}
 
+		bool read(filereader& reader)
+		{
+			if (reader.hasmore(20) && reader.readInt64() == HEAD_MARK)
+			{
+				int64 time = reader.readInt64();
+				if ((this->currentTimeMillis() - time) > 86400l * 1000 * 2l)
+				{
+					return false;
+				}
+				int size = reader.readInt32();
+				int* dicindexs = new int[size];
+				mapi2s::dici2s dmap((size / 256) + 16);
+				char temp[128];
+				for (int i = 0; i < size; i++)
+				{
+					char len = reader.readChar();
+					reader.read(temp, len);
+					dmap.insert(i, (signed char*)temp, len);
+					dicindexs[i] = -1;
+				}
+				uint* tempindexs = new uint[1024 * 32];
+				long long sum = 0;
+				long long sum1 = 0;
+				int count = 0;
+				while (reader.hasmore(9))
+				{
+					if (count++ % 100000 == 99999)
+					{
+						cout << "add nodes:" << count << " avg:" << sum1 / 100000 << " allAvg:" << sum / count << endl;
+						sum1 = 0;
+					}
+					char mark = reader.readChar();
+					int64 key = reader.readInt64();
+
+					if (mark == NODE_ADD)
+					{
+					
+						int64 sort = reader.readInt64();
+						short length = reader.readShort();
+						sum += length;
+						sum1 += length;
+						for (int j = 0; j < length; j++)
+						{
+							int pos = reader.readInt32();
+							if (dicindexs[pos] == -1)
+							{
+								string word;
+								if (dmap.get(pos, word))
+								{
+									dicindexs[pos] = this->dic->add(word, -1);
+								}
+								else
+								{
+									cout << "get word error!" << endl;
+								}
+							}
+							tempindexs[j] = dicindexs[pos];
+
+						}
+						this->add(key, sort, bubbleSort(tempindexs, length), length);
+					}
+					else if (mark == FILE_EOF && key==TAIL_MARK) {
+						delete[] dicindexs;
+						delete[] tempindexs;
+						return true;
+					}
+					else
+					{
+						delete[] dicindexs;
+						delete[] tempindexs;
+						return false;
+						break;
+					}
+				}
+				delete[] dicindexs;
+				delete[] tempindexs;
+				return false;
+			}
+			else {
+				return false;
+			}
+			
+		}
 		void writefile(string& filename)
 		{
 			if (!this->segs->hasSegment())
@@ -519,6 +557,7 @@ namespace qstardb
 			//写入词典部分
 			int dicSize = this->dic->getCurSeq();
 			fileout.writeInt64(HEAD_MARK);
+			fileout.writeInt64(this->currentTimeMillis());
 			fileout.writeInt32(dicSize);
 			for (int i = 0; i < dicSize; i++)
 			{

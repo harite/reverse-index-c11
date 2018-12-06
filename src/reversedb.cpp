@@ -123,11 +123,16 @@ int test3(string testfile, reverse::rmindex* index101, string outfile)
 	return count;
 }
 #include "btreei2b.h"
+using namespace std::chrono;
 int main()
 {
-	string aa("E:/software/程序开发/workspace.iso");
-	filereader reader(aa);
-	cout << reader.size()<<endl;
+	//string aa("E:/software/程序开发/workspace.iso");
+	//filereader reader(aa);
+	//cout << reader.size()<<endl;
+	auto time_now = chrono::system_clock::now();
+	auto duration_in_ms = chrono::duration_cast<chrono::milliseconds>(time_now.time_since_epoch());
+
+	cout << duration_in_ms.count() << endl;
 	int abc;
 	cin >> abc;
 	cout << "endl------------------;" << endl;

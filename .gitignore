@@ -1,1 +1,5 @@
 /Debug/
+/.settings/
+/src/x64/
+/src/.vs/
+/src/reversedb-c11.VC.db
