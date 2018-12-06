@@ -48,7 +48,8 @@ namespace seqmap
 		int length;
 		uint* keys;
 		seqblock* _block;
-		int indexof(uint* keys, const char* key, int len, int size, type _type)
+		qstardb::sequence* seq;
+		int indexof(uint* keys, int size, const char* key, int len,  type _type)
 		{
 			int fromIndex = 0;
 			int toIndex = size - 1;
@@ -79,9 +80,11 @@ namespace seqmap
 			}
 		}
 	public:
-		b2ipage(int len)
+		b2ipage( qstardb::sequence* seq, int len, seqblock* _block)
 		{
+			this->seq = seq;
 			this->length = len;
+			this->_block = _block;
 			this->keys = new uint[this->length];
 		}
 		~b2ipage() 
@@ -91,18 +94,164 @@ namespace seqmap
 
 		int inset(const char* ch,int len)
 		{
-
+			if (this->size==0)
+			{
+				int index=this->seq->createsq();
+				this->keys[this->size] = index;
+				this->_block->insert(index,ch,len);
+				this->size++;
+				return index;
+			}
+			int pos = indexof(this->keys,this->size,ch,len,type_insert);
+			if (pos >= 0)
+			{
+				if (this->size == this->length)
+				{
+					int extSize = this->length >> 1;
+					this->length += extSize > 512 ? 512 : extSize;
+					uint* temp = new uint[this->length];
+					memmove(temp, this->keys, sizeof(int)*this->size);
+					delete[] this->keys;
+					this->keys = temp;
+				}
+				int numMoved = this->size - pos;
+				if (numMoved > 0)
+				{
+					memmove(this->keys + pos + 1, this->keys + pos, sizeof(uint) * numMoved);
+				}
+				int index = this->seq->createsq();
+				this->keys[pos] = index;
+				this->_block->insert(index, ch, len);
+				this->size++;
+				return index;
+			}
+			else
+			{
+				return this->keys[-pos - 1];
+			}
 		}
 
 		int get(const char* ch,int len)
 		{
+			if (this->size == 0)
+			{
+				return -1;
+			}
+			else 
+			{
+				int pos = indexof(this->keys, this->size, ch, len, type_index);
+				if (pos >= 0)
+				{
+					return this->keys[pos];
+				}
+				else
+				{
+					return -1;
+				}
+			}
 
 		}
 
 		bool remove(const char* ch,int len)
 		{
+			if (this->size == 0)
+			{
+				return false;
+			}
+			else {
+				int pos = indexof(this->keys, this->size, ch, len, type_index);
+				if (pos >= 0) {
+					int index = this->keys[pos];
+					int numMoved = size - pos - 1;
+					if (numMoved > 0)
+					{
+						memmove(this->keys + pos, this->keys + pos + 1, sizeof(uint) * numMoved);
+					}
+					//标记数据被删除
+					this->_block->remove(index);
+					//回收该分配的id
+					this->seq->recycle(index);
+					this->size--;
+					return true;
+				}
+				else {
+					return false;
+				}
+				
+			}
 
 		}
 	};
+	class b2imap
+	{
+	private:
+		int partition;
+		seqblock* _block;
+		b2ipage** pages;
+		qstardb::sequence* seq;
+		inline int ypos(const char* ch,int len)
+		{
+			int pos =strhash(ch,len)% partition;
+			if (pos < 0) {
+				return -pos;
+			}
+			else {
+				return pos;
+			}
+		}
+	public:
+		b2imap(int part)
+		{
+			this->partition = part;
+			this->_block = new seqblock();
+			this->seq = new qstardb::sequence();
+			this->pages = new b2ipage*[part];
+			for (int i = 0; i < part; i++)
+			{
+				this->pages[i] = new b2ipage(this->seq,1024, this->_block);
+			}
+		}
+		~b2imap()
+		{
+			for (int i = 0; i < this->partition; i++)
+			{
+				delete this->pages[i];
+			}
+			delete[] this->pages;
+			delete seq;
+			delete this->_block;
+		}
+		bool get(int index,string& str)
+		{
+			int length;
+			const char* temp=this->_block->find(index, length);
+			if (temp != nullptr)
+			{
+				str.append(str,length);
+				return true;
+			}
+			else {
+				return false;
+			}
+			
+		}
+		int get(const char* ch, int len)
+		{
+			int pos = ypos(ch,len);
+			return this->pages[pos]->get(ch,len);
+		}
+		int add(const char* ch, int len)
+		{
+			int pos = ypos(ch, len);
+			return this->pages[pos]->inset(ch, len);
+		}
+		bool remove(const char* ch,int len)
+		{
+			int pos = ypos(ch, len);
+			return this->pages[pos]->remove(ch,len);
+		}
+
+	};
+
 }
 #endif
