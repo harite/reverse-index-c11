@@ -5,8 +5,8 @@
  *      Author: jkuang
  */
 #pragma once
-#ifndef _SEQMAP_H
-#define _SEQMAP_H
+#ifndef _SEQMAP_I2B_H
+#define _SEQMAP_I2B_H
 #include<string.h>
 #include<iostream>
 #include "stdio.h"
@@ -187,20 +187,19 @@ namespace seqmap {
 		}
 
 	};
-	class block
+	class seqblock
 	{
 	private:
 		int nodeSize{ 0 };
 		int pageLength{ 1 };
 		page** pages{ nullptr };
-		qstardb::seq64to32 seq;
 		char* shardData;
 		inline int ypos(int index)
 		{
 			return index / NODE_MAX_SIZE;
 		}
 	public:
-		block()
+		seqblock()
 		{
 
 			this->pages = new page*[pageLength];
@@ -209,7 +208,7 @@ namespace seqmap {
 
 		}
 
-		~block()
+		~seqblock()
 		{
 			for (int i = 0; i < pageLength; i++)
 			{
@@ -219,10 +218,8 @@ namespace seqmap {
 			delete[] this->shardData;
 		}
 
-		int insert(int64 key, const char* ch, int length)
+		int insert(uint index, const char* ch, int length)
 		{
-			uint index;
-			seq.create(key, index);
 			int _ypos = this->ypos(index);
 			if (_ypos >= this->pageLength)
 			{
@@ -238,11 +235,52 @@ namespace seqmap {
 			return index;
 		}
 
+		bool remove(uint index)
+		{
+			return this->pages[ypos(index)]->remove(index);
+		}
+
+		const char* find(uint index, int& length)
+		{
+			int _ypos = this->ypos(index);
+			if (_ypos < this->pageLength)
+			{
+				return this->pages[ypos(index)]->find(index, length);
+			}
+			else
+			{
+				length = 0;
+				return nullptr;
+			}
+		}
+	};
+	class i2b_block
+	{
+	private:
+		seqblock _sblock;
+		qstardb::seq64to32 seq;
+		inline int ypos(int index)
+		{
+			return index / NODE_MAX_SIZE;
+		}
+	public:
+		i2b_block() = default;
+
+		~i2b_block() = default;
+
+		int insert(int64 key, const char* ch, int length)
+		{
+			uint index;
+			seq.create(key, index);
+		    this->_sblock.insert(index,ch,length);
+			return index;
+		}
+
 		int remove(int64 key)
 		{
 			uint index;
 			if (this->seq.exists(key, index)) {
-				this->pages[ypos(index)]->remove(index);
+				this->_sblock.remove(index);
 				this->seq.remove(key, index);
 				return 1;
 			}
@@ -257,7 +295,7 @@ namespace seqmap {
 			uint index;
 			if (this->seq.exists(key, index))
 			{
-				return this->pages[ypos(index)]->find(index, length);
+				return 	this->_sblock.find(index, length);
 			}
 			else
 			{
@@ -270,7 +308,7 @@ namespace seqmap {
 	{
 	private:
 		int partition;
-		block** blocks;
+		i2b_block** blocks;
 		qstardb::rwsyslock* rwlock;
 		inline int _hash(int64 key)
 		{
@@ -281,11 +319,11 @@ namespace seqmap {
 		seqcache(int partition)
 		{
 			this->partition = partition;
-			this->blocks = new block*[this->partition];
+			this->blocks = new i2b_block*[this->partition];
 			this->rwlock = new qstardb::rwsyslock[this->partition];
 			for (int i = 0; i < this->partition; i++)
 			{
-				this->blocks[i] = new block();
+				this->blocks[i] = new i2b_block();
 			}
 		}
 		~seqcache()

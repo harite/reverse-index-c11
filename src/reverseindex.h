@@ -388,7 +388,7 @@ namespace qstardb
 				}
 				int dicSize = reader.readInt32();
 				// check dic
-				char temp[257];
+				char* tempData = new char[32 * 1024 * 4];
 				for (int i = 0; i < dicSize; i++)
 				{
 					if (reader.hasmore(1))
@@ -396,20 +396,22 @@ namespace qstardb
 						char len = reader.readChar();
 						if (reader.hasmore(len))
 						{
-							reader.read(temp,len);
+							reader.read(tempData,len);
 						}
 						else {
 							reader.close();
+							delete[] tempData;
 							return false;
 						}
 					}
 					else {
 						reader.close();
+						delete[] tempData;
 						return false;
 					}
 				}
 				//check index
-				char* temp = new char[32*1024*4];
+				
 				while (reader.hasmore(9)) 
 				{
 					char mark = reader.readChar();
@@ -421,38 +423,38 @@ namespace qstardb
 							short length = reader.readShort();
 							if (reader.hasmore(length*4))
 							{
-								reader.read(temp,length*4);
+								reader.read(tempData,length*4);
 							}
 							else
 							{
 								reader.close();
-								delete[] temp;
+								delete[] tempData;
 								return true;
 							}
 						}
 						else
 						{
 							reader.close();
-							delete[] temp;
+							delete[] tempData;
 							return true;
 						}
 					}
 					else if (mark==FILE_EOF &&  key==TAIL_MARK)
 					{
 						reader.close();
-						delete[] temp;
+						delete[] tempData;
 						return true;
 						
 					}
 					else
 					{
 						reader.close();
-						delete[] temp;
+						delete[] tempData;
 						return false;
 					}
 				}
 				reader.close();
-				delete[] temp;
+				delete[] tempData;
 				return false;
 			}
 			else
