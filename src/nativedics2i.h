@@ -116,9 +116,10 @@ extern "C"
 			if (smap->find(index) != smap->end())
 			{
 				string str;
-				bool result = (*smap)[index]->get(key, str);
-				maplock.unrdlock();
-				return charToJString(env,str.c_str(),str.length());
+				if ((*smap)[index]->get(key, str)) {
+					maplock.unrdlock();
+					return charToJString(env, str.c_str(), str.length());
+				}
 			}
 			maplock.unrdlock();
 			return charToJString(env,nullptr,0);
