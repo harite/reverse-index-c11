@@ -372,6 +372,26 @@ namespace seqmap {
 				return false;
 			}
 		}
+
+		bool get(int64 key, string& str)
+		{
+			int length;
+			int pos = _hash(key);
+			rwlock[pos].rdlock();
+			const char* temp = this->blocks[pos]->find(key, length);
+			if (temp != nullptr)
+			{
+
+				str.append(temp, length);
+				rwlock[pos].unrdlock();
+				return true;
+			}
+			else
+			{
+				rwlock[pos].unrdlock();
+				return false;
+			}
+		}
 	};
 }
 

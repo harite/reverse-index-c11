@@ -1,6 +1,5 @@
 #include "jni.h"
 #include "nativedics2s.h"
-#include "nativedici2b.h"
 #include "nativedici2i.h"
 #include "nativeintset.h"
 #include "nativeindex.h"

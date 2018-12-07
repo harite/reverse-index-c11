@@ -12,7 +12,6 @@
 #include "filestream.h"
 #include "stopencoder.h"
 #include "exeplan.h"
-#include  "dicmapi2s.h"
 #include <mutex>    
 
 using namespace std;
@@ -475,13 +474,13 @@ namespace qstardb
 				}
 				int size = reader.readInt32();
 				int* dicindexs = new int[size];
-				mapi2s::dici2s dmap((size / 256) + 16);
+				seqmap::seqcache dmap(16);
 				char temp[128];
 				for (int i = 0; i < size; i++)
 				{
 					char len = reader.readChar();
 					reader.read(temp, len);
-					dmap.insert(i, (signed char*)temp, len);
+					dmap.add(i, (const char*)temp, len);
 					dicindexs[i] = -1;
 				}
 				uint* tempindexs = new uint[1024 * 32];

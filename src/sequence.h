@@ -7,7 +7,7 @@
 #ifndef  SEQUENCE_H_
 #define  SEQUENCE_H_
 #pragma once
-#include "dicmapi2i.h"
+#include "elastici2i.h"
 namespace qstardb
 {
 	class sequence
@@ -69,12 +69,12 @@ namespace qstardb
 	private:
 		sequence* seq;
 		rwsyslock rwlock;
-		mapi2i::dici2i<qstardb::int64, uint>* table;
+		elasticsmap::emapi2i<qstardb::int64, uint>* table;
 	public:
 		seq64to32()
 		{
 			this->seq = new sequence();
-			this->table = new mapi2i::dici2i<int64, uint>(512 * 1024);
+			this->table = new elasticsmap::emapi2i<int64, uint>(1024);
 		}
 
 		~seq64to32()
@@ -121,8 +121,7 @@ namespace qstardb
 			if (table->get(key, rmseq))
 			{
 				this->seq->recycle(rmseq);
-				uint tempvalue;
-				table->remove(key, tempvalue);
+				table->remove(key);
 				rwlock.unwrlock();
 				return true;
 			}

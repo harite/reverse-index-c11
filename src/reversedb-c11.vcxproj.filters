@@ -60,25 +60,7 @@
     <ClInclude Include="nativedics2s.h">
       <Filter>jni</Filter>
     </ClInclude>
-    <ClInclude Include="dicmapi2b.h">
-      <Filter>util</Filter>
-    </ClInclude>
-    <ClInclude Include="dicmapi2s.h">
-      <Filter>util</Filter>
-    </ClInclude>
-    <ClInclude Include="dicmapi2i.h">
-      <Filter>util</Filter>
-    </ClInclude>
-    <ClInclude Include="nativedici2b.h">
-      <Filter>jni</Filter>
-    </ClInclude>
     <ClInclude Include="dicmaps2s.h">
-      <Filter>util</Filter>
-    </ClInclude>
-    <ClInclude Include="dicmaps2b.h">
-      <Filter>util</Filter>
-    </ClInclude>
-    <ClInclude Include="dichashset.h">
       <Filter>util</Filter>
     </ClInclude>
     <ClInclude Include="nativeintset.h">
@@ -127,6 +109,9 @@
       <Filter>util</Filter>
     </ClInclude>
     <ClInclude Include="elastici2i.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="elasticset.h">
       <Filter>util</Filter>
     </ClInclude>
   </ItemGroup>
