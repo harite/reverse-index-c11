@@ -88,17 +88,10 @@ extern "C"
 			i2ilock.rdlock();
 			if (intmap->find(index) != intmap->end())
 			{
-				int64 value;
-				bool result = (*intmap)[index]->get(key, value);
+				int64 value =qstardb::MIN_VALUE;
+				(*intmap)[index]->get(key, value);
 				i2ilock.unrdlock();
-				if (result)
-				{
-					return value;
-				}
-				else
-				{
-					return qstardb::MIN_VALUE;
-				}
+				return value;
 			}
 			i2ilock.unrdlock();
 			return false;

@@ -418,7 +418,8 @@ namespace qstardb
 					if (mark == NODE_ADD) {
 						if (reader.hasmore(10))
 						{
-							int64 sort = reader.readInt64();
+							//int64 sort
+							reader.readInt64();
 							short length = reader.readShort();
 							if (reader.hasmore(length*4))
 							{

@@ -1,7 +1,7 @@
 /*
 * dicmapi2i.h
-*  µ¯ÐÔÀ©ÈÝÕûÐÎ¼üÖµ¶Ô£¬Ö÷ÒªÓÃÓÚ×ª»¯ 64Î»ÕûÐÎµ½32Î»ÕûÐÎ
-*  Created on: 2015Äê2ÔÂ11ÈÕ
+*  ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¼ï¿½Öµï¿½Ô£ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ 64Î»ï¿½ï¿½ï¿½Îµï¿½32Î»ï¿½ï¿½ï¿½ï¿½
+*  Created on: 2015ï¿½ï¿½2ï¿½ï¿½11ï¿½ï¿½
 *      Author: jkuang
 */
 #ifndef ELASTICSMAP_I2I_H_
@@ -129,7 +129,6 @@ namespace elasticsmap
 				if (index >= 0)
 				{
 					int moveNum = size - index - 1;
-					this->nodes[index].value;
 					if (moveNum > 0)
 					{
 						memmove(this->nodes + index, this->nodes + index + 1, sizeof(node<k, v>) * moveNum);
@@ -159,7 +158,7 @@ namespace elasticsmap
 			return false;
 		}
 
-		/*ÅÐ¶¨Ò³µÄ·¶Î§ÊÇ·ñ°üº¬ key*/
+		/*ï¿½Ð¶ï¿½Ò³ï¿½Ä·ï¿½Î§ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ key*/
 		int rangecontains(k key)
 		{
 			if (this->nodes[this->size - 1].key < key)
@@ -173,7 +172,7 @@ namespace elasticsmap
 			return 0;
 		}
 
-		/*Ò³·¢Éú·ÖÁÑ*/
+		/*Ò³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
 		page<k,v>** splitToTwo(bool tail)
 		{
 			page<k, v>** pages = new page<k, v>*[2];
@@ -276,15 +275,15 @@ namespace elasticsmap
 			page<k, v>* newpage = new page<k, v>( size0 + size1 + 128);
 			memmove(newpage->nodes, temp0->nodes, sizeof(node<k,v>)*size0);
 			memmove(newpage->nodes + size0, temp1->nodes, sizeof(node<k, v>)*size1);
-			//ÉèÖÃÐÂÒ²µÄÊý¾ÝÁ¿
+			//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			newpage->size = size0 + size1;
-			//ÊÍ·ÅÔ­Êý¾ÝÒ³1
+			//ï¿½Í·ï¿½Ô­ï¿½ï¿½ï¿½ï¿½Ò³1
 			delete temp0;
-			//ÊÍ·ÅÔ­Êý¾ÝÒ³2
+			//ï¿½Í·ï¿½Ô­ï¿½ï¿½ï¿½ï¿½Ò³2
 			delete temp1;
-			//½«ÐÂÒ³Êý¾Ý·Åµ½ index0µÄÎ»ÖÃ
+			//ï¿½ï¿½ï¿½ï¿½Ò³ï¿½ï¿½ï¿½Ý·Åµï¿½ index0ï¿½ï¿½Î»ï¿½ï¿½
 			this->pages[index0] = newpage;
-			//½«¿Õ°×Ò³É¾³ý
+			//ï¿½ï¿½ï¿½Õ°ï¿½Ò³É¾ï¿½ï¿½
 			int moveNum = this->size - index1 - 1;
 			if (moveNum > 0)
 			{
@@ -300,15 +299,15 @@ namespace elasticsmap
 			{
 				return false;
 			}
-			//Èç¹ûÊý¾ÝÒ³ÄÚµÄÊý¾ÝÐ¡ÓÚ64Ìõ£¬ÔòºÏ²¢Êý¾ÝÒ³
+			//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò³ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½64ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï²ï¿½ï¿½ï¿½ï¿½ï¿½Ò³
 			else if (this->pages[index]->size <  64)
 			{
-				//Èç¹ûÊÇµÚÒ»Ò³£¬Ôò½«µÚ¶þÒ³µÄºÏ²¢µ½µÚÒ»Ò³
+				//ï¿½ï¿½ï¿½ï¿½Çµï¿½Ò»Ò³ï¿½ï¿½ï¿½ò½«µÚ¶ï¿½Ò³ï¿½ÄºÏ²ï¿½ï¿½ï¿½ï¿½ï¿½Ò»Ò³
 				if (index == 0)
 				{
 					combine(0, 1);
 				}
-				else//ÆäËûÇé¿öÔò½«Êý¾Ý½«ÓëÇ°Ò»Ò³ºÏ²¢
+				else//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý½ï¿½ï¿½ï¿½Ç°Ò»Ò³ï¿½Ï²ï¿½
 				{
 					combine(index - 1, index);
 				}

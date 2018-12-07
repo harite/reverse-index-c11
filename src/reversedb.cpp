@@ -141,9 +141,9 @@ void testelasticsmap()
 	{
 		ba.insert(i, i);
 	}
-	for (size_t i = 0; i < 1024 * 1024; i++)
+	for (int i = 0; i < 1024 * 1024; i++)
 	{
-		int a;
+		int a = 0;
 		ba.get(i, a);
 		if (i != a) {
 			cout << "error" << endl;
