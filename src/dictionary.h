@@ -20,7 +20,7 @@ namespace qstardb
 		dictionary(bool ignorecase)
 		{
 			this->ignorecase = ignorecase;
-			this->word_index = new seqmap::b2imap(1024);
+			this->word_index = new seqmap::b2imap(128);
 		}
 		~dictionary()
 		{

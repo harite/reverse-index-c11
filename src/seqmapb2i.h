@@ -92,8 +92,11 @@ namespace seqmap
 		{
 			delete[] keys;
 		}
-
-		int inset(const char* ch,int len)
+		int keySize()
+		{
+			return this->size;
+		}
+		int insert(const char* ch,int len)
 		{
 			if (this->size==0)
 			{
@@ -136,7 +139,7 @@ namespace seqmap
 		{
 			if (this->size == 0)
 			{
-				return -1;
+				return qstardb::MIN_INT_VALUE;
 			}
 			else 
 			{
@@ -147,7 +150,7 @@ namespace seqmap
 				}
 				else
 				{
-					return -1;
+					return qstardb::MIN_INT_VALUE;
 				}
 			}
 
@@ -182,13 +185,228 @@ namespace seqmap
 			}
 
 		}
+
+		/*数据库分裂为两个块*/
+		b2ipage** splitToTwo(bool tail)
+		{
+			b2ipage** pages = new b2ipage*[2];
+			int mid = (this->size * (tail ? 7 : 5)) / 10;
+			pages[0] = new b2ipage(this->seq, mid+128,this->_block);
+			pages[0]->size = mid;
+			memmove(pages[0]->keys,this->keys,sizeof(int)*pages[0]->size);
+		
+			pages[1] = new b2ipage(this->seq, this->size - mid + 128, this->_block);
+			pages[1]->size = this->size - mid;
+			memmove(pages[1]->keys, this->keys+ mid, sizeof(int)*pages[1]->size);
+			return pages;
+		}
+
+		/*判定页的范围是否包含 key*/
+		int rangecontains(const char* key,int len)
+		{
+			int tailLength;
+			const char* tail = _block->find(keys[this->size-1], tailLength);
+			if (compare(tail, tailLength, key, len) < 0)
+			{
+				return -1;
+			}
+			int headLength;
+			const char* head = _block->find(keys[0], headLength);
+			if (compare(head, headLength, key,len) > 0)
+			{
+				return 1;
+			}
+			return 0;
+		}
 	};
+
+	class b2iblcok
+	{
+	private:
+		int size{1};
+		b2ipage** pages;
+		seqblock* _block;
+		qstardb::sequence* seq;
+		inline int indexOf(b2ipage** pages, int size,const char* key,int len, type _type)
+		{
+			int fromIndex = 0;
+			int toIndex = size - 1;
+			while (fromIndex <= toIndex)
+			{
+				int mid = (fromIndex + toIndex) >> 1;
+				int cmp = pages[mid]->rangecontains(key,len);
+				if (cmp < 0)
+					fromIndex = mid + 1;
+				else if (cmp > 0)
+					toIndex = mid - 1;
+				else
+					return _type == type_insert ? -(mid + 1) : mid; // key
+			}
+			switch (_type)
+			{
+			case type_insert:
+				return fromIndex > size ? size : fromIndex;
+			case type_ceil:
+				return fromIndex;
+			case type_index:
+				return -(fromIndex + 1);
+			default:
+				return toIndex;
+			}
+		}
+	public:
+		b2iblcok(qstardb::sequence* seq, seqblock* _block)
+		{
+			this->seq = seq;
+			this->_block = _block;
+			this->pages = new b2ipage*[this->size];
+			this->pages[0] = new b2ipage(this->seq,1024,this->_block);
+		}
+		~b2iblcok()
+		{
+			for (int i = 0; i < this->size; i++)
+			{
+				delete this->pages[i];
+			}
+			delete[] pages;
+		}
+
+		inline int insertAndSplit(int index,  const char* key, int length)
+		{
+
+			int reuslt = this->pages[index]->insert(key, length);
+			if (this->pages[index]->size > 1024*8)
+			{
+				b2ipage** temp = this->pages[index]->splitToTwo(index == this->size - 1);
+				b2ipage** newpages = new b2ipage*[this->size + 1];
+				if (index > 0)
+				{
+					memmove(newpages, this->pages, sizeof(b2ipage*)*index);
+				}
+				int moveNum = this->size - index - 1;
+				if (moveNum > 0)
+				{
+					memmove(newpages + index + 2, this->pages + index + 1, sizeof(page*) * moveNum);
+				}
+				newpages[index] = temp[0];
+				newpages[index + 1] = temp[1];
+				delete pages[index];
+				delete[] temp;
+				delete[] this->pages;
+				this->pages = newpages;
+				this->size++;
+			}
+			return reuslt;
+		}
+
+		bool combine(int index0, int index1)
+		{
+			b2ipage* temp0 = this->pages[index0];
+			b2ipage* temp1 = this->pages[index1];
+			int size0 = temp0->keySize();
+			int size1 = temp1->keySize();
+			b2ipage* newpage = new b2ipage(this->seq,size0+size1+128,this->_block);
+			memmove(newpage->keys, temp0->keys, sizeof(int)*size0);
+			memmove(newpage->keys+ size0, temp1->keys, sizeof(int)*size1);
+			//设置新也的数据量
+			newpage->size = size0 + size1;
+			//释放原数据页1
+			delete temp0;
+			//释放原数据页2
+			delete temp1;
+			//将新页数据放到 index0的位置
+			this->pages[index0] = newpage;
+			//将空白页删除
+			int moveNum = this->size - index1 - 1;
+			if (moveNum > 0)
+			{
+				memmove(this->pages + index1, this->pages + index1 + 1, sizeof(b2ipage*)*moveNum);
+			}
+			this->size--;
+			return true;
+		}
+
+		inline bool combine(int index)
+		{
+			if (this->size == 1)
+			{
+				return false;
+			}
+			//如果数据页内的数据小于64条，则合并数据页
+			else if (this->pages[index]->keySize() <  64)
+			{
+				//如果是第一页，则将第二页的合并到第一页
+				if (index == 0)
+				{
+					combine(0, 1);
+				}
+				else//其他情况则将数据将与前一页合并
+				{
+					combine(index - 1, index);
+				}
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		int insert(const char* key, int len)
+		{
+			if (this->size == 1 || this->pages[0]->rangecontains(key,len) >= 0)
+			{
+				return this->insertAndSplit(0,key,len);
+			}
+			else if (this->pages[this->size - 1]->rangecontains(key,len) <= 0)
+			{
+				return this->insertAndSplit(this->size - 1, key, len);
+			}
+			else
+			{
+				int pageno = indexOf(pages, this->size,key,len,type_ceil);
+				return this->insertAndSplit(pageno, key, len);
+			}
+		}
+
+		bool remove(const char* key,int len)
+		{
+			if (this->pages[this->size - 1]->rangecontains(key,len) == 0)
+			{
+				bool deled = this->pages[this->size - 1]->remove(key,len);
+				//this->combine(this->size - 1);
+				return deled;
+			}
+			else
+			{
+				int pageno = indexOf(this->pages, this->size,key,len, type_index);
+				if (pageno >= 0)
+				{
+					bool deled = this->pages[pageno]->remove(key,len);
+					this->combine(pageno);
+					return deled;
+				}
+				return false;
+			}
+		}
+		int get(const char* key,int len)
+		{
+			int pageno = indexOf(this->pages,  this->size,key,len, type_index);
+			if (pageno >= 0) {
+				return this->pages[pageno]->get(key, len);
+			}
+			else {
+				return qstardb::MIN_INT_VALUE;
+			}
+		}
+	};
+
 	class b2imap
 	{
 	private:
 		int partition;
 		seqblock* _block;
-		b2ipage** pages;
+		b2iblcok** pages;
 		qstardb::sequence* seq;
 		qstardb::rwsyslock rwlock;
 		inline int ypos(const char* ch,int len)
@@ -207,10 +425,10 @@ namespace seqmap
 			this->partition = part;
 			this->_block = new seqblock();
 			this->seq = new qstardb::sequence();
-			this->pages = new b2ipage*[part];
+			this->pages = new b2iblcok*[part];
 			for (int i = 0; i < part; i++)
 			{
-				this->pages[i] = new b2ipage(this->seq,1024, this->_block);
+				this->pages[i] = new b2iblcok(this->seq,this->_block);
 			}
 		}
 		~b2imap()
@@ -256,7 +474,7 @@ namespace seqmap
 		{
 			int pos = ypos(ch, len);
 			rwlock.wrlock();
-			int result= this->pages[pos]->inset(ch, len);
+			int result= this->pages[pos]->insert(ch, len);
 			rwlock.unwrlock();
 			return result;
 		}

@@ -391,7 +391,7 @@ namespace btree
 			delete[] shardData;
 		}
 
-		bool insertAndSplit(int index, int64 key, const char* data, int length)
+		inline bool insertAndSplit(int index, int64 key, const char* data, int length)
 		{
 
 			bool insertNew = this->pages[index]->insert(key, data, length);
