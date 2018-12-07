@@ -12,7 +12,7 @@
 #include "classdef.h"
 #include "rwsyslock.h"
 using namespace std;
-namespace mapi2i
+namespace elasticsmap
 {
 	typedef long long int64;
 
@@ -118,7 +118,7 @@ namespace mapi2i
 				}
 			}
 		}
-		bool remove(k key, v& value)
+		bool remove(k key)
 		{
 			if (this->size == 0)
 			{
@@ -196,7 +196,35 @@ namespace mapi2i
 	private:
 		int size{ 1 };
 		page<k, v>** pages;
-
+	public:
+		block() = default;
+		inline int indexOf(page<k, v>** pages, int size,k key,  type _type)
+		{
+			int fromIndex = 0;
+			int toIndex = size - 1;
+			while (fromIndex <= toIndex)
+			{
+				int mid = (fromIndex + toIndex) >> 1;
+				int cmp = pages[mid]->rangecontains(key);
+				if (cmp < 0)
+					fromIndex = mid + 1;
+				else if (cmp > 0)
+					toIndex = mid - 1;
+				else
+					return _type == type_insert ? -(mid + 1) : mid; // key
+			}
+			switch (_type)
+			{
+			case type_insert:
+				return fromIndex > size ? size : fromIndex;
+			case type_ceil:
+				return fromIndex;
+			case type_index:
+				return -(fromIndex + 1);
+			default:
+				return toIndex;
+			}
+		}
 
 		inline int insertAndSplit(int index,k key,v value)
 		{
@@ -279,7 +307,104 @@ namespace mapi2i
 				return false;
 			}
 		}
-	};
+		int insert(k key,v value)
+		{
+			if (this->size == 1 || this->pages[0]->rangecontains(key) >= 0)
+			{
+				return this->insertAndSplit(0, key, value);
+			}
+			else if (this->pages[this->size - 1]->rangecontains(key, value) <= 0)
+			{
+				return this->insertAndSplit(this->size - 1, key, value);
+			}
+			else
+			{
+				int pageno = indexOf(pages, this->size, key, value, type_ceil);
+				return this->insertAndSplit(pageno, key, value);
+			}
+		}
 
+		bool remove(k key)
+		{
+			if (this->pages[this->size - 1]->rangecontains(key) == 0)
+			{
+				bool deled = this->pages[this->size - 1]->remove(key);
+				this->combine(this->size - 1);
+				return deled;
+			}
+			else
+			{
+				int pageno = indexOf(this->pages, this->size, key,  type_index);
+				if (pageno >= 0)
+				{
+					bool deled = this->pages[pageno]->remove(key);
+					this->combine(pageno);
+					return deled;
+				}
+				return false;
+			}
+		}
+		int get(k key, v& value)
+		{
+			int pageno = indexOf(this->pages, this->size, key,  type_index);
+			if (pageno >= 0) {
+				return this->pages[pageno]->get(key, value);
+			}
+			else {
+				return qstardb::MIN_INT_VALUE;
+			}
+		}
+	};
+	template<class k, class v> class emapi2i {
+	private:
+		int partition;
+		block<k, v>* blocks;
+		qstardb::rwsyslock rwlock;
+		inline int ypos(k key)
+		{
+			int pos = key % partition;
+			if (pos < 0) {
+				return -pos;
+			}
+			else {
+				return pos;
+			}
+		}
+	public:
+		emapi2i(int partition)
+		{
+			this->partition =  partition;
+			this->blocks = new block<k, v>[this->partition];
+		}
+		~emapi2i()
+		{
+			delete[] this->blocks;
+		}
+	
+		int get(k key, v& value)
+		{
+			int pos = ypos(key);
+			rwlock.rdlock();
+			int result = this->blocks[pos]->get(key, value);
+			rwlock.unrdlock();
+			return result;
+		}
+		int add(k key,v value)
+		{
+			int pos = ypos(key);
+			rwlock.wrlock();
+			int result = this->blocks[pos]->insert(key,value);
+			rwlock.unwrlock();
+			return result;
+		}
+		bool remove(k key)
+		{
+			int pos = ypos(key);
+			rwlock.wrlock();
+			int result = this->blocks[pos]->remove(key);
+			rwlock.unwrlock();
+			return result;
+		}
+	};
 }
 #endif

@@ -374,7 +374,7 @@ namespace seqmap
 			if (this->pages[this->size - 1]->rangecontains(key,len) == 0)
 			{
 				bool deled = this->pages[this->size - 1]->remove(key,len);
-				//this->combine(this->size - 1);
+				this->combine(this->size - 1);
 				return deled;
 			}
 			else
@@ -406,7 +406,7 @@ namespace seqmap
 	private:
 		int partition;
 		seqblock* _block;
-		b2iblcok** pages;
+		b2iblcok** blocks;
 		qstardb::sequence* seq;
 		qstardb::rwsyslock rwlock;
 		inline int ypos(const char* ch,int len)
@@ -425,19 +425,19 @@ namespace seqmap
 			this->partition = part;
 			this->_block = new seqblock();
 			this->seq = new qstardb::sequence();
-			this->pages = new b2iblcok*[part];
+			this->blocks = new b2iblcok*[part];
 			for (int i = 0; i < part; i++)
 			{
-				this->pages[i] = new b2iblcok(this->seq,this->_block);
+				this->blocks[i] = new b2iblcok(this->seq,this->_block);
 			}
 		}
 		~b2imap()
 		{
 			for (int i = 0; i < this->partition; i++)
 			{
-				delete this->pages[i];
+				delete this->blocks[i];
 			}
-			delete[] this->pages;
+			delete[] this->blocks;
 			delete this->seq;
 			delete this->_block;
 		}
@@ -466,7 +466,7 @@ namespace seqmap
 		{
 			int pos = ypos(ch,len);
 			rwlock.rdlock();
-			int result= this->pages[pos]->get(ch,len);
+			int result= this->blocks[pos]->get(ch,len);
 			rwlock.unrdlock();
 			return result;
 		}
@@ -474,7 +474,7 @@ namespace seqmap
 		{
 			int pos = ypos(ch, len);
 			rwlock.wrlock();
-			int result= this->pages[pos]->insert(ch, len);
+			int result= this->blocks[pos]->insert(ch, len);
 			rwlock.unwrlock();
 			return result;
 		}
@@ -482,7 +482,7 @@ namespace seqmap
 		{
 			int pos = ypos(ch, len);
 			rwlock.wrlock();
-			int result = this->pages[pos]->remove(ch,len);
+			int result = this->blocks[pos]->remove(ch,len);
 			rwlock.unwrlock();
 			return result;
 		}

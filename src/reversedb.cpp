@@ -128,6 +128,7 @@ int test3(string testfile, reverse::rmindex* index101, string outfile)
 using namespace std::chrono;
 int main()
 {
+	elasticsmap::block<int,int> ba;
 	seqmap::b2imap* mp = new seqmap::b2imap(128);
 	for (int i = 0; i < 1024*1024; i++)
 	{
