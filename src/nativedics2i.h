@@ -123,6 +123,21 @@ extern "C"
 			maplock.unrdlock();
 			return charToJString(env,nullptr,0);
 		}
+
+		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024SMap_maxSeq(JNIEnv * env, jclass, jint index)
+		{
+
+			maplock.rdlock();
+			if (smap->find(index) != smap->end())
+			{
+				string str;
+				int result = (*smap)[index]->curSeq();
+				maplock.unrdlock();
+				return result;
+			}
+			maplock.unrdlock();
+			return 0;
+		}
 	}
 #ifdef __cplusplus
 }
