@@ -126,6 +126,9 @@
     <ClInclude Include="nativedics2i.h">
       <Filter>jni</Filter>
     </ClInclude>
+    <ClInclude Include="elasticsmapi2i.h">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="reversedb.cpp">

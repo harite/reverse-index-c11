@@ -156,6 +156,7 @@
     <ClInclude Include="dicmaps2s.h" />
     <ClInclude Include="dictionary.h" />
     <ClInclude Include="dxtemplate.h" />
+    <ClInclude Include="elasticsmapi2i.h" />
     <ClInclude Include="exeplan.h" />
     <ClInclude Include="filestream.h" />
     <ClInclude Include="dicmapi2b.h" />

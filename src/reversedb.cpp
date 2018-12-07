@@ -9,6 +9,7 @@
 #include "nativeembtree.h"
 #include "seqmapi2b.h"
 #include "nativedics2i.h"
+#include "elasticsmapi2i.h"
 #include<sstream>
 #include <string.h>
 #include <atomic>
