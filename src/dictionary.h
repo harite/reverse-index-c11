@@ -7,7 +7,7 @@
 #ifndef  DICTIONARY_H_
 #define DICTIONARY_H_
 #include "rwsyslock.h"
-#include "seqmapb2i.h"
+#include "elasticb2i.h"
 namespace qstardb
 {
 	class dictionary

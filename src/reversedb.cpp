@@ -7,9 +7,9 @@
 #include "nativebase.h"
 #include "nativebtree.h"
 #include "nativeembtree.h"
-#include "seqmapi2b.h"
+#include "elastici2b.h"
 #include "nativedics2i.h"
-#include "elasticsmapi2i.h"
+#include "elastici2i.h"
 #include<sstream>
 #include <string.h>
 #include <atomic>
@@ -129,18 +129,29 @@ using namespace std::chrono;
 int main()
 {
 	elasticsmap::block<int,int> ba;
-	seqmap::b2imap* mp = new seqmap::b2imap(128);
-	for (int i = 0; i < 1024*1024; i++)
+	for (size_t i = 0; i < 1024*1024; i++)
 	{
-		string str = tostring(i);
-		mp->add(str.c_str(),str.length());
+		ba.insert(i,i);
 	}
-	for (int i = 0; i < 1024; i++)
+	for (size_t i = 0; i < 1024 * 1024; i++)
 	{
-		string str;
-		mp->get(i,str);
-		cout << str << endl;
+		ba.remove(i);
+
 	}
+	for (size_t i = 0; i < 1024 * 1024; i++)
+	{
+		ba.insert(i, i);
+	}
+	for (size_t i = 0; i < 1024 * 1024; i++)
+	{
+		int a;
+		ba.get(i,a);
+		if (i != a) {
+			cout << "error" << endl;
+		}
+
+	}
+
 	cout << "ok" << endl;
 	int a;
 	cin >> a;

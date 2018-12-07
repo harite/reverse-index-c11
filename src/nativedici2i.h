@@ -4,20 +4,20 @@
  *  Created on: 2015年3月11日
  *      Author: jkuang
  */
-#include "dicmapi2i.h"
+#include "elastici2i.h"
 #ifndef _Included_org_jkuang_qstardb_I2IMap
 #define _Included_org_jkuang_qstardb_I2IMap
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-	namespace dici2imap
+	namespace elasticsmap
 	{
 		typedef long long int64;
 
 		static qstardb::rwsyslock i2ilock;
 
-		static map<int, mapi2i::dici2i<int64, int64>*>* intmap = new map<int, mapi2i::dici2i<int64, int64>*>();
+		static map<int, emapi2i<int64, int64>*>* intmap = new map<int, emapi2i<int64, int64>*>();
 
 		/*
 		 * Class:     org_jkuang_qstardb_Native_I2IMap
@@ -33,7 +33,7 @@ extern "C"
 			}
 			else
 			{
-				(*intmap)[index] = new mapi2i::dici2i<int64, int64>(mode);
+				(*intmap)[index] = new emapi2i<int64, int64>(mode);
 				cout << "create intmap:" << index << endl;
 			}
 			i2ilock.unwrlock();
@@ -114,53 +114,17 @@ extern "C"
 			i2ilock.rdlock();
 			if (intmap->find(index) != intmap->end())
 			{
-				int64 oldvalue;
-				bool result = (*intmap)[index]->remove(key, oldvalue);
+				bool result = (*intmap)[index]->remove(key);
 				if (result)
 				{
 					i2ilock.unrdlock();
-					return oldvalue;
+					return 0;
 				}
 			}
 			i2ilock.unrdlock();
 			return qstardb::MIN_VALUE;
 
 		}
-
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024I2IMap_load(JNIEnv * env, jclass, jint index, jstring file)
-		{
-			i2ilock.rdlock();
-			if (intmap->find(index) != intmap->end())
-			{
-				jboolean copy = false;
-				const char* ch = env->GetStringUTFChars(file, &copy);
-				string filename(ch);
-				(*intmap)[index]->readfile(filename);
-				env->ReleaseStringUTFChars(file, ch);
-				i2ilock.unrdlock();
-				return true;
-			}
-			i2ilock.unrdlock();
-			return false;
-		}
-
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024I2IMap_dump(JNIEnv *env, jclass, jint index, jstring file)
-		{
-			i2ilock.rdlock();
-			if (intmap->find(index) != intmap->end())
-			{
-				jboolean copy = false;
-				const char* ch = env->GetStringUTFChars(file, &copy);
-				string filename(ch);
-				(*intmap)[index]->writefile(filename);
-				env->ReleaseStringUTFChars(file, ch);
-				i2ilock.unrdlock();
-				return true;
-			}
-			i2ilock.unrdlock();
-			return false;
-		}
-
 	}
 #ifdef __cplusplus
 }

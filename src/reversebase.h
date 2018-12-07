@@ -9,7 +9,7 @@
 #define REVERSEBASE_H_
 #include "reverseindex.h"
 #include "btreei2b.h"
-#include "seqmapi2b.h"
+#include "elastici2b.h"
 using namespace std;
 using namespace qstardb;
 namespace reverse {

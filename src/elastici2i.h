@@ -34,8 +34,7 @@ namespace elasticsmap
 	{
 	private:
 	
-		int length{ 0 };
-		node<k, v>* nodes{ null };
+
 		int indexof(node<k, v>* nodes,int size,k key, qstardb::type _type)
 		{
 			int fromIndex = 0;
@@ -79,6 +78,8 @@ namespace elasticsmap
 	
 	public:
 		int size{ 0 };
+		int length{ 0 };
+		node<k, v>* nodes{ null };
 		page(int length)
 		{
 			this->length = length;
@@ -130,7 +131,7 @@ namespace elasticsmap
 				if (index >= 0)
 				{
 					int moveNum = size - index - 1;
-					value = this->nodes[index].value;
+					this->nodes[index].value;
 					if (moveNum > 0)
 					{
 						memmove(this->nodes + index, this->nodes + index + 1, sizeof(node<k, v>) * moveNum);
@@ -143,7 +144,6 @@ namespace elasticsmap
 					return false;
 				}
 			}
-
 		}
 		bool contains(k key)
 		{
@@ -162,7 +162,7 @@ namespace elasticsmap
 		}
 
 		/*判定页的范围是否包含 key*/
-		template<typename t> int rangecontains(k key)
+		int rangecontains(k key)
 		{
 			if (this->nodes[this->size - 1].key < key)
 			{
@@ -197,7 +197,21 @@ namespace elasticsmap
 		int size{ 1 };
 		page<k, v>** pages;
 	public:
-		block() = default;
+		block()
+		{
+			this->pages = new page<k, v>*[this->size];
+			for (int i = 0; i < this->size; i++)
+			{
+				this->pages[i] = new page<k, v>(64);
+			}
+		}
+		~block(){
+			for (int i = 0; i < this->size; i++)
+			{
+				delete this->pages[i];
+			}
+			delete[] this->pages;
+		}
 		inline int indexOf(page<k, v>** pages, int size,k key,  type _type)
 		{
 			int fromIndex = 0;
@@ -261,9 +275,9 @@ namespace elasticsmap
 			page<k, v>* temp1 = this->pages[index1];
 			int size0 = temp0->size;
 			int size1 = temp1->size;
-			page<k, v>* newpage = new page<k, v>(this->seq, size0 + size1 + 128, this->_block);
-			memmove(newpage->keys, temp0->keys, sizeof(node<k,v>)*size0);
-			memmove(newpage->keys + size0, temp1->keys, sizeof(node<k, v>)*size1);
+			page<k, v>* newpage = new page<k, v>( size0 + size1 + 128);
+			memmove(newpage->nodes, temp0->nodes, sizeof(node<k,v>)*size0);
+			memmove(newpage->nodes + size0, temp1->nodes, sizeof(node<k, v>)*size1);
 			//设置新也的数据量
 			newpage->size = size0 + size1;
 			//释放原数据页1
@@ -313,13 +327,13 @@ namespace elasticsmap
 			{
 				return this->insertAndSplit(0, key, value);
 			}
-			else if (this->pages[this->size - 1]->rangecontains(key, value) <= 0)
+			else if (this->pages[this->size - 1]->rangecontains(key) <= 0)
 			{
 				return this->insertAndSplit(this->size - 1, key, value);
 			}
 			else
 			{
-				int pageno = indexOf(pages, this->size, key, value, type_ceil);
+				int pageno = indexOf(pages, this->size, key,  type_ceil);
 				return this->insertAndSplit(pageno, key, value);
 			}
 		}
@@ -385,7 +399,7 @@ namespace elasticsmap
 		{
 			int pos = ypos(key);
 			rwlock.rdlock();
-			int result = this->blocks[pos]->get(key, value);
+			int result = this->blocks[pos].get(key, value);
 			rwlock.unrdlock();
 			return result;
 		}
@@ -393,7 +407,7 @@ namespace elasticsmap
 		{
 			int pos = ypos(key);
 			rwlock.wrlock();
-			int result = this->blocks[pos]->insert(key,value);
+			int result = this->blocks[pos].insert(key,value);
 			rwlock.unwrlock();
 			return result;
 		}
@@ -401,7 +415,7 @@ namespace elasticsmap
 		{
 			int pos = ypos(key);
 			rwlock.wrlock();
-			int result = this->blocks[pos]->remove(key);
+			int result = this->blocks[pos].remove(key);
 			rwlock.unwrlock();
 			return result;
 		}

@@ -2,7 +2,7 @@
 #ifndef _SEQMAP_B2I_H
 #define _SEQMAP_B2I_H
 #include "sequence.h"
-#include "seqmapi2b.h"
+#include "elastici2b.h"
 //add 2018-09-08
 namespace seqmap 
 {

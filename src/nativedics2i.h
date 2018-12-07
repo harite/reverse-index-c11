@@ -8,7 +8,7 @@
 #include "nativejni.h"
 #include "filestream.h"
 #include "rwsyslock.h"
-#include "seqmapb2i.h"
+#include "elasticb2i.h"
 #ifndef _Included_org_jkuang_qstardb_S2I
 #define _Included_org_jkuang_qstardb_S2I
 #ifdef __cplusplus

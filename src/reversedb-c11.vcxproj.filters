@@ -117,16 +117,16 @@
     <ClInclude Include="nativeembtree.h">
       <Filter>jni</Filter>
     </ClInclude>
-    <ClInclude Include="seqmapi2b.h">
-      <Filter>util</Filter>
-    </ClInclude>
-    <ClInclude Include="seqmapb2i.h">
-      <Filter>util</Filter>
-    </ClInclude>
     <ClInclude Include="nativedics2i.h">
       <Filter>jni</Filter>
     </ClInclude>
-    <ClInclude Include="elasticsmapi2i.h">
+    <ClInclude Include="elastici2b.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="elasticb2i.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="elastici2i.h">
       <Filter>util</Filter>
     </ClInclude>
   </ItemGroup>
