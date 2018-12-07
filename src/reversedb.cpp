@@ -5,7 +5,6 @@
 #include "nativeindex.h"
 #include "nativebase.h"
 #include "nativebtree.h"
-#include "nativeembtree.h"
 #include "elastici2b.h"
 #include "nativedics2i.h"
 #include "elastici2i.h"
@@ -123,14 +122,15 @@ int test3(string testfile, reverse::rmindex* index101, string outfile)
 	writer.close();
 	return count;
 }
-#include "btreei2b.h"
+#include "elastictree.h"
 using namespace std::chrono;
-int main()
+
+void testelasticsmap()
 {
-	elasticsmap::block<int,int> ba;
-	for (size_t i = 0; i < 1024*1024; i++)
+	elasticsmap::block<int, int> ba;
+	for (size_t i = 0; i < 1024 * 1024; i++)
 	{
-		ba.insert(i,i);
+		ba.insert(i, i);
 	}
 	for (size_t i = 0; i < 1024 * 1024; i++)
 	{
@@ -144,13 +144,37 @@ int main()
 	for (size_t i = 0; i < 1024 * 1024; i++)
 	{
 		int a;
-		ba.get(i,a);
+		ba.get(i, a);
 		if (i != a) {
 			cout << "error" << endl;
 		}
-
+	}
+}
+int main()
+{
+	setint::keyset<int> kset(16);
+	for (int i = 0; i < 1024*1024*10; i++)
+	{
+		kset.add(i);	
+	}
+	for (int i = 0; i < 1024 * 1024*10; i++)
+	{
+	//	if (i % 3 == 0)
+			kset.remove(i);
 	}
 
+	for (int i = 0; i < 1024 * 1024*10; i++)
+	{
+		if (i % 3 == 0)
+		{
+			if (kset.contains(i)) {
+				cout << "error" << endl;
+			}
+		}
+		else if (!kset.contains(i)) {
+			//cout << "error" << endl;
+		}
+	}
 	cout << "ok" << endl;
 	int a;
 	cin >> a;

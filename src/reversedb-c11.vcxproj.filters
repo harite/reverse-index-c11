@@ -87,16 +87,10 @@
     <ClInclude Include="reverseindex.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="btreei2b.h">
-      <Filter>util</Filter>
-    </ClInclude>
     <ClInclude Include="nativebtree.h">
       <Filter>jni</Filter>
     </ClInclude>
     <ClInclude Include="nativejni.h">
-      <Filter>jni</Filter>
-    </ClInclude>
-    <ClInclude Include="nativeembtree.h">
       <Filter>jni</Filter>
     </ClInclude>
     <ClInclude Include="nativedics2i.h">
@@ -112,6 +106,9 @@
       <Filter>util</Filter>
     </ClInclude>
     <ClInclude Include="elasticset.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="elastictree.h">
       <Filter>util</Filter>
     </ClInclude>
   </ItemGroup>

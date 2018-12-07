@@ -148,7 +148,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="btreei2b.h" />
+    <ClInclude Include="elastictree.h" />
     <ClInclude Include="classdef.h" />
     <ClInclude Include="dataindex.h" />
     <ClInclude Include="dataqueue.h" />
@@ -178,7 +178,6 @@
     <ClInclude Include="stopdecoder.h" />
     <ClInclude Include="stopencoder.h" />
     <ClInclude Include="syntaxparser.h" />
-    <ClInclude Include="nativeembtree.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="reversedb.cpp" />

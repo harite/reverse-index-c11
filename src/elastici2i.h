@@ -33,8 +33,6 @@ namespace elasticsmap
 	template<class k, class v> class page
 	{
 	private:
-	
-
 		int indexof(node<k, v>* nodes,int size,k key, qstardb::type _type)
 		{
 			int fromIndex = 0;

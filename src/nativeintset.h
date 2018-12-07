@@ -131,39 +131,8 @@ extern "C"
 			rwlock.unrdlock();
 			return false;
 		}
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int32Set_load(JNIEnv * env, jclass, jint index, jstring file)
-		{
-			rwlock.rdlock();
-			if (int32sets->find(index) != int32sets->end())
-			{
-				jboolean copy = false;
-				const char* ch = env->GetStringUTFChars(file, &copy);
-				string filename(ch);
-				(*int32sets)[index]->readfile(filename);
-				env->ReleaseStringUTFChars(file, ch);
-				rwlock.unrdlock();
-				return true;
-			}
-			rwlock.unrdlock();
-			return false;
-		}
 
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int32Set_dump(JNIEnv *env, jclass, jint index, jstring file)
-		{
-			rwlock.rdlock();
-			if (int32sets->find(index) != int32sets->end())
-			{
-				jboolean copy = false;
-				const char* ch = env->GetStringUTFChars(file, &copy);
-				string filename(ch);
-				(*int32sets)[index]->writefile(filename);
-				env->ReleaseStringUTFChars(file, ch);
-				rwlock.unrdlock();
-				return true;
-			}
-			rwlock.unrdlock();
-			return false;
-		}
+
 
 		/*
 		 * Class:     org_jkuang_qstardb_NativeSet_Int64Set
@@ -261,39 +230,6 @@ extern "C"
 			return false;
 		}
 
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int64Set_load(JNIEnv * env, jclass, jint index, jstring file)
-		{
-			rwlock.rdlock();
-			if (int64sets->find(index) != int64sets->end())
-			{
-				jboolean copy = false;
-				const char* ch = env->GetStringUTFChars(file, &copy);
-				string filename(ch);
-				(*int64sets)[index]->readfile(filename);
-				env->ReleaseStringUTFChars(file, ch);
-				rwlock.unrdlock();
-				return true;
-			}
-			rwlock.unrdlock();
-			return false;
-		}
-
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024Int64Set_dump(JNIEnv *env, jclass, jint index, jstring file)
-		{
-			rwlock.rdlock();
-			if (int64sets->find(index) != int64sets->end())
-			{
-				jboolean copy = false;
-				const char* ch = env->GetStringUTFChars(file, &copy);
-				string filename(ch);
-				(*int64sets)[index]->writefile(filename);
-				env->ReleaseStringUTFChars(file, ch);
-				rwlock.unrdlock();
-				return true;
-			}
-			rwlock.unrdlock();
-			return false;
-		}
 		/*
 		 * Class:     org_jkuang_qstardb_NativeSet_Int64Set
 		 * Method:    size

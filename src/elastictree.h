@@ -2,6 +2,8 @@
 #ifndef BTREEI2B_H_
 #define BTREEI2B_H_
 #include <string.h>
+#include "filestream.h"
+#include "rwsyslock.h"
 namespace btree
 {
 	typedef long long int64;
@@ -596,7 +598,7 @@ namespace btree
 			rwlock[pos].unwrlock();
 		}
 
-		bool find(int64 key, charwriter& writer)
+		bool find(int64 key, qstardb::charwriter& writer)
 		{
 			int length;
 			int pos = _hash(key);

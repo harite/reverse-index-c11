@@ -8,7 +8,7 @@
 #ifndef REVERSEBASE_H_
 #define REVERSEBASE_H_
 #include "reverseindex.h"
-#include "btreei2b.h"
+#include "elastictree.h"
 #include "elastici2b.h"
 using namespace std;
 using namespace qstardb;

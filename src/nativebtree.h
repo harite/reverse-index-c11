@@ -8,7 +8,7 @@
 #include "nativejni.h"
 #include "filestream.h"
 #include "rwsyslock.h"
-#include "btreei2b.h"
+#include "elastictree.h"
 #ifndef _Included_org_jkuang_qstardb_I2BBTREE
 #define _Included_org_jkuang_qstardb_I2BBTREE
 #ifdef __cplusplus

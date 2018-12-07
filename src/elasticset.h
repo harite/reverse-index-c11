@@ -1,11 +1,5 @@
-/*
- * dichashset.h
- *  基础组件 hashset
- *  Created on: 2015年2月11日
- *      Author: jkuang
- */
-#ifndef DICHASHSET_H_
-#define DICHASHSET_H_
+#ifndef adDICHASHSET_H_
+#define adDICHASHSET_H_
 #include <string.h>
 #include "classdef.h"
 #include "filestream.h"
@@ -15,13 +9,13 @@ namespace setint
 {
 	typedef long long int64;
 	typedef unsigned int uint;
-	template<class k> class block
+	template<class k> class page
 	{
-	private:
-		k * keys;
+	public:
+		k* keys;
 		int size;
+	private:
 		int length;
-		qstardb::rwsyslock rwlock;
 		int indexof(k key, qstardb::type _type)
 		{
 			int fromIndex = 0;
@@ -65,25 +59,23 @@ namespace setint
 			}
 		}
 	public:
-		block()
+		page(int length)
 		{
 			this->size = 0;
-			this->length = 16;
+			this->length = length;
 			this->keys = new k[this->length];
 		}
-		~block()
+		~page()
 		{
 			delete[] keys;
 		}
 
 		bool add(k key)
 		{
-			rwlock.wrlock();
 			ensurecapacity(this->size + 1);
 			if (this->size == 0 || keys[this->size - 1] < key)
 			{
 				keys[this->size++] = key;
-				rwlock.unwrlock();
 				return true;
 			}
 			else
@@ -98,12 +90,10 @@ namespace setint
 					}
 					keys[index] = key;
 					this->size++;
-					rwlock.unwrlock();
 					return true;
 				}
 				else
 				{
-					rwlock.unwrlock();
 					return false;
 				}
 			}
@@ -117,7 +107,6 @@ namespace setint
 			}
 			else
 			{
-				rwlock.wrlock();
 				int index = indexof(key, qstardb::type_index);
 				if (index >= 0)
 				{
@@ -131,12 +120,10 @@ namespace setint
 					{
 						this->keys[--size] = 0;
 					}
-					rwlock.unwrlock();
 					return true;
 				}
 				else
 				{
-					rwlock.unwrlock();
 					return false;
 				}
 			}
@@ -144,34 +131,231 @@ namespace setint
 		}
 		bool contains(k key)
 		{
-			rwlock.rdlock();
-			bool result = indexof(key, qstardb::type_index) >= 0;
-			rwlock.unrdlock();
-			return result;
+			return indexof(key, qstardb::type_index) >= 0;
 		}
 
-		void readall(qstardb::filewriter& writer)
+
+		/**判定页的范围是否包含 key**/
+		int rangecontains(k key)
 		{
-			rwlock.rdlock();
-			writer.writeInt32(this->size);
-			for (int i = 0; i < this->size; i++)
+			if (this->keys[this->size - 1] < key)
 			{
-				writer.writeInt64(keys[i]);
+				return -1;
 			}
-			rwlock.unrdlock();
+			else if (this->keys[0] > key)
+			{
+				return 1;
+			}
+			return 0;
+		}
+
+		/**页发生分裂**/
+		page<k>** splitToTwo(bool tail)
+		{
+			page<k>** pages = new page<k>*[2];
+			int mid = (this->size * (tail ? 9 : 5)) / 10;
+			pages[0] = new page<k>(mid + 10);
+			pages[0]->size = mid;
+			memmove(pages[0]->keys, this->keys, sizeof(k) * mid);
+
+			pages[1] = new page<k>(tail ? this->size : this->size - mid + 128);
+			pages[1]->size = this->size - mid;
+			memmove(pages[1]->keys, this->keys + mid, sizeof(k) * pages[1]->size);
+			return pages;
 		}
 	};
+	template<class k> class block 
+	{
+	private:
+		int size{1};
+		page<k>** pages;
+	public:
+		block()
+		{
+			this->pages = new page<k>*[this->size];
+			for (int i = 0; i < this->size; i++)
+			{
+				this->pages[i] = new page<k>(16);
+			}
+		}
+		~block() 
+		{
+			for (int i = 0; i < this->size; i++)
+			{
+				delete this->pages[i];
+			}
+			delete[] this->pages;
+		}
 
+		inline int indexOf(page<k>** pages, int size, k key, type _type)
+		{
+			int fromIndex = 0;
+			int toIndex = size - 1;
+			while (fromIndex <= toIndex)
+			{
+				int mid = (fromIndex + toIndex) >> 1;
+				int cmp = pages[mid]->rangecontains(key);
+				if (cmp < 0)
+					fromIndex = mid + 1;
+				else if (cmp > 0)
+					toIndex = mid - 1;
+				else
+					return _type == type_insert ? -(mid + 1) : mid; // key
+			}
+			switch (_type)
+			{
+			case type_insert:
+				return fromIndex > size ? size : fromIndex;
+			case type_ceil:
+				return fromIndex;
+			case type_index:
+				return -(fromIndex + 1);
+			default:
+				return toIndex;
+			}
+		}
+
+		inline int insertAndSplit(int index, k key)
+		{
+
+			int reuslt = this->pages[index]->add(key);
+
+			if (this->pages[index]->size > 1024 * 8)
+			{
+				page<k>** temp = this->pages[index]->splitToTwo(index == this->size - 1);
+				page<k>** newpages = new page<k>*[this->size + 1];
+				if (index > 0)
+				{
+					memmove(newpages, this->pages, sizeof(page<k>*)*index);
+				}
+				int moveNum = this->size - index - 1;
+				if (moveNum > 0)
+				{
+					memmove(newpages + index + 2, this->pages + index + 1, sizeof(page<k>*) * moveNum);
+				}
+				newpages[index] = temp[0];
+				newpages[index + 1] = temp[1];
+				delete pages[index];
+				delete[] temp;
+				delete[] this->pages;
+				this->pages = newpages;
+				this->size++;
+			}
+			return reuslt;
+		}
+
+		bool combine(int index0, int index1)
+		{
+			page<k>* temp0 = this->pages[index0];
+			page<k>* temp1 = this->pages[index1];
+			int size0 = temp0->size;
+			int size1 = temp1->size;
+			page<k>* newpage = new page<k>(size0 + size1 + 128);
+			memmove(newpage->keys, temp0->keys, sizeof(k)*size0);
+			memmove(newpage->keys + size0, temp1->keys, sizeof(k)*size1);
+			//设置新也的数据量
+			newpage->size = size0 + size1;
+			//释放原数据页1
+			delete temp0;
+			//释放原数据页2
+			delete temp1;
+			//将新页数据放到 index0的位置
+			this->pages[index0] = newpage;
+			//将空白页删除
+			int moveNum = this->size - index1 - 1;
+			if (moveNum > 0)
+			{
+				memmove(this->pages + index1, this->pages + index1 + 1, sizeof(page<k>*)*moveNum);
+			}
+			this->size--;
+			return true;
+		}
+
+		inline bool combine(int index)
+		{
+			if (this->size == 1)
+			{
+				return false;
+			}
+			//如果数据页内的数据小于64条，则合并数据页
+			else if (this->pages[index]->size < 64)
+			{
+				//如果是第一页，则将第二页的合并到第一页
+				if (index == 0)
+				{
+					combine(0, 1);
+				}
+				else//其他情况则将数据将与前一页合并
+				{
+					combine(index - 1, index);
+				}
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		int add(k key)
+		{
+			if (this->size == 1 || this->pages[0]->rangecontains(key) >= 0)
+			{
+				return this->insertAndSplit(0, key);
+			}
+			else if (this->pages[this->size - 1]->rangecontains(key) <= 0)
+			{
+				return this->insertAndSplit(this->size - 1, key);
+			}
+			else
+			{
+				int pageno = indexOf(pages, this->size, key, type_ceil);
+				return this->insertAndSplit(pageno, key);
+			}
+		}
+
+		bool contains(k key)
+		{
+			int pageno = indexOf(this->pages, this->size, key, type_index);
+			if (pageno >= 0) {
+				return this->pages[pageno]->contains(key);
+			}
+			else {
+				return false;
+			}
+		}
+
+		bool remove(k key)
+		{
+			if (this->pages[this->size - 1]->rangecontains(key) == 0)
+			{
+				bool deled = this->pages[this->size - 1]->remove(key);
+				this->combine(this->size - 1);
+				return deled;
+			}
+			else
+			{
+				int pageno = indexOf(this->pages, this->size, key, type_index);
+				if (pageno >= 0)
+				{
+					bool deled = this->pages[pageno]->remove(key);
+					this->combine(pageno);
+					return deled;
+				}
+				return false;
+			}
+		}
+		
+	};
 	template<class k> class keyset
 	{
 	private:
-		int mode;
+		int partition;
 		int size;
 		block<k>* blocks;
 		qstardb::rwsyslock rwlock;
 		int index(k key)
 		{
-			int value = key % mode;
+			int value = key % partition;
 			if (value < 0)
 			{
 				return -value;
@@ -182,12 +366,17 @@ namespace setint
 			}
 		}
 	public:
-		keyset(int mode)
+		keyset(int part)
 		{
 			this->size = 0;
-			this->mode = mode > 0 ? mode : 16;
-			this->blocks = new block<k> [this->mode];
+			this->partition = part;
+			this->blocks = new block<k> [this->partition];
 		}
+		~keyset()
+		{
+			delete[] this->blocks;
+		}
+
 		void add(k key)
 		{
 			if (blocks[index(key)].add(key))
@@ -215,48 +404,6 @@ namespace setint
 		int keysize()
 		{
 			return this->size;
-		}
-
-		void writefile(string& filename)
-		{
-			if (this->size > 1024)
-			{
-				rwlock.wrlock();
-				string temp = filename;
-				temp.append(".temp");
-				qstardb::filewriter fwriter(temp);
-				fwriter.writeInt32(this->mode);
-				for (int i = 0; i < this->mode; i++)
-				{
-					blocks[i].readall(fwriter);
-				}
-				fwriter.flush();
-				fwriter.close();
-				fwriter.reNameTo(filename);
-				rwlock.unwrlock();
-			}
-		}
-		void readfile(string& filename)
-		{
-			rwlock.wrlock();
-			qstardb::filereader reader(filename);
-			if (reader.isOpen())
-			{
-				int num = reader.readInt32();
-				for (int i = 0; i < num; i++)
-				{
-					int segnum = reader.readInt32();
-					for (int i = 0; i < segnum; i++)
-					{
-						int64 key = reader.readInt64();
-						if (blocks[index(key)].add(key))
-						{
-							this->size++;
-						}
-					}
-				}
-			}
-			rwlock.unwrlock();
 		}
 	};
 }
