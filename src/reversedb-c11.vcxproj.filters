@@ -60,9 +60,6 @@
     <ClInclude Include="nativedics2s.h">
       <Filter>jni</Filter>
     </ClInclude>
-    <ClInclude Include="dicmaps2s.h">
-      <Filter>util</Filter>
-    </ClInclude>
     <ClInclude Include="nativeintset.h">
       <Filter>jni</Filter>
     </ClInclude>
@@ -109,6 +106,9 @@
       <Filter>util</Filter>
     </ClInclude>
     <ClInclude Include="elastictree.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="elastics2s.h">
       <Filter>util</Filter>
     </ClInclude>
   </ItemGroup>

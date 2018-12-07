@@ -4,7 +4,7 @@
  *  Created on: 2015年3月11日
  *      Author: jkuang
  */
-#include "dicmaps2s.h"
+#include "elastics2s.h"
 #include "nativejni.h"
 #include <map>
 #ifndef _Included_org_jkuang_qstardb_Native_S2SMap
