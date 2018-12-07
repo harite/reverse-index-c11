@@ -5,7 +5,8 @@
 #include "filestream.h"
 #include "rwsyslock.h"
 using namespace std;
-namespace setint
+/*完成基础存储查询测试*/
+namespace elasticset
 {
 	typedef long long int64;
 	typedef unsigned int uint;

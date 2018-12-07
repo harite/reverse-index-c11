@@ -16,9 +16,9 @@ extern "C"
 
 		static qstardb::rwsyslock rwlock;
 
-		static map<int, setint::keyset<int>*>* int32sets = new map<int, setint::keyset<int>*>();
+		static map<int, elasticset::keyset<int>*>* int32sets = new map<int, elasticset::keyset<int>*>();
 
-		static map<int, setint::keyset<setint::int64>*>* int64sets = new map<int, setint::keyset<setint::int64>*>();
+		static map<int, elasticset::keyset<elasticset::int64>*>* int64sets = new map<int, elasticset::keyset<elasticset::int64>*>();
 		/*
 		 * Class:     org_jkuang_qstardb_NativeSet_Int32Set
 		 * Method:    create
@@ -33,7 +33,7 @@ extern "C"
 			}
 			else
 			{
-				(*int32sets)[index] = new setint::keyset<int>(mode);
+				(*int32sets)[index] = new elasticset::keyset<int>(mode);
 				cout << "create int32set:" << index << endl;
 			}
 			rwlock.unwrlock();
@@ -148,7 +148,7 @@ extern "C"
 			}
 			else
 			{
-				(*int64sets)[index] = new setint::keyset<setint::int64>(mode);
+				(*int64sets)[index] = new elasticset::keyset<elasticset::int64>(mode);
 				cout << "create int64set:" << index << endl;
 			}
 			rwlock.unwrlock();

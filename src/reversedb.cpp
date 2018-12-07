@@ -152,7 +152,7 @@ void testelasticsmap()
 }
 int main()
 {
-	setint::keyset<int> kset(16);
+	elasticset::keyset<int> kset(16);
 	for (int i = 0; i < 1024*1024*10; i++)
 	{
 		kset.add(i);	
