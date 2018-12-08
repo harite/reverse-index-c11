@@ -24,22 +24,15 @@ namespace maps2s
 
 	class node
 	{
-	private:
+	public:
 		//偏移地址
 		int offset{ 0 };
-
-	public:
-	
 		//数据总总长度
 		int length{ 0 };
 		//主键长度
 		short keylen { 0 };
 		node() = default;
 		~node() = default;
-		inline int getOffset()
-		{
-			 return offset;
-	     }
 		void set(int offset, short keylen, int length)
 		{
 			this->offset = offset;
@@ -122,7 +115,7 @@ namespace maps2s
 					int offset = 0;
 					for (int i = 0; i < this->nodeSize; i++)
 					{
-						memmove(temp + offset, mems + nodes[i].getOffset(), sizeof(char) * nodes[i].length);
+						memmove(temp + offset, mems + nodes[i].offset, sizeof(char) * nodes[i].length);
 						nodes[i].set(offset, nodes[i].keylen, nodes[i].length);
 						offset += nodes[i].length;
 					}
@@ -227,7 +220,7 @@ namespace maps2s
 					{
 						this->delSize += nodes[index].length - length;
 						this->nodes[index].length = length;
-						memmove(mems + nodes[index].getOffset() + nodes[index].keylen, value, vlen);
+						memmove(mems + nodes[index].offset + nodes[index].keylen, value, vlen);
 						
 					}
 					else
@@ -289,7 +282,7 @@ namespace maps2s
 						char* temp = new char[this->menLength];
 						for (int i = 0; i < nodeSize; i++)
 						{
-							memmove(temp + offset, mems + nodes[i].getOffset(), sizeof(char) *  nodes[i].length);
+							memmove(temp + offset, mems + nodes[i].offset, sizeof(char) *  nodes[i].length);
 							nodes[i].set(offset, nodes[i].keylen, nodes[i].length);
 							offset += nodes[i].length;
 						}
@@ -312,7 +305,7 @@ namespace maps2s
 			if (index >= 0)
 			{
 				vlen = nodes[index].length- nodes[index].keylen;
-				return  mems + nodes[index].getOffset() + nodes[index].keylen;
+				return  mems + nodes[index].offset + nodes[index].keylen;
 			}
 			else
 			{
@@ -327,6 +320,9 @@ namespace maps2s
 			const char* temp = get(key,klen,vlen);
 			if (temp != null) {
 				word.append(temp, vlen);
+				return true;
+			}else{
+				return false;
 			}
 		}
 
@@ -358,7 +354,7 @@ namespace maps2s
 			for (int i = from; i < to; i++)
 			{
 				pg->nodes[i - from].set(offset,this->nodes[i].keylen,this->nodes[i].length);
-				memmove(pg->mems + offset, this->mems+ this->nodes[i].getOffset(), sizeof(char) * this->nodes[i].length);
+				memmove(pg->mems + offset, this->mems+ this->nodes[i].offset, sizeof(char) * this->nodes[i].length);
 				offset += this->nodes[i].length;
 			}
 			//设置当前内存的偏移量
@@ -478,14 +474,14 @@ namespace maps2s
 			for (int i = 0; i < size0; i++)
 			{
 				newpage->nodes[i].set(offset, temp0->nodes[i].keylen, temp0->nodes[i].length);
-				memmove(newpage->mems+ offset, temp0->mems + temp0->nodes[i].getOffset(), sizeof(char) * temp0->nodes[i].length);
+				memmove(newpage->mems+ offset, temp0->mems + temp0->nodes[i].offset, sizeof(char) * temp0->nodes[i].length);
 				offset += temp0->nodes[i].length;
 			}
 
 			for (int i = 0; i < size1; i++)
 			{
 				newpage->nodes[i+size0].set(offset, temp1->nodes[i].keylen, temp1->nodes[i].length);
-				memmove(newpage->mems+ offset, temp1->mems + temp1->nodes[i].getOffset(), sizeof(char) * temp1->nodes[i].length);
+				memmove(newpage->mems+ offset, temp1->mems + temp1->nodes[i].offset, sizeof(char) * temp1->nodes[i].length);
 				offset += temp1->nodes[i].length;
 			}
 
@@ -614,23 +610,22 @@ namespace maps2s
 			}
 		}
 	public:
-		dics2s(int partition)
+		dics2s(uint partition)
 		{
 			this->size = 0;
 			this->partition = partition;
 			this->blocks = new block*[this->partition];
 			this->shardCopyData = new char[SHARD_SIZE];
-			for (int i = 0; i < partition; i++)
+			for (uint i = 0; i < partition; i++)
 			{
 				this->blocks[i] = new block(shardCopyData);
 			}
 		}
 		~dics2s()
 		{
-			for (int i = 0; i < partition; i++)
+			for (uint i = 0; i < partition; i++)
 			{
 				delete this->blocks[i];
-					 
 			}
 			delete[] this->blocks;
 			delete[] this->shardCopyData;
