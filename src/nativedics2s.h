@@ -100,17 +100,18 @@ extern "C"
 				jboolean copy = false;
 				short klen = env->GetStringUTFLength(key);
 				const char* ch = env->GetStringUTFChars(key, &copy);
-				const char* value = (*dicmaps)[index]->get(ch, klen, vlen);
+				string str;
+				bool result=(*dicmaps)[index]->get(ch, klen, str);
 				env->ReleaseStringUTFChars(key, ch);
-				if (value != null)
+				if (result )
 				{
-					jstring jvalue = charToJString(env, value, vlen);
+					jstring jvalue = charToJString(env, str.c_str(), str.length());
 					maplock.unrdlock();
 					return jvalue;
 				}
 			}
 			maplock.unrdlock();
-			return env->NewStringUTF("not found");
+			return env->NewStringUTF("");
 		}
 
 		/*

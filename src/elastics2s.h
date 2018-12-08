@@ -16,6 +16,7 @@ namespace maps2s
 {
 	typedef unsigned int uint;
 	typedef long long int64;
+	const int MAX_NODE_SIZE = 256;
 	const int SHARD_SIZE = 1024 * 1024;
 	enum type
 	{
@@ -436,7 +437,7 @@ namespace maps2s
 		{
 
 			int reuslt = this->pages[index]->insert(key, klen,value,vlen);
-			if (this->pages[index]->nodeSize > 1024)
+			if (this->pages[index]->nodeSize > MAX_NODE_SIZE)
 			{
 				page** temp = this->pages[index]->splitToTwo(index == this->size - 1);
 				page** newpages = new page*[this->size + 1];
@@ -468,7 +469,7 @@ namespace maps2s
 			int size1 = temp1->nodeSize;
 			int mlength0 = temp0->countMemSize(0,size0);
 			int mlength1 = temp1->countMemSize(0, size1);
-			page* newpage = new page( size0 + size1 + 128, mlength0+ mlength1+ mlength1/10,this->shardCopyData);
+			page* newpage = new page( size0 + size1 + MAX_NODE_SIZE/8, mlength0+ mlength1+ mlength1/10,this->shardCopyData);
 		
 			int offset = 0;
 			for (int i = 0; i < size0; i++)
@@ -511,7 +512,7 @@ namespace maps2s
 				return false;
 			}
 			//如果数据页内的数据小于64条，则合并数据页
-			else if (this->pages[index]->nodeSize < 64)
+			else if (this->pages[index]->nodeSize < (MAX_NODE_SIZE / 32))
 			{
 				//如果是第一页，则将第二页的合并到第一页
 				if (index == 0)
@@ -587,8 +588,7 @@ namespace maps2s
 		block** blocks;
 		char* shardCopyData;
 		std::atomic<int> size { 0 };
-		qstardb::rwsyslock rwlocks[64];
-
+		qstardb::rwsyslock lock;
 		inline uint _hash(const char* str, short len)
 		{
 			uint hash = 0;
@@ -634,40 +634,57 @@ namespace maps2s
 		int remove(const char* key, short klen)
 		{
 			uint pos = index(key, klen);
+			lock.wrlock();
 			if (blocks[pos]->remove(key, klen))
 			{
 				this->size--;
 			}
+			lock.unwrlock();
 			return this->size;
 		}
 
 		int insert(const char* key, short klen, const char* value, int vlen)
 		{
 			uint pos = index(key, klen);
+			lock.wrlock();
 			if (blocks[pos]->insert(key, klen, value, vlen))
 			{
 				this->size++;
 			}
+			lock.unwrlock();
 			return this->size;
 		}
 
-		const char* get(const char* key, short klen, int& vlen)
+		bool get(const char* key, short klen, qstardb::charwriter* writer)
 		{
-			return blocks[index(key, klen)]->get(key, klen, vlen);
+			int vlen = -1;
+			lock.rdlock();
+			const char* temp=blocks[index(key, klen)]->get(key, klen, vlen);
+			if (temp != nullptr)
+			{
+				writer->writeInt(vlen);
+				writer->write(temp,vlen);
+				lock.unrdlock();
+				return true;
+			}
+			lock.unrdlock();
+			return false;
 		}
 
 		bool get(const char* key, short klen, string& word)
 		{
 			int vlen;
 			uint pos = index(key, klen);
+			lock.rdlock();
 			const char* ch = blocks[pos]->get(key, klen, vlen);
 			if (ch != nullptr)
 			{
 				word.append(ch,vlen);
+				lock.unrdlock();
 				return true;
 			}
 			else {
-				cout << "false" << endl;
+				lock.unrdlock();
 				return false;
 			}
 		}
