@@ -16,7 +16,7 @@ namespace maps2s
 {
 	typedef unsigned int uint;
 	typedef long long int64;
-	const int MAX_NODE_SIZE = 256;
+	const int MAX_NODE_SIZE = 512;
 	const int SHARD_SIZE = 1024 * 1024;
 	enum type
 	{

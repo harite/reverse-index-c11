@@ -96,7 +96,6 @@ extern "C"
 			maplock.rdlock();
 			if (dicmaps->find(index) != dicmaps->end())
 			{
-				int vlen = 0;
 				jboolean copy = false;
 				short klen = env->GetStringUTFLength(key);
 				const char* ch = env->GetStringUTFChars(key, &copy);
