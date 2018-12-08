@@ -14,30 +14,34 @@
 using namespace std;
 namespace maps2s
 {
+	const int SHARD_SIZE = 1024 * 1024;
 	enum type
 	{
 		type_insert, type_index, type_ceil, type_floor
 	};
 
-	class entry
+	class node
 	{
 	public:
+		//偏移地址
 		int offset { 0 };
-		short klen { 0 };
-		int vlen { 0 };
-		entry() = default;
-		~entry() = default;
+		//数据总总长度
+		int length{ 0 };
+		//主键长度
+		short keylen { 0 };
+		node() = default;
+		~node() = default;
 
-		void set(int offset, short klen, int vlen)
+		void set(int offset, short keylen, int length)
 		{
 			this->offset = offset;
-			this->klen = klen;
-			this->vlen = vlen;
+			this->keylen = keylen;
+			this->length = length;
 		}
 
 		inline int compare(char* chs, const char* key, short klen)
 		{
-			if (this->klen == klen)
+			if (this->keylen == klen)
 			{
 				for (int i = 0; i < klen; i++)
 				{
@@ -58,7 +62,7 @@ namespace maps2s
 			}
 			else
 			{
-				return this->klen - klen;
+				return this->keylen - klen;
 			}
 
 		}
@@ -66,12 +70,13 @@ namespace maps2s
 
 	class page
 	{
-	private:
+	public:
 		char* mems;
 		int delSize;
 		int menSize;
 		int menLength;
-		entry* nodes;
+		node* nodes;
+
 		int nodeSize;
 		int nodeLength;
 		void ensurenodecapacity(int length)
@@ -79,8 +84,8 @@ namespace maps2s
 			if (length > this->nodeLength)
 			{
 				this->nodeLength = length + 64;
-				entry* temp = new entry[this->nodeLength];
-				memmove(temp, nodes, sizeof(entry) * this->nodeSize);
+				node* temp = new node[this->nodeLength];
+				memmove(temp, nodes, sizeof(node) * this->nodeSize);
 				delete[] this->nodes;
 				this->nodes = temp;
 			}
@@ -96,9 +101,9 @@ namespace maps2s
 					int offset = 0;
 					for (int i = 0; i < nodeSize; i++)
 					{
-						int kvlength = nodes[i].klen + nodes[i].vlen;
+						int kvlength = nodes[i].length;
 						memmove(temp + offset, mems + nodes[i].offset, sizeof(char) * kvlength);
-						nodes[i].set(offset, nodes[i].klen, nodes[i].vlen);
+						nodes[i].set(offset, nodes[i].keylen, kvlength);
 						offset += kvlength;
 					}
 					this->delSize = 0;
@@ -113,16 +118,16 @@ namespace maps2s
 			}
 		}
 	public:
-		page()
+		page(int nlength,int mlength)
 		{
+			this->nodeSize = 0;
+			this->nodeLength = nlength;
+			this->nodes = new node[this->nodeLength];
+
 			this->delSize = 0;
 			this->menSize = 0;
-			this->menLength = 128;
-
-			this->nodeSize = 0;
-			this->nodeLength = 4;
+			this->menLength = mlength;
 			this->mems = new char[this->menLength];
-			this->nodes = new entry[this->nodeLength];
 		}
 		~page()
 		{
@@ -158,9 +163,9 @@ namespace maps2s
 			}
 		}
 
-		void set(entry& node, const char* key, short klen, const char* value, int vlen)
+		void set(node& node, const char* key, short klen, const char* value, int vlen)
 		{
-			node.set(this->menSize, klen, vlen);
+			node.set(this->menSize, klen, klen + vlen);
 			memmove(mems + this->menSize, key, klen);
 			this->menSize += klen;
 			memmove(mems + this->menSize, value, vlen);
@@ -183,15 +188,17 @@ namespace maps2s
 				if (index < 0)
 				{
 					index = -index - 1;
-					if (nodes[index].vlen >= vlen)
+					int length = klen + vlen;
+					if (nodes[index].length >= length)
 					{
-						this->delSize += nodes[index].vlen - vlen;
-						memmove(mems + nodes[index].offset + nodes[index].klen, value, vlen);
-						nodes[index].vlen = vlen;
+						this->delSize += nodes[index].length - length;
+						this->nodes[index].length = length;
+						memmove(mems + nodes[index].offset + nodes[index].keylen, value, vlen);
+						
 					}
 					else
 					{
-						this->delSize += klen + nodes[index].vlen;
+						this->delSize += this->nodes[index].length;
 						this->set(nodes[index], key, klen, value, vlen);
 					}
 					return false;
@@ -201,9 +208,9 @@ namespace maps2s
 					int moveNum = this->nodeSize - index;
 					if (moveNum > 0)
 					{
-						memmove(nodes + index + 1, nodes + index, sizeof(entry) * moveNum);
+						memmove(this->nodes + index + 1, this->nodes + index, sizeof(node) * moveNum);
 					}
-					this->set(nodes[index], key, klen, value, vlen);
+					this->set(this->nodes[index], key, klen, value, vlen);
 					this->nodeSize++;
 					return true;
 				}
@@ -226,17 +233,17 @@ namespace maps2s
 				else
 				{
 					int moveNum = this->nodeSize - index - 1;
-					this->delSize -= this->nodes[index].klen + this->nodes[index].vlen;
+					this->delSize -= this->nodes[index].length;
 					if (moveNum > 0)
 					{
-						memmove(this->nodes + index, this->nodes + index + 1, sizeof(entry) * moveNum);
+						memmove(this->nodes + index, this->nodes + index + 1, sizeof(node) * moveNum);
 					}
 					this->nodeSize--;
 					if (this->nodeLength > (this->nodeSize + 3) * 3)
 					{
 						this->nodeLength = (this->nodeSize + 3) * 2;
-						entry* temp = new entry[this->nodeLength];
-						memmove(temp, nodes, sizeof(entry) * this->nodeSize);
+						node* temp = new node[this->nodeLength];
+						memmove(temp, nodes, sizeof(node) * this->nodeSize);
 						delete[] nodes;
 						this->nodes = temp;
 					}
@@ -248,10 +255,9 @@ namespace maps2s
 						char* temp = new char[this->menLength];
 						for (int i = 0; i < nodeSize; i++)
 						{
-							int kvlength = nodes[i].klen + nodes[i].vlen;
-							memmove(temp + offset, mems + nodes[i].offset, sizeof(char) * kvlength);
-							nodes[i].set(offset, nodes[i].klen, nodes[i].vlen);
-							offset += kvlength;
+							memmove(temp + offset, mems + nodes[i].offset, sizeof(char) *  nodes[i].length);
+							nodes[i].set(offset, nodes[i].keylen, nodes[i].length);
+							offset += nodes[i].length;
 						}
 						this->delSize = 0;
 						this->menSize = offset;
@@ -261,7 +267,7 @@ namespace maps2s
 			}
 		}
 
-		char* get(const char* key, short klen, int& vlen)
+		const char* get(const char* key, short klen, int& vlen)
 		{
 			if (this->nodeSize == 0)
 			{
@@ -271,11 +277,8 @@ namespace maps2s
 			int index = indexof(key, klen, type_index);
 			if (index >= 0)
 			{
-				vlen = nodes[index].vlen;
-				const char* temp = mems + nodes[index].offset + nodes[index].klen;
-				char* result = new char[vlen];
-				memcpy(result, temp, sizeof(char) * vlen);
-				return result;
+				vlen = nodes[index].length- nodes[index].keylen;
+				return  mems + nodes[index].offset + nodes[index].keylen;
 			}
 			else
 			{
@@ -286,16 +289,204 @@ namespace maps2s
 
 		bool get(const char* key, short klen, string& word)
 		{
-			if (this->nodeSize == 0)
+			int vlen = 0;
+			const char* temp = get(key,klen,vlen);
+			if (temp != null) {
+				word.append(temp, vlen);
+			}
+		}
+
+		int rangecontains(const char* key,int klen)
+		{
+			if (nodes[this->nodeSize-1].compare(mems, key, klen) <0)
+			{
+				return -1;
+			}
+			else if (nodes[0].compare(mems, key, klen))
+			{
+				return 1;
+			}
+			return 0;
+		}
+
+		int countMemSize(int from, int to)
+		{
+			int sum = 0;
+			for (int i = from; i < to; i++)
+			{
+				sum += this->nodes[i].length;
+			}
+			return sum;
+		}
+		void copyTo(int from, int to, page* pg)
+		{
+			int offset = 0;
+			for (int i = from; i < to; i++)
+			{
+				pg->nodes[i - from].set(offset,this->nodes[from].keylen,this->nodes[from].length);
+				memmove(pg->mems, this->mems+ this->nodes[from].offset, sizeof(char) * this->nodes[from].length);
+			}
+		}
+
+		page** splitToTwo(bool tail)
+		{
+			page** pages = new page*[2];
+			int mid = (this->nodeSize * (tail ? 9 : 5)) / 10;
+			int mlength0 = this->countMemSize(0,mid);
+			int avg0 = mlength0 / mid;
+			pages[0] = new page(mid + 10, mlength0 +10 * avg0);
+			pages[0]->nodeSize = mid;
+			this->copyTo(0,mid,pages[0]);
+
+			int size = this->nodeSize - mid;
+			int mlength1 = this->countMemSize(mid, this->nodeSize);
+			int avg1 = mlength1 / size;
+			pages[1] = new page(size + 16, mlength1 +16 * avg1);
+			pages[1]->nodeSize = size;
+			this->copyTo(mid, this->nodeSize, pages[1]);
+			return pages;
+		}
+	};
+
+	class block
+	{
+	private:
+		int size;
+		page** pages;
+		char* shardData;
+		inline int indexOf(page** pages, int size, const char* key, int len, type _type)
+		{
+			int fromIndex = 0;
+			int toIndex = size - 1;
+			while (fromIndex <= toIndex)
+			{
+				int mid = (fromIndex + toIndex) >> 1;
+				int cmp = pages[mid]->rangecontains(key, len);
+				if (cmp < 0)
+					fromIndex = mid + 1;
+				else if (cmp > 0)
+					toIndex = mid - 1;
+				else
+					return _type == type_insert ? -(mid + 1) : mid; // key
+			}
+			switch (_type)
+			{
+			case type_insert:
+				return fromIndex > size ? size : fromIndex;
+			case type_ceil:
+				return fromIndex;
+			case type_index:
+				return -(fromIndex + 1);
+			default:
+				return toIndex;
+			}
+		}
+	public:
+		block()
+		{
+			this->size = 1;
+			this->pages = new page*[1];
+			this->pages[0] = new page(16,16*256);
+			this->shardData = new char[SHARD_SIZE];
+		}
+		~block()
+		{
+			for (int i = 0; i < this->size; i++)
+			{
+				delete this->pages[i];
+			}
+			delete this->pages;
+		}
+
+		inline int insertAndSplit(int index, const char* key, short klen,const char* value,int vlen)
+		{
+
+			int reuslt = this->pages[index]->insert(key, klen,value,vlen);
+			if (this->pages[index]->nodeSize > 1024)
+			{
+				page** temp = this->pages[index]->splitToTwo(index == this->size - 1);
+				page** newpages = new page*[this->size + 1];
+				if (index > 0)
+				{
+					memmove(newpages, this->pages, sizeof(page*)*index);
+				}
+				int moveNum = this->size - index - 1;
+				if (moveNum > 0)
+				{
+					memmove(newpages + index + 2, this->pages + index + 1, sizeof(page*) * moveNum);
+				}
+				newpages[index] = temp[0];
+				newpages[index + 1] = temp[1];
+				delete pages[index];
+				delete[] temp;
+				delete[] this->pages;
+				this->pages = newpages;
+				this->size++;
+			}
+			return reuslt;
+		}
+
+		bool combine(int index0, int index1)
+		{
+			page* temp0 = this->pages[index0];
+			page* temp1 = this->pages[index1];
+			int size0 = temp0->nodeSize;
+			int size1 = temp1->nodeSize;
+			int mlength0 = temp0->countMemSize(0,size0);
+			int mlength1 = temp1->countMemSize(0, size1);
+			page* newpage = new page( size0 + size1 + 128, mlength0+ mlength1+ mlength1/10);
+		
+			int offset = 0;
+			for (int i = 0; i < size0; i++)
+			{
+				newpage->nodes[i].set(offset, temp0->nodes[i].keylen, temp0->nodes[i].length);
+				memmove(newpage->mems, temp0->mems + temp0->nodes[i].offset, sizeof(char) * temp0->nodes[i].length);
+				offset += temp0->nodes[i].length;
+			}
+
+			for (int i = 0; i < size1; i++)
+			{
+				newpage->nodes[i+size0].set(offset, temp1->nodes[i].keylen, temp1->nodes[i].length);
+				memmove(newpage->mems, temp1->mems + temp1->nodes[i].offset, sizeof(char) * temp1->nodes[i].length);
+				offset += temp1->nodes[i].length;
+			}
+
+			//设置新也的数据量
+			newpage->nodeSize = size0 + size1;
+			//释放原数据页1
+			delete temp0;
+			//释放原数据页2
+			delete temp1;
+			//将新页数据放到 index0的位置
+			this->pages[index0] = newpage;
+			//将空白页删除
+			int moveNum = this->size - index1 - 1;
+			if (moveNum > 0)
+			{
+				memmove(this->pages + index1, this->pages + index1 + 1, sizeof(page*)*moveNum);
+			}
+			this->size--;
+			return true;
+		}
+
+		inline bool combine(int index)
+		{
+			if (this->size == 1)
 			{
 				return false;
 			}
-			int index = indexof(key, klen, type_index);
-			if (index >= 0)
+			//如果数据页内的数据小于64条，则合并数据页
+			else if (this->pages[index]->nodeSize < 64)
 			{
-				// nodes[index].vlen;
-				const char* temp = mems + nodes[index].offset + nodes[index].klen;
-				word.append(temp, nodes[index].vlen);
+				//如果是第一页，则将第二页的合并到第一页
+				if (index == 0)
+				{
+					combine(0, 1);
+				}
+				else//其他情况则将数据将与前一页合并
+				{
+					combine(index - 1, index);
+				}
 				return true;
 			}
 			else
@@ -304,45 +495,62 @@ namespace maps2s
 			}
 		}
 
-		int get(const char* key, short klen, qstardb::charwriter& writer)
+		int insert(const char* key, short klen,const char* value,int vlen)
 		{
-			int hits = 0;
-			if (this->nodeSize == 0)
+			if (this->size == 1 || this->pages[0]->rangecontains(key, klen) >= 0)
 			{
-				return hits;
+				return this->insertAndSplit(0, key, klen,value,vlen);
 			}
-			int index = indexof(key, klen, type_index);
-			if (index >= 0)
+			else if (this->pages[this->size - 1]->rangecontains(key, klen) <= 0)
 			{
-				hits++;
-				writer.writeShort(nodes[index].klen);
-				writer.write(mems, nodes[index].offset, nodes[index].klen);
-				writer.writeShort(nodes[index].vlen);
-				writer.write(mems, nodes[index].offset + nodes[index].klen, nodes[index].vlen);
+				return this->insertAndSplit(this->size - 1, key, klen,value,vlen);
 			}
-			return hits;
+			else
+			{
+				int pageno = indexOf(pages, this->size, key, klen, type_ceil);
+				return this->insertAndSplit(pageno, key, klen,value,vlen);
+			}
 		}
-		void readall(qstardb::filewriter& writer)
+
+		bool remove(const char* key, int len)
 		{
-			writer.writeInt32(this->nodeSize);
-			for (int i = 0; i < this->nodeSize; i++)
+			if (this->pages[this->size - 1]->rangecontains(key, len) == 0)
 			{
-				writer.writeShort(nodes[i].klen);
-				writer.write(mems, nodes[i].offset, nodes[i].klen);
-				writer.writeInt32(nodes[i].vlen);
-				writer.write(mems, nodes[i].offset + nodes[i].klen, nodes[i].vlen);
+				bool deled = this->pages[this->size - 1]->remove(key, len);
+				this->combine(this->size - 1);
+				return deled;
+			}
+			else
+			{
+				int pageno = indexOf(this->pages, this->size, key, len, type_index);
+				if (pageno >= 0)
+				{
+					bool deled = this->pages[pageno]->remove(key, len);
+					this->combine(pageno);
+					return deled;
+				}
+				return false;
+			}
+		}
+		const char* get(const char* key, int klen,int& vlen)
+		{
+			int pageno = indexOf(this->pages, this->size, key, klen, type_index);
+			if (pageno >= 0) {
+				return this->pages[pageno]->get(key, klen,vlen);
+			}
+			else {
+				return nullptr;
 			}
 		}
 
 	};
-
 	class dics2s
 	{
 	private:
 		typedef unsigned int uint;
 		typedef long long int64;
 
-		page* pages;
+		block* blocks;
 		uint hashmode;
 		std::atomic<int> size { 0 };
 		qstardb::rwsyslock rwlocks[64];
@@ -366,18 +574,18 @@ namespace maps2s
 		{
 			this->size = 0;
 			this->hashmode = hashmode > 0 ? hashmode : 16;
-			this->pages = new page[this->hashmode];
+			this->blocks = new block[this->hashmode];
 		}
 		~dics2s()
 		{
-			delete[] this->pages;
+			delete[] this->blocks;
 		}
 
 		int remove(const char* key, short klen)
 		{
 			uint pos = index(key, klen);
 			rwlocks[pos % 64].wrlock();
-			if (pages[pos].remove(key, klen))
+			if (blocks[pos].remove(key, klen))
 			{
 				this->size--;
 			}
@@ -389,7 +597,7 @@ namespace maps2s
 		{
 			uint pos = index(key, klen);
 			rwlocks[pos % 64].wrlock();
-			if (pages[pos % 64].insert(key, klen, value, vlen))
+			if (blocks[pos % 64].insert(key, klen, value, vlen))
 			{
 				this->size++;
 			}
@@ -397,22 +605,28 @@ namespace maps2s
 			return this->size;
 		}
 
-		char* get(const char* key, short klen, int& vlen)
+		const char* get(const char* key, short klen, int& vlen)
 		{
-			uint pos = index(key, klen);
-			rwlocks[pos % 64].rdlock();
-			char* ch = pages[pos].get(key, klen, vlen);
-			rwlocks[pos % 64].unrdlock();
-			return ch;
+			return blocks[index(key, klen)].get(key, klen, vlen);
 		}
 
 		bool get(const char* key, short klen, string& word)
 		{
+			int vlen;
 			uint pos = index(key, klen);
 			rwlocks[pos % 64].rdlock();
-			bool result = pages[pos].get(key, klen, word);
+			const char* ch = blocks[pos].get(key, klen, vlen);
+			if (ch != nullptr)
+			{
+				word.append(ch,vlen);
+			}
 			rwlocks[pos % 64].unrdlock();
-			return result;
+			if (ch != null) {
+				return true;
+			}
+			else {
+				return false;
+			}
 		}
 
 		short readshort(const char* ch, int offset)
@@ -420,91 +634,9 @@ namespace maps2s
 			return (((short) ch[offset]) << 8) | (short) (ch[offset + 1] & 0xff);
 		}
 
-		int get(const char* keys, int length, qstardb::charwriter& writer)
-		{
-			int hits = 0;
-			for (int offset = 0; offset < length;)
-			{
-				short klen = readshort(keys, offset);
-				offset += 2;
-				uint pos = index(keys + offset, klen);
-				rwlocks[pos % 64].rdlock();
-				if (pages[pos].get(keys + offset, klen, writer))
-				{
-					hits++;
-				}
-				rwlocks[pos % 64].unrdlock();
-				offset += klen;
-			}
-			return hits;
-		}
-
 		int docszie()
 		{
 			return this->size;
-		}
-
-		void writefile(string& filename)
-		{
-			if (this->size > 1024)
-			{
-				string temp = filename;
-				temp.append(".temp");
-				qstardb::filewriter fwriter(temp);
-				fwriter.writeInt32(this->hashmode);
-				for (uint i = 0; i < this->hashmode; i++)
-				{
-					rwlocks[i % 64].rdlock();
-					pages[i].readall(fwriter);
-					rwlocks[i % 64].unrdlock();
-				}
-				fwriter.flush();
-				fwriter.close();
-				fwriter.reNameTo(filename);
-			}
-		}
-
-		void readfile(string& filename)
-		{
-			qstardb::filereader reader(filename);
-			if (reader.isOpen())
-			{
-
-				int templength = 1024 * 1024;
-				char* tempkey = new char[64 * 1024];
-				char* tempvalue = new char[templength];
-				int num = reader.readInt32();
-				for (int i = 0; i < num; i++)
-				{
-					int segnum = reader.readInt32();
-					for (int i = 0; i < segnum; i++)
-					{
-						short klen = reader.readShort();
-						reader.read(tempkey, klen);
-						int length = reader.readInt32();
-						if (length <= templength)
-						{
-							reader.read(tempvalue, length);
-						}
-						else
-						{
-							templength = length;
-							delete[] tempvalue;
-							tempvalue = new char[templength];
-							reader.read(tempvalue, length);
-						}
-						const char* key = tempkey;
-						const char* value = tempvalue;
-
-						if (pages[index(key, klen)].insert(key, klen, value, length))
-						{
-							this->size++;
-						}
-					}
-				}
-				delete[] tempkey;
-				delete[] tempvalue;
-			}
 		}
 	};
 }

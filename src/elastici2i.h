@@ -158,7 +158,6 @@ namespace elasticsmap
 			return false;
 		}
 
-		/*�ж�ҳ�ķ�Χ�Ƿ���� key*/
 		int rangecontains(k key)
 		{
 			if (this->nodes[this->size - 1].key < key)
@@ -172,7 +171,6 @@ namespace elasticsmap
 			return 0;
 		}
 
-		/*ҳ��������*/
 		page<k,v>** splitToTwo(bool tail)
 		{
 			page<k, v>** pages = new page<k, v>*[2];

@@ -136,41 +136,6 @@ extern "C"
 			return 0;
 
 		}
-
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024S2SMap_load(JNIEnv * env, jclass, jint index, jstring file)
-		{
-			maplock.rdlock();
-			if (dicmaps->find(index) != dicmaps->end())
-			{
-				jboolean copy = false;
-				const char* ch = env->GetStringUTFChars(file, &copy);
-				string filename(ch);
-				(*dicmaps)[index]->readfile(filename);
-				env->ReleaseStringUTFChars(file, ch);
-				maplock.unrdlock();
-				return true;
-			}
-			maplock.unrdlock();
-			return false;
-		}
-
-		JNIEXPORT jboolean JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024S2SMap_dump(JNIEnv *env, jclass, jint index, jstring file)
-		{
-			maplock.rdlock();
-			if (dicmaps->find(index) != dicmaps->end())
-			{
-				jboolean copy = false;
-				const char* ch = env->GetStringUTFChars(file, &copy);
-				string filename(ch);
-				(*dicmaps)[index]->writefile(filename);
-				env->ReleaseStringUTFChars(file, ch);
-				maplock.unrdlock();
-				return true;
-			}
-			maplock.unrdlock();
-			return false;
-		}
-
 	}
 #ifdef __cplusplus
 }
