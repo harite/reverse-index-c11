@@ -105,7 +105,6 @@ extern "C"
 				if (value != null)
 				{
 					jstring jvalue = charToJString(env, value, vlen);
-					delete value;
 					maplock.unrdlock();
 					return jvalue;
 				}

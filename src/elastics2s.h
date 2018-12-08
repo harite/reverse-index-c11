@@ -14,6 +14,8 @@
 using namespace std;
 namespace maps2s
 {
+	typedef unsigned int uint;
+	typedef long long int64;
 	const int SHARD_SIZE = 1024 * 1024;
 	enum type
 	{
@@ -22,16 +24,22 @@ namespace maps2s
 
 	class node
 	{
-	public:
+	private:
 		//偏移地址
-		int offset { 0 };
+		int offset{ 0 };
+
+	public:
+	
 		//数据总总长度
 		int length{ 0 };
 		//主键长度
 		short keylen { 0 };
 		node() = default;
 		~node() = default;
-
+		inline int getOffset()
+		{
+			 return offset;
+	     }
 		void set(int offset, short keylen, int length)
 		{
 			this->offset = offset;
@@ -45,11 +53,11 @@ namespace maps2s
 			{
 				for (int i = 0; i < klen; i++)
 				{
-					if (chs[offset + i] == key[i])
+					if (chs[this->offset + i] == key[i])
 					{
 						continue;
 					}
-					else if (chs[offset + i] > key[i])
+					else if (chs[this->offset + i] > key[i])
 					{
 						return 1;
 					}
@@ -79,6 +87,7 @@ namespace maps2s
 
 		int nodeSize;
 		int nodeLength;
+		char* shardCopyData;
 		void ensurenodecapacity(int length)
 		{
 			if (length > this->nodeLength)
@@ -94,31 +103,53 @@ namespace maps2s
 		{
 			if (length > this->menLength)
 			{
-				this->menLength = length + (this->menLength / (nodeSize + 1)) * 32 + 64;
-				char* temp = new char[this->menLength];
-				if (this->delSize > (length - this->menLength) && this->delSize * 3 > this->menSize)
+				//需要增加的容量
+				int needSize = length - this->menSize;
+				char* temp = nullptr;
+				//如果被删除的数据量三十条 或被删除的数量大于总量的十分之一
+				bool clearDelData = this->delSize > needSize * 30 || (this->delSize > needSize && this->delSize * 10 > length);
+				if (clearDelData && (this->menSize - this->delSize < SHARD_SIZE))
+				{
+					temp = this->shardCopyData;
+				}
+				else 
+				{
+					this->menLength = length + (this->menLength / (nodeSize + 1)) * 128 + 128;
+					temp = new char[this->menLength];
+				}
+				if (this->delSize > 0)
 				{
 					int offset = 0;
-					for (int i = 0; i < nodeSize; i++)
+					for (int i = 0; i < this->nodeSize; i++)
 					{
-						int kvlength = nodes[i].length;
-						memmove(temp + offset, mems + nodes[i].offset, sizeof(char) * kvlength);
-						nodes[i].set(offset, nodes[i].keylen, kvlength);
-						offset += kvlength;
+						memmove(temp + offset, mems + nodes[i].getOffset(), sizeof(char) * nodes[i].length);
+						nodes[i].set(offset, nodes[i].keylen, nodes[i].length);
+						offset += nodes[i].length;
 					}
 					this->delSize = 0;
 					this->menSize = offset;
+					//如果是使用了临时拷贝区的话，整理完数据后需要拷贝回原数据块
+					if (clearDelData && (this->menSize - this->delSize < SHARD_SIZE))
+					{
+						memmove(mems, temp, sizeof(char) * this->menSize);
+					}
+					else 
+					{
+						delete[] this->mems;
+						this->mems = temp;
+					}
 				}
 				else
 				{
 					memmove(temp, mems, sizeof(char) * this->menSize);
+					delete[] this->mems;
+					this->mems = temp;
 				}
-				delete[] this->mems;
-				this->mems = temp;
+				
 			}
 		}
 	public:
-		page(int nlength,int mlength)
+		page(int nlength,int mlength, char* shardCopyData)
 		{
 			this->nodeSize = 0;
 			this->nodeLength = nlength;
@@ -128,6 +159,7 @@ namespace maps2s
 			this->menSize = 0;
 			this->menLength = mlength;
 			this->mems = new char[this->menLength];
+			this->shardCopyData = shardCopyData;
 		}
 		~page()
 		{
@@ -139,9 +171,11 @@ namespace maps2s
 		{
 			int fromIndex = 0;
 			int toIndex = this->nodeSize - 1;
+			
 			while (fromIndex <= toIndex)
 			{
 				int mid = (fromIndex + toIndex) >> 1;
+				
 				int cmp = nodes[mid].compare(mems, key, klen);
 				if (cmp < 0)
 					fromIndex = mid + 1;
@@ -193,7 +227,7 @@ namespace maps2s
 					{
 						this->delSize += nodes[index].length - length;
 						this->nodes[index].length = length;
-						memmove(mems + nodes[index].offset + nodes[index].keylen, value, vlen);
+						memmove(mems + nodes[index].getOffset() + nodes[index].keylen, value, vlen);
 						
 					}
 					else
@@ -255,7 +289,7 @@ namespace maps2s
 						char* temp = new char[this->menLength];
 						for (int i = 0; i < nodeSize; i++)
 						{
-							memmove(temp + offset, mems + nodes[i].offset, sizeof(char) *  nodes[i].length);
+							memmove(temp + offset, mems + nodes[i].getOffset(), sizeof(char) *  nodes[i].length);
 							nodes[i].set(offset, nodes[i].keylen, nodes[i].length);
 							offset += nodes[i].length;
 						}
@@ -272,18 +306,18 @@ namespace maps2s
 			if (this->nodeSize == 0)
 			{
 				vlen = 0;
-				return null;
+				return nullptr;
 			}
 			int index = indexof(key, klen, type_index);
 			if (index >= 0)
 			{
 				vlen = nodes[index].length- nodes[index].keylen;
-				return  mems + nodes[index].offset + nodes[index].keylen;
+				return  mems + nodes[index].getOffset() + nodes[index].keylen;
 			}
 			else
 			{
 				vlen = 0;
-				return null;
+				return nullptr;
 			}
 		}
 
@@ -302,7 +336,7 @@ namespace maps2s
 			{
 				return -1;
 			}
-			else if (nodes[0].compare(mems, key, klen))
+			else if (nodes[0].compare(mems, key, klen)> 0 )
 			{
 				return 1;
 			}
@@ -323,9 +357,12 @@ namespace maps2s
 			int offset = 0;
 			for (int i = from; i < to; i++)
 			{
-				pg->nodes[i - from].set(offset,this->nodes[from].keylen,this->nodes[from].length);
-				memmove(pg->mems, this->mems+ this->nodes[from].offset, sizeof(char) * this->nodes[from].length);
+				pg->nodes[i - from].set(offset,this->nodes[i].keylen,this->nodes[i].length);
+				memmove(pg->mems + offset, this->mems+ this->nodes[i].getOffset(), sizeof(char) * this->nodes[i].length);
+				offset += this->nodes[i].length;
 			}
+			//设置当前内存的偏移量
+			pg->menSize = offset;
 		}
 
 		page** splitToTwo(bool tail)
@@ -334,14 +371,14 @@ namespace maps2s
 			int mid = (this->nodeSize * (tail ? 9 : 5)) / 10;
 			int mlength0 = this->countMemSize(0,mid);
 			int avg0 = mlength0 / mid;
-			pages[0] = new page(mid + 10, mlength0 +10 * avg0);
+			pages[0] = new page(mid + 10, mlength0 +10 * avg0, this->shardCopyData);
 			pages[0]->nodeSize = mid;
 			this->copyTo(0,mid,pages[0]);
 
 			int size = this->nodeSize - mid;
 			int mlength1 = this->countMemSize(mid, this->nodeSize);
 			int avg1 = mlength1 / size;
-			pages[1] = new page(size + 16, mlength1 +16 * avg1);
+			pages[1] = new page(size + 16, mlength1 +16 * avg1, this->shardCopyData);
 			pages[1]->nodeSize = size;
 			this->copyTo(mid, this->nodeSize, pages[1]);
 			return pages;
@@ -353,7 +390,7 @@ namespace maps2s
 	private:
 		int size;
 		page** pages;
-		char* shardData;
+		char* shardCopyData;
 		inline int indexOf(page** pages, int size, const char* key, int len, type _type)
 		{
 			int fromIndex = 0;
@@ -382,12 +419,13 @@ namespace maps2s
 			}
 		}
 	public:
-		block()
+		block(char* shardCopyData)
 		{
 			this->size = 1;
 			this->pages = new page*[1];
-			this->pages[0] = new page(16,16*256);
-			this->shardData = new char[SHARD_SIZE];
+			this->shardCopyData = shardCopyData;
+			this->pages[0] = new page(16,16*256, shardCopyData);
+		
 		}
 		~block()
 		{
@@ -395,7 +433,7 @@ namespace maps2s
 			{
 				delete this->pages[i];
 			}
-			delete this->pages;
+			delete[] this->pages;
 		}
 
 		inline int insertAndSplit(int index, const char* key, short klen,const char* value,int vlen)
@@ -434,25 +472,26 @@ namespace maps2s
 			int size1 = temp1->nodeSize;
 			int mlength0 = temp0->countMemSize(0,size0);
 			int mlength1 = temp1->countMemSize(0, size1);
-			page* newpage = new page( size0 + size1 + 128, mlength0+ mlength1+ mlength1/10);
+			page* newpage = new page( size0 + size1 + 128, mlength0+ mlength1+ mlength1/10,this->shardCopyData);
 		
 			int offset = 0;
 			for (int i = 0; i < size0; i++)
 			{
 				newpage->nodes[i].set(offset, temp0->nodes[i].keylen, temp0->nodes[i].length);
-				memmove(newpage->mems, temp0->mems + temp0->nodes[i].offset, sizeof(char) * temp0->nodes[i].length);
+				memmove(newpage->mems+ offset, temp0->mems + temp0->nodes[i].getOffset(), sizeof(char) * temp0->nodes[i].length);
 				offset += temp0->nodes[i].length;
 			}
 
 			for (int i = 0; i < size1; i++)
 			{
 				newpage->nodes[i+size0].set(offset, temp1->nodes[i].keylen, temp1->nodes[i].length);
-				memmove(newpage->mems, temp1->mems + temp1->nodes[i].offset, sizeof(char) * temp1->nodes[i].length);
+				memmove(newpage->mems+ offset, temp1->mems + temp1->nodes[i].getOffset(), sizeof(char) * temp1->nodes[i].length);
 				offset += temp1->nodes[i].length;
 			}
 
 			//设置新也的数据量
 			newpage->nodeSize = size0 + size1;
+			newpage->menSize = offset;
 			//释放原数据页1
 			delete temp0;
 			//释放原数据页2
@@ -547,11 +586,10 @@ namespace maps2s
 	class dics2s
 	{
 	private:
-		typedef unsigned int uint;
-		typedef long long int64;
 
-		block* blocks;
-		uint hashmode;
+		uint partition;
+		block** blocks;
+		char* shardCopyData;
 		std::atomic<int> size { 0 };
 		qstardb::rwsyslock rwlocks[64];
 
@@ -565,66 +603,76 @@ namespace maps2s
 			return hash;
 		}
 
-		unsigned int index(const char* key, short len)
+		inline unsigned int index(const char* key, short len)
 		{
-			return _hash(key, len) % hashmode;
+			int value= _hash(key, len) % partition;
+			if (value < 0) {
+				return -value;
+			}
+			else {
+				return value;
+			}
 		}
 	public:
-		dics2s(int hashmode)
+		dics2s(int partition)
 		{
 			this->size = 0;
-			this->hashmode = hashmode > 0 ? hashmode : 16;
-			this->blocks = new block[this->hashmode];
+			this->partition = partition;
+			this->blocks = new block*[this->partition];
+			this->shardCopyData = new char[SHARD_SIZE];
+			for (int i = 0; i < partition; i++)
+			{
+				this->blocks[i] = new block(shardCopyData);
+			}
 		}
 		~dics2s()
 		{
+			for (int i = 0; i < partition; i++)
+			{
+				delete this->blocks[i];
+					 
+			}
 			delete[] this->blocks;
+			delete[] this->shardCopyData;
 		}
 
 		int remove(const char* key, short klen)
 		{
 			uint pos = index(key, klen);
-			rwlocks[pos % 64].wrlock();
-			if (blocks[pos].remove(key, klen))
+			if (blocks[pos]->remove(key, klen))
 			{
 				this->size--;
 			}
-			rwlocks[pos % 64].unwrlock();
 			return this->size;
 		}
 
 		int insert(const char* key, short klen, const char* value, int vlen)
 		{
 			uint pos = index(key, klen);
-			rwlocks[pos % 64].wrlock();
-			if (blocks[pos % 64].insert(key, klen, value, vlen))
+			if (blocks[pos]->insert(key, klen, value, vlen))
 			{
 				this->size++;
 			}
-			rwlocks[pos % 64].unwrlock();
 			return this->size;
 		}
 
 		const char* get(const char* key, short klen, int& vlen)
 		{
-			return blocks[index(key, klen)].get(key, klen, vlen);
+			return blocks[index(key, klen)]->get(key, klen, vlen);
 		}
 
 		bool get(const char* key, short klen, string& word)
 		{
 			int vlen;
 			uint pos = index(key, klen);
-			rwlocks[pos % 64].rdlock();
-			const char* ch = blocks[pos].get(key, klen, vlen);
+			const char* ch = blocks[pos]->get(key, klen, vlen);
 			if (ch != nullptr)
 			{
 				word.append(ch,vlen);
-			}
-			rwlocks[pos % 64].unrdlock();
-			if (ch != null) {
 				return true;
 			}
 			else {
+				cout << "false" << endl;
 				return false;
 			}
 		}

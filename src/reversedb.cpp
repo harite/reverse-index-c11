@@ -150,7 +150,7 @@ void testelasticsmap()
 		}
 	}
 }
-int main()
+int testSet()
 {
 	elasticset::keyset<int> kset(16);
 	for (int i = 0; i < 1024*1024*10; i++)
@@ -178,8 +178,27 @@ int main()
 	cout << "ok" << endl;
 	int a;
 	cin >> a;
-}
+	return 0;
 
+}
+int main() {
+	maps2s::dics2s s2s(1);
+	for (int i = 0; i < 1024*1024; i++)
+	{
+		string str = tostring(i);
+		s2s.insert(str.c_str(),str.length(), str.c_str(), str.length());
+		string temp;
+		s2s.get(str.c_str(), str.length(), temp);
+		if (temp.compare(str) != 0) {
+			cout << "temp:" << temp << " str:" << str << " i:" << i << endl;
+			break;
+		}
+	}
+	cout << "ok" << endl;
+	int a;
+	cin >> a;
+	return a;
+}
 int ___main__()
 {
 	cout << "---" << sizeof(tarray<int>) << endl;
