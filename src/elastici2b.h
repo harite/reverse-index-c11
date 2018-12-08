@@ -17,8 +17,8 @@ namespace seqmap {
 
 	typedef long long int64;
 	typedef unsigned int uint;
-	const static int NODE_MAX_SIZE = 1024*16;
-	const static int SHARD_COPY_SIZE = 1024 * 1024 * 8;
+	const static int NODE_MAX_SIZE = 1024*8;
+	const static int SHARD_COPY_SIZE = 1024 * 1024 * 4;
 	class node
 	{
 	public:

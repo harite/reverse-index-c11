@@ -234,7 +234,7 @@ namespace elasticsmap
 
 			int reuslt = this->pages[index]->add(key,value);
 
-			if (this->pages[index]->size > 1024 * 8)
+			if (this->pages[index]->size > 1024 * 4)
 			{
 				page<k, v>** temp = this->pages[index]->splitToTwo(index == this->size - 1);
 				page<k, v>** newpages = new page<k, v>*[this->size + 1];
