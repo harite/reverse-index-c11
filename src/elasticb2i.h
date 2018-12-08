@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #ifndef _SEQMAP_B2I_H
 #define _SEQMAP_B2I_H
 #include "sequence.h"
@@ -171,9 +171,9 @@ namespace seqmap
 					{
 						memmove(this->keys + pos, this->keys + pos + 1, sizeof(uint) * numMoved);
 					}
-					//±ê¼ÇÊý¾Ý±»É¾³ý
+					//æ ‡è®°æ•°æ®è¢«åˆ é™¤
 					this->_block->remove(index);
-					//»ØÊÕ¸Ã·ÖÅäµÄid
+					//å›žæ”¶è¯¥åˆ†é…çš„id
 					this->seq->recycle(index);
 					this->size--;
 					return true;
@@ -186,7 +186,7 @@ namespace seqmap
 
 		}
 
-		/*Êý¾Ý¿â·ÖÁÑÎªÁ½¸ö¿é*/
+		/*æ•°æ®åº“åˆ†è£‚ä¸ºä¸¤ä¸ªå—*/
 		b2ipage** splitToTwo(bool tail)
 		{
 			b2ipage** pages = new b2ipage*[2];
@@ -201,7 +201,7 @@ namespace seqmap
 			return pages;
 		}
 
-		/*ÅÐ¶¨Ò³µÄ·¶Î§ÊÇ·ñ°üº¬ key*/
+		/*åˆ¤å®šé¡µçš„èŒƒå›´æ˜¯å¦åŒ…å« key*/
 		int rangecontains(const char* key,int len)
 		{
 			int tailLength;
@@ -308,15 +308,15 @@ namespace seqmap
 			b2ipage* newpage = new b2ipage(this->seq,size0+size1+128,this->_block);
 			memmove(newpage->keys, temp0->keys, sizeof(int)*size0);
 			memmove(newpage->keys+ size0, temp1->keys, sizeof(int)*size1);
-			//ÉèÖÃÐÂÒ²µÄÊý¾ÝÁ¿
+			//è®¾ç½®æ–°ä¹Ÿçš„æ•°æ®é‡
 			newpage->size = size0 + size1;
-			//ÊÍ·ÅÔ­Êý¾ÝÒ³1
+			//é‡Šæ”¾åŽŸæ•°æ®é¡µ1
 			delete temp0;
-			//ÊÍ·ÅÔ­Êý¾ÝÒ³2
+			//é‡Šæ”¾åŽŸæ•°æ®é¡µ2
 			delete temp1;
-			//½«ÐÂÒ³Êý¾Ý·Åµ½ index0µÄÎ»ÖÃ
+			//å°†æ–°é¡µæ•°æ®æ”¾åˆ° index0çš„ä½ç½®
 			this->pages[index0] = newpage;
-			//½«¿Õ°×Ò³É¾³ý
+			//å°†ç©ºç™½é¡µåˆ é™¤
 			int moveNum = this->size - index1 - 1;
 			if (moveNum > 0)
 			{
@@ -332,15 +332,15 @@ namespace seqmap
 			{
 				return false;
 			}
-			//Èç¹ûÊý¾ÝÒ³ÄÚµÄÊý¾ÝÐ¡ÓÚ64Ìõ£¬ÔòºÏ²¢Êý¾ÝÒ³
+			//å¦‚æžœæ•°æ®é¡µå†…çš„æ•°æ®å°äºŽ64æ¡ï¼Œåˆ™åˆå¹¶æ•°æ®é¡µ
 			else if (this->pages[index]->keySize() <  64)
 			{
-				//Èç¹ûÊÇµÚÒ»Ò³£¬Ôò½«µÚ¶þÒ³µÄºÏ²¢µ½µÚÒ»Ò³
+				//å¦‚æžœæ˜¯ç¬¬ä¸€é¡µï¼Œåˆ™å°†ç¬¬äºŒé¡µçš„åˆå¹¶åˆ°ç¬¬ä¸€é¡µ
 				if (index == 0)
 				{
 					combine(0, 1);
 				}
-				else//ÆäËûÇé¿öÔò½«Êý¾Ý½«ÓëÇ°Ò»Ò³ºÏ²¢
+				else//å…¶ä»–æƒ…å†µåˆ™å°†æ•°æ®å°†ä¸Žå‰ä¸€é¡µåˆå¹¶
 				{
 					combine(index - 1, index);
 				}

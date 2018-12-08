@@ -1,10 +1,4 @@
-/*
-* dicmapi2i.h
-*  �����������μ�ֵ�ԣ���Ҫ����ת�� 64λ���ε�32λ����
-*  Created on: 2015��2��11��
-*      Author: jkuang
-*/
-#ifndef ELASTICSMAP_I2I_H_
+﻿#ifndef ELASTICSMAP_I2I_H_
 #define ELASTICSMAP_I2I_H_
 #include <string.h>
 #include <atomic>
@@ -273,15 +267,10 @@ namespace elasticsmap
 			page<k, v>* newpage = new page<k, v>( size0 + size1 + 128);
 			memmove(newpage->nodes, temp0->nodes, sizeof(node<k,v>)*size0);
 			memmove(newpage->nodes + size0, temp1->nodes, sizeof(node<k, v>)*size1);
-			//������Ҳ��������
 			newpage->size = size0 + size1;
-			//�ͷ�ԭ����ҳ1
 			delete temp0;
-			//�ͷ�ԭ����ҳ2
 			delete temp1;
-			//����ҳ���ݷŵ� index0��λ��
 			this->pages[index0] = newpage;
-			//���հ�ҳɾ��
 			int moveNum = this->size - index1 - 1;
 			if (moveNum > 0)
 			{
@@ -297,15 +286,13 @@ namespace elasticsmap
 			{
 				return false;
 			}
-			//�������ҳ�ڵ�����С��64������ϲ�����ҳ
 			else if (this->pages[index]->size <  64)
 			{
-				//����ǵ�һҳ���򽫵ڶ�ҳ�ĺϲ�����һҳ
 				if (index == 0)
 				{
 					combine(0, 1);
 				}
-				else//������������ݽ���ǰһҳ�ϲ�
+				else
 				{
 					combine(index - 1, index);
 				}
