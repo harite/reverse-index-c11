@@ -149,7 +149,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="elastictree.h" />
-    <ClInclude Include="classdef.h" />
+    <ClInclude Include="commons.h" />
     <ClInclude Include="dataindex.h" />
     <ClInclude Include="operateor.h" />
     <ClInclude Include="datastore.h" />

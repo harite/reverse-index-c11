@@ -1,7 +1,7 @@
 #ifndef adDICHASHSET_H_
 #define adDICHASHSET_H_
 #include <string.h>
-#include "classdef.h"
+#include "commons.h"
 #include "filestream.h"
 #include "rwsyslock.h"
 using namespace std;

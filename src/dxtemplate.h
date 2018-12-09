@@ -8,7 +8,7 @@
 #define DXTEMPLATE_H_
 #include <iostream>
 #include <algorithm>
-#include "classdef.h"
+#include "commons.h"
 namespace qstardb
 {
 

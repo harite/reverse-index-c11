@@ -3,7 +3,7 @@
 #include <string.h>
 #include <atomic>
 #include <string>
-#include "classdef.h"
+#include "commons.h"
 #include "rwsyslock.h"
 using namespace std;
 namespace elasticsmap
