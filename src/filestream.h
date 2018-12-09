@@ -292,11 +292,11 @@ namespace qstardb
 
 	public:
 		char* buffer;
-		charwriter(int size)
+		charwriter(int capacity)
 		{
 			this->offset = 0;
-			this->capacity = size;
-			this->buffer = new char[size];
+			this->capacity = capacity;
+			this->buffer = new char[capacity];
 		}
 		charwriter()
 		{

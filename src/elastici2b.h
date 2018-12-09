@@ -192,8 +192,10 @@ namespace seqmap {
 	private:
 		int nodeSize{ 0 };
 		int pageLength{ 1 };
-		page** pages{ nullptr };
+
+		page** pages;
 		char* shardData;
+		qstardb::rwsyslock lock;
 		inline int ypos(int index)
 		{
 			return index / NODE_MAX_SIZE;
@@ -201,11 +203,9 @@ namespace seqmap {
 	public:
 		seqblock()
 		{
-
 			this->pages = new page*[pageLength];
 			this->shardData = new char[SHARD_COPY_SIZE];
 			this->pages[0] = new page(shardData);
-
 		}
 
 		~seqblock()
@@ -220,6 +220,7 @@ namespace seqmap {
 
 		int insert(uint index, const char* ch, int length)
 		{
+			lock.wrlock();
 			int _ypos = this->ypos(index);
 			if (_ypos >= this->pageLength)
 			{
@@ -232,26 +233,67 @@ namespace seqmap {
 			}
 			bool optimize = (index  % NODE_MAX_SIZE) == NODE_MAX_SIZE - 1;
 			this->pages[_ypos]->insert(index, ch, length, optimize);
+			lock.unwrlock();
 			return index;
 		}
 
 		bool remove(uint index)
 		{
-			return this->pages[ypos(index)]->remove(index);
+			lock.wrlock();
+			bool result= this->pages[ypos(index)]->remove(index);
+			lock.unwrlock();
+			return result;
 		}
 
+		bool find(uint index, string& str)
+		{
+		
+			int _ypos = this->ypos(index);
+			bool reuslt = false;
+			lock.rdlock();
+			if (_ypos < this->pageLength)
+			{
+				int length;
+				const char* temp= this->pages[_ypos]->find(index, length);
+				if (temp != nullptr) 
+				{
+					str.append(temp,length);
+					reuslt = true;
+				}
+			}
+			lock.unrdlock();
+			return reuslt;
+		}
+
+		bool find(uint index, qstardb::charwriter& writer)
+		{
+
+			int _ypos = this->ypos(index);
+			bool reuslt = false;
+			lock.rdlock();
+			if (_ypos < this->pageLength)
+			{
+				int length;
+				const char* temp = this->pages[_ypos]->find(index, length);
+				if (temp != nullptr)
+				{
+					writer.writeInt(length);
+					writer.write(temp,length);
+					reuslt = true;
+				}
+			}
+			lock.unrdlock();
+			return reuslt;
+		}
 		const char* find(uint index, int& length)
 		{
+
 			int _ypos = this->ypos(index);
 			if (_ypos < this->pageLength)
 			{
 				return this->pages[_ypos]->find(index, length);
 			}
-			else
-			{
-				length = 0;
-				return nullptr;
-			}
+			return nullptr;
 		}
 	};
 	class i2b_block
@@ -259,6 +301,7 @@ namespace seqmap {
 	private:
 		seqblock _sblock;
 		qstardb::seq64to32 seq;
+		qstardb::rwsyslock lock;
 		inline int ypos(int index)
 		{
 			return index / NODE_MAX_SIZE;
@@ -271,45 +314,63 @@ namespace seqmap {
 		int insert(int64 key, const char* ch, int length)
 		{
 			uint index;
+			lock.wrlock();
 			seq.create(key, index);
 		    this->_sblock.insert(index,ch,length);
+			lock.unwrlock();
 			return index;
 		}
 
-		int remove(int64 key)
+		bool remove(int64 key)
 		{
 			uint index;
+			lock.wrlock();
 			if (this->seq.exists(key, index)) {
+				
 				this->_sblock.remove(index);
 				this->seq.remove(key, index);
-				return 1;
+				lock.unwrlock();
+				return true;
 			}
 			else {
-				return 0;
+				lock.unwrlock();
+				return false;
 			}
 
 		}
 
-		const char* find(int64 key, int& length)
+		bool find(int64 key, string& word)
 		{
 			uint index;
+			bool result = false;
+			lock.rdlock();
 			if (this->seq.exists(key, index))
 			{
-				return 	this->_sblock.find(index, length);
+				result= this->_sblock.find(index,  word);
 			}
-			else
+			lock.unrdlock();
+			return result;
+		}
+
+		bool find(int64 key, qstardb::charwriter& writer)
+		{
+			uint index;
+			bool result = false;
+			lock.rdlock();
+			if (this->seq.exists(key, index))
 			{
-				length = 0;
-				return nullptr;
+				result = this->_sblock.find(index, writer);
 			}
+			lock.unrdlock();
+			return result;
 		}
 	};
+	/**建议分区不超过十六个分区，否则每个分区都会消耗共享拷贝内存空间*/
 	class seqcache
 	{
 	private:
 		int partition;
 		i2b_block** blocks;
-		qstardb::rwsyslock* rwlock;
 		inline int _hash(int64 key)
 		{
 			int _h = key % this->partition;
@@ -320,7 +381,6 @@ namespace seqmap {
 		{
 			this->partition = partition;
 			this->blocks = new i2b_block*[this->partition];
-			this->rwlock = new qstardb::rwsyslock[this->partition];
 			for (int i = 0; i < this->partition; i++)
 			{
 				this->blocks[i] = new i2b_block();
@@ -332,65 +392,27 @@ namespace seqmap {
 			{
 				delete this->blocks[i];
 			}
-			delete[] this->rwlock;
 			delete[] this->blocks;
 		}
 
 		void add(int64 key, const char* ch, int length)
 		{
-			int pos = _hash(key);
-			rwlock[pos].wrlock();
-			this->blocks[pos]->insert(key, ch, length);
-			rwlock[pos].unwrlock();
+			this->blocks[_hash(key)]->insert(key, ch, length);
 		}
 
 		void remove(int64 key)
 		{
-			int pos = _hash(key);
-			rwlock[pos].wrlock();
-			this->blocks[pos]->remove(key);
-			rwlock[pos].unwrlock();
+			this->blocks[_hash(key)]->remove(key);
 		}
 
 		bool find(int64 key, qstardb::charwriter& writer)
 		{
-			int length;
-			int pos = _hash(key);
-			rwlock[pos].rdlock();
-			const char* temp = this->blocks[pos]->find(key, length);
-			if (temp != nullptr)
-			{
-				writer.writeInt(length);
-				writer.write(temp, length);
-				rwlock[pos].unrdlock();
-				return true;
-			}
-			else
-			{
-				writer.writeInt(0);
-				rwlock[pos].unrdlock();
-				return false;
-			}
+			return this->blocks[_hash(key)]->find(key, writer);
 		}
 
-		bool get(int64 key, string& str)
+		bool get(int64 key, string& word)
 		{
-			int length;
-			int pos = _hash(key);
-			rwlock[pos].rdlock();
-			const char* temp = this->blocks[pos]->find(key, length);
-			if (temp != nullptr)
-			{
-
-				str.append(temp, length);
-				rwlock[pos].unrdlock();
-				return true;
-			}
-			else
-			{
-				rwlock[pos].unrdlock();
-				return false;
-			}
+			return this->blocks[_hash(key)]->find(key, word);
 		}
 	};
 }

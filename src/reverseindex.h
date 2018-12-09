@@ -475,7 +475,7 @@ namespace qstardb
 				}
 				int size = reader.readInt32();
 				int* dicindexs = new int[size];
-				seqmap::seqcache dmap(16);
+				seqmap::seqcache dmap(8);
 				char temp[128];
 				for (int i = 0; i < size; i++)
 				{

@@ -408,7 +408,7 @@ namespace seqmap
 		seqblock* _block;
 		b2iblcok** blocks;
 		qstardb::sequence* seq;
-		qstardb::rwsyslock rwlock;
+		qstardb::rwsyslock lock;
 		inline int ypos(const char* ch,int len)
 		{
 			int pos =strhash(ch,len)% partition;
@@ -445,46 +445,38 @@ namespace seqmap
 		{
 			return this->seq->get();
 		}
-		bool get(int index,string& str)
+		bool get(uint index,string& str)
 		{
-			int length;
-			rwlock.rdlock();
-			const char* temp=this->_block->find(index, length);
-			if (temp != nullptr)
-			{
-				str.append(temp,length);
-				rwlock.unrdlock();
-				return true;
-			}
-			else
-			{
-				rwlock.unrdlock();
-				return false;
-			}
+			bool result = false;
+			lock.rdlock();
+			result = this->_block->find(index, str);
+			lock.unrdlock();
+			return result;
+
 		}
 		int get(const char* ch, int len)
 		{
 			int pos = ypos(ch,len);
-			rwlock.rdlock();
-			int result= this->blocks[pos]->get(ch,len);
-			rwlock.unrdlock();
-			return result;
+			lock.rdlock();
+			int innerseq= this->blocks[pos]->get(ch,len);
+			lock.unrdlock();
+			return innerseq;
 		}
 		int add(const char* ch, int len)
 		{
 			int pos = ypos(ch, len);
-			rwlock.wrlock();
-			int result= this->blocks[pos]->insert(ch, len);
-			rwlock.unwrlock();
-			return result;
+			lock.wrlock();
+			int innerseq = this->blocks[pos]->insert(ch, len);
+			lock.unwrlock();
+			return innerseq;
 		}
 		bool remove(const char* ch,int len)
 		{
 			int pos = ypos(ch, len);
-			rwlock.wrlock();
-			int result = this->blocks[pos]->remove(ch,len);
-			rwlock.unwrlock();
-			return result;
+			lock.wrlock();
+			int innerseq = this->blocks[pos]->remove(ch,len);
+			lock.unwrlock();
+			return innerseq;
 		}
 	};
 

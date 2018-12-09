@@ -120,11 +120,18 @@ extern "C"
 			{
 				int vlength = 0;
 				(*i2bmap)[index]->lock.rdlock();
-				const char* result = (*i2bmap)[index]->_block->find(key, vlength);
-				jbyteArray data = createJByteArray(env, result, vlength);
-				(*i2bmap)[index]->lock.unrdlock();
-				maplock.unrdlock();
-				return data;
+				qstardb::charwriter writer(256);
+				if ((*i2bmap)[index]->_block->find(key, writer))
+				{
+					(*i2bmap)[index]->lock.unrdlock();
+					jbyteArray data = createJByteArray(env, writer.buffer, writer.size());
+					maplock.unrdlock();
+					return data;
+				}
+				else {
+					maplock.unrdlock();
+					return createJByteArray(env, nullptr, 0);
+				}
 			}
 			maplock.unrdlock();
 			return createJByteArray(env, nullptr, 0);

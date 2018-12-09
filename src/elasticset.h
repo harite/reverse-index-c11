@@ -1,5 +1,6 @@
 #ifndef adDICHASHSET_H_
 #define adDICHASHSET_H_
+#include <atomic>
 #include <string.h>
 #include "commons.h"
 #include "filestream.h"
@@ -168,8 +169,9 @@ namespace elasticset
 	template<class k> class block 
 	{
 	private:
-		int size{1};
 		page<k>** pages;
+		atomic<int> size{1};
+		qstardb::rwsyslock lock;
 	public:
 		block()
 		{
@@ -216,10 +218,10 @@ namespace elasticset
 			}
 		}
 
-		inline int insertAndSplit(int index, k key)
+		inline bool insertAndSplit(int index, k key)
 		{
 
-			int reuslt = this->pages[index]->add(key);
+			bool reuslt = this->pages[index]->add(key);
 
 			if (this->pages[index]->size > 1024 * 8)
 			{
@@ -299,51 +301,60 @@ namespace elasticset
 		}
 		int add(k key)
 		{
+			bool result = false;
+			lock.wrlock();
 			if (this->size == 1 || this->pages[0]->rangecontains(key) >= 0)
 			{
-				return this->insertAndSplit(0, key);
+				result = this->insertAndSplit(0, key);
 			}
 			else if (this->pages[this->size - 1]->rangecontains(key) <= 0)
 			{
-				return this->insertAndSplit(this->size - 1, key);
+				result = this->insertAndSplit(this->size - 1, key);
 			}
 			else
 			{
 				int pageno = indexOf(pages, this->size, key, type_ceil);
-				return this->insertAndSplit(pageno, key);
+				result = this->insertAndSplit(pageno, key);
 			}
+			lock.unwrlock();
+			return result;
 		}
 
 		bool contains(k key)
 		{
+			lock.rdlock();
 			int pageno = indexOf(this->pages, this->size, key, type_index);
 			if (pageno >= 0) {
-				return this->pages[pageno]->contains(key);
+				bool result= this->pages[pageno]->contains(key);
+				lock.unrdlock();
+				return result;
 			}
 			else {
+				lock.unrdlock();
 				return false;
 			}
 		}
 
 		bool remove(k key)
 		{
+			bool result = false;
+			lock.wrlock();
 			if (this->pages[this->size - 1]->rangecontains(key) == 0)
 			{
-				bool deled = this->pages[this->size - 1]->remove(key);
+				result = this->pages[this->size - 1]->remove(key);
 				this->combine(this->size - 1);
-				return deled;
 			}
 			else
 			{
 				int pageno = indexOf(this->pages, this->size, key, type_index);
 				if (pageno >= 0)
 				{
-					bool deled = this->pages[pageno]->remove(key);
+					result = this->pages[pageno]->remove(key);
 					this->combine(pageno);
-					return deled;
 				}
-				return false;
 			}
+			lock.unwrlock();
+			return result;
 		}
 		
 	};
@@ -351,9 +362,8 @@ namespace elasticset
 	{
 	private:
 		int partition;
-		int size;
 		block<k>* blocks;
-		qstardb::rwsyslock rwlock;
+		atomic<int> size;
 		int index(k key)
 		{
 			int value = key % partition;
@@ -382,18 +392,14 @@ namespace elasticset
 		{
 			if (blocks[index(key)].add(key))
 			{
-				rwlock.wrlock();
 				this->size++;
-				rwlock.unwrlock();
 			}
 		}
 		void remove(k key)
 		{
 			if (blocks[index(key)].remove(key))
 			{
-				rwlock.wrlock();
 				this->size--;
-				rwlock.unwrlock();
 			}
 		}
 

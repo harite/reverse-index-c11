@@ -345,6 +345,8 @@ namespace btree
 
 		page** pages;
 		char* shardData;
+
+		qstardb::rwsyslock lock;
 	private:
 		inline int indexOf(page** pages, int64 key, int size, type _type)
 		{
@@ -423,19 +425,23 @@ namespace btree
 
 		bool insert(int64 key, const char* data, int length)
 		{
+			bool result = false;
+			lock.wrlock();
 			if (this->size == 1 || this->pages[0]->rangecontains(key) >= 0)
 			{
-				return this->insertAndSplit(0, key, data, length);
+				result = this->insertAndSplit(0, key, data, length);
 			}
 			else if (this->pages[this->size - 1]->rangecontains(key) <= 0)
 			{
-				return this->insertAndSplit(this->size - 1, key, data, length);
+				result = this->insertAndSplit(this->size - 1, key, data, length);
 			}
 			else
 			{
 				int pageno = indexOf(this->pages, key, this->size, type_ceil);
-				return this->insertAndSplit(pageno, key, data, length);
+				result = this->insertAndSplit(pageno, key, data, length);
 			}
+			lock.unwrlock();
+			return result;
 		}
 
 		bool combine(int index0, int index1)
@@ -516,36 +522,61 @@ namespace btree
 
 		bool remove(int64 key)
 		{
+
+			bool result = false;
+			lock.wrlock();
 			if (this->pages[this->size - 1]->rangecontains(key) == 0)
 			{
-				bool deled = this->pages[this->size - 1]->remove(key);
+				result = this->pages[this->size - 1]->remove(key);
 				this->combine(this->size - 1);
-				return deled;
 			}
 			else
 			{
 				int pageno = indexOf(this->pages, key, this->size, type_index);
 				if (pageno >= 0)
 				{
-					bool deled = this->pages[pageno]->remove(key);
+					result = this->pages[pageno]->remove(key);
 					this->combine(pageno);
-					return deled;
 				}
-				return false;
 			}
+			lock.unwrlock();
+			return result;
 		}
 
-		const char* find(int64 key, int& length)
+		bool find(int64 key, string& str)
 		{
+			bool result = false;
+			lock.rdlock();
 			int pageno = indexOf(this->pages, key, this->size, type_index);
 			if (pageno >= 0)
 			{
-				return this->pages[pageno]->find(key, length);
+				int length = 0;
+				const char* temp= this->pages[pageno]->find(key, length);
+				if (temp != nullptr) {
+					str.append(temp,length);
+					result = true;
+				}
 			}
-			else
+			lock.unrdlock();
+			return result;
+		}
+		bool find(int64 key, qstardb::charwriter& writer)
+		{
+			bool result = false;
+			lock.rdlock();
+			int pageno = indexOf(this->pages, key, this->size, type_index);
+			if (pageno >= 0)
 			{
-				return nullptr;
+				int length = 0;
+				const char* temp = this->pages[pageno]->find(key, length);
+				if (temp != nullptr) {
+					writer.writeInt(length);
+					writer.write(temp,length);
+					result = true;
+				}
 			}
+			lock.unrdlock();
+			return result;
 		}
 	};
 
@@ -554,7 +585,6 @@ namespace btree
 	private:
 		int partition;
 		block** blocks;
-		qstardb::rwsyslock* rwlock;
 		inline int _hash(int64 key)
 		{
 			int _h = key % this->partition;
@@ -565,7 +595,6 @@ namespace btree
 		{
 			this->partition = partition;
 			this->blocks = new block*[this->partition];
-			this->rwlock = new qstardb::rwsyslock[this->partition];
 			for (int i = 0; i < this->partition; i++)
 			{
 				this->blocks[i] = new block(max_nodenum_per_page, avg_node_data_size);
@@ -577,46 +606,30 @@ namespace btree
 			{
 				delete this->blocks[i];
 			}
-			delete[] this->rwlock;
 			delete[] this->blocks;
 		}
 
 		void insert(int64 key, const char* ch, int length)
 		{
-			int pos = _hash(key);
-			rwlock[pos].wrlock();
-			this->blocks[pos]->insert(key, ch, length);
-			rwlock[pos].unwrlock();
-
+			this->blocks[_hash(key)]->insert(key, ch, length);
 		}
 
 		void remove(int64 key)
 		{
-			int pos = _hash(key);
-			rwlock[pos].wrlock();
-			this->blocks[pos]->remove(key);
-			rwlock[pos].unwrlock();
+			this->blocks[_hash(key)]->remove(key);
+		}
+		
+		bool find(int64 key, string& word)
+		{
+			return this->blocks[_hash(key)]->find(key, word);
 		}
 
 		bool find(int64 key, qstardb::charwriter& writer)
 		{
-			int length;
-			int pos = _hash(key);
-			rwlock[pos].rdlock();
-			const char* temp = this->blocks[pos]->find(key, length);
-			if (temp != nullptr)
-			{
-				writer.writeInt(length);
-				writer.write(temp, length);
-				rwlock[pos].unrdlock();
-				return true;
-			}
-			else 
-			{
-				rwlock[pos].unrdlock();
-				return false;
-			}
+			return this->blocks[_hash(key)]->find(key, writer);
 		}
+
+
 	};
 }
 #endif

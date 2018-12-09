@@ -355,7 +355,6 @@ namespace elasticsmap
 	private:
 		int partition;
 		block<k, v>* blocks;
-		qstardb::rwsyslock rwlock;
 		inline int ypos(k key)
 		{
 			int pos = key % partition;
@@ -379,27 +378,17 @@ namespace elasticsmap
 	
 		int get(k key, v& value)
 		{
-			int pos = ypos(key);
-			rwlock.rdlock();
-			int result = this->blocks[pos].get(key, value);
-			rwlock.unrdlock();
-			return result;
+			return this->blocks[ypos(key)].get(key, value);;
 		}
+
 		int add(k key,v value)
 		{
-			int pos = ypos(key);
-			rwlock.wrlock();
-			int result = this->blocks[pos].insert(key,value);
-			rwlock.unwrlock();
-			return result;
+			return this->blocks[ypos(key)].insert(key, value);;
 		}
+
 		bool remove(k key)
 		{
-			int pos = ypos(key);
-			rwlock.wrlock();
-			int result = this->blocks[pos].remove(key);
-			rwlock.unwrlock();
-			return result;
+			return this->blocks[ypos(key)].remove(key);;
 		}
 	};
 }

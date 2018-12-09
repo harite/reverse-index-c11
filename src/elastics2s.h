@@ -388,6 +388,7 @@ namespace maps2s
 		int size;
 		page** pages;
 		char* shardCopyData;
+	
 		inline int indexOf(page** pages, int size, const char* key, int len, type _type)
 		{
 			int fromIndex = 0;
@@ -433,10 +434,10 @@ namespace maps2s
 			delete[] this->pages;
 		}
 
-		inline int insertAndSplit(int index, const char* key, short klen,const char* value,int vlen)
+		inline bool insertAndSplit(int index, const char* key, short klen,const char* value,int vlen)
 		{
 
-			int reuslt = this->pages[index]->insert(key, klen,value,vlen);
+			bool reuslt = this->pages[index]->insert(key, klen,value,vlen);
 			if (this->pages[index]->nodeSize > MAX_NODE_SIZE)
 			{
 				page** temp = this->pages[index]->splitToTwo(index == this->size - 1);
@@ -531,51 +532,76 @@ namespace maps2s
 			}
 		}
 
-		int insert(const char* key, short klen,const char* value,int vlen)
+		bool insert(const char* key, short klen,const char* value,int vlen)
 		{
+			bool result = false;
 			if (this->size == 1 || this->pages[0]->rangecontains(key, klen) >= 0)
 			{
-				return this->insertAndSplit(0, key, klen,value,vlen);
+				result = this->insertAndSplit(0, key, klen,value,vlen);
 			}
 			else if (this->pages[this->size - 1]->rangecontains(key, klen) <= 0)
 			{
-				return this->insertAndSplit(this->size - 1, key, klen,value,vlen);
+				result = this->insertAndSplit(this->size - 1, key, klen,value,vlen);
 			}
 			else
 			{
 				int pageno = indexOf(pages, this->size, key, klen, type_ceil);
-				return this->insertAndSplit(pageno, key, klen,value,vlen);
+				result = this->insertAndSplit(pageno, key, klen,value,vlen);
 			}
+			return result;
 		}
 
 		bool remove(const char* key, int len)
 		{
+			bool result = false;
 			if (this->pages[this->size - 1]->rangecontains(key, len) == 0)
 			{
-				bool deled = this->pages[this->size - 1]->remove(key, len);
+				bool result = this->pages[this->size - 1]->remove(key, len);
 				this->combine(this->size - 1);
-				return deled;
 			}
 			else
 			{
 				int pageno = indexOf(this->pages, this->size, key, len, type_index);
 				if (pageno >= 0)
 				{
-					bool deled = this->pages[pageno]->remove(key, len);
+					result = this->pages[pageno]->remove(key, len);
 					this->combine(pageno);
-					return deled;
 				}
-				return false;
 			}
+			return result;
 		}
-		const char* get(const char* key, int klen,int& vlen)
+		bool get(const char* key, int klen,qstardb::charwriter& writer)
 		{
 			int pageno = indexOf(this->pages, this->size, key, klen, type_index);
 			if (pageno >= 0) {
-				return this->pages[pageno]->get(key, klen,vlen);
+				int vlen = 0;
+				const char* temp = this->pages[pageno]->get(key, klen, vlen);
+				if (temp != nullptr)
+				{
+					writer.writeInt(vlen);
+					writer.write(temp,vlen);
+				}
+				return temp != nullptr;
 			}
 			else {
-				return nullptr;
+				return false;
+			}
+		}
+
+		bool get(const char* key, int klen, string& word)
+		{
+			int pageno = indexOf(this->pages, this->size, key, klen, type_index);
+			if (pageno >= 0) {
+				int vlen = 0;
+				const char* temp = this->pages[pageno]->get(key, klen, vlen);
+				if (temp != nullptr)
+				{
+					word.append(temp,vlen);
+				}
+				return temp != nullptr;
+			}
+			else {
+				return false;
 			}
 		}
 
@@ -655,38 +681,20 @@ namespace maps2s
 			return this->size;
 		}
 
-		bool get(const char* key, short klen, qstardb::charwriter* writer)
+		bool get(const char* key, short klen, qstardb::charwriter& writer)
 		{
-			int vlen = -1;
 			lock.rdlock();
-			const char* temp=blocks[index(key, klen)]->get(key, klen, vlen);
-			if (temp != nullptr)
-			{
-				writer->writeInt(vlen);
-				writer->write(temp,vlen);
-				lock.unrdlock();
-				return true;
-			}
+			bool result= blocks[index(key, klen)]->get(key, klen, writer);
 			lock.unrdlock();
-			return false;
+			return result;
 		}
 
 		bool get(const char* key, short klen, string& word)
 		{
-			int vlen;
-			uint pos = index(key, klen);
 			lock.rdlock();
-			const char* ch = blocks[pos]->get(key, klen, vlen);
-			if (ch != nullptr)
-			{
-				word.append(ch,vlen);
-				lock.unrdlock();
-				return true;
-			}
-			else {
-				lock.unrdlock();
-				return false;
-			}
+			bool result = blocks[index(key, klen)]->get(key, klen, word);
+			lock.unrdlock();
+			return result;
 		}
 
 		short readshort(const char* ch, int offset)
