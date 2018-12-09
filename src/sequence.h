@@ -84,17 +84,17 @@ namespace qstardb
 		}
 		bool create(int64 key, uint& value)
 		{
+			bool result = false;
 			rwlock.wrlock();
 			if (!this->table->get(key, value))
 			{
 				int temp = this->seq->createsq();
 				this->table->add(key, temp);
 				value = temp;
-				rwlock.unwrlock();
-				return true;
+				result = true;
 			}
 			rwlock.unwrlock();
-			return false;
+			return result;
 		}
 
 		bool exists(int64 key)

@@ -1,6 +1,6 @@
 #pragma once
-#ifndef  OPERATEAND_H_
-#define  OPERATEAND_H_
+#ifndef  OPERATE_AND_H_
+#define  OPERATE_AND_H_
 #include "dxtemplate.h"
 #include "stopdecoder.h"
 #include <mutex>

@@ -4,8 +4,8 @@
  *  Created on: 2015年2月10日
  *      Author: jkuang
  */
-#ifndef  DATAQUEUE_H_
-#define  DATAQUEUE_H_
+#ifndef  OPERATE_OR_H_
+#define  OPERATE_OR_H_
 #include "datastore.h"
 #include "dataindex.h"
 #include <mutex>    
