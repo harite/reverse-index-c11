@@ -15,17 +15,17 @@ namespace qstardb
 	template<class c> class iditerator
 	{
 	private:
-		uint index { 0 };
-		bool desc { true };
-		bool _virtual { true };
+		uint index{ 0 };
+		bool desc{ true };
+		bool _virtual{ true };
 		stopdecoder decoder;
-		datanode* data { null };
-		segments<c>* segs { null };
-		memstore<c>* store { null };
-		treeanalysis* left { null };
-		treeanalysis* right { null };
-		baseiterator<uint>* nodes { null };
-		baseiterator<arraylist<uint>*>* nodeslist { null };
+		datanode* data{ null };
+		segments<c>* segs{ null };
+		memstore<c>* store{ null };
+		treeanalysis* left{ null };
+		treeanalysis* right{ null };
+		baseiterator<uint>* nodes{ null };
+		baseiterator<arraylist<uint>*>* nodeslist{ null };
 		static const int MAX_SCAN_COUNT = 512;
 	public:
 		iditerator(segments<c>* segs, memstore<c>* store)
@@ -235,8 +235,8 @@ namespace qstardb
 		treeanalysis* right;
 		iditerator<t>** queue;
 		iditerpool<t>* iterpool;
-		int size { 0 }, capacity, scansize { 0 };
-		datanode*tempnode { null }, *duplicate { null };
+		int size{ 0 }, capacity, scansize{ 0 };
+		datanode*tempnode{ null }, *duplicate{ null };
 
 		bool ensurecapacity()
 		{
@@ -292,10 +292,10 @@ namespace qstardb
 				if (queue[i] == moved)
 				{
 					siftup(i, moved);
-					if (queue[i] != moved) 
+					if (queue[i] != moved)
 					{
 						return moved;
-					}	
+					}
 				}
 			}
 			return null;
@@ -337,11 +337,11 @@ namespace qstardb
 				delete[] this->queue;
 				this->queue = temp;
 			}
-			if (this->size == 0) 
+			if (this->size == 0)
 			{
 				queue[0] = iditer;
 			}
-			else 
+			else
 			{
 				siftup(this->size, iditer);
 			}

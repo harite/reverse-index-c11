@@ -27,9 +27,6 @@
     <ClInclude Include="dataindex.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="dataqueue.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="datastore.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -72,9 +69,6 @@
     <ClInclude Include="sequence.h">
       <Filter>util</Filter>
     </ClInclude>
-    <ClInclude Include="exeplan.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="nativebase.h">
       <Filter>jni</Filter>
     </ClInclude>
@@ -110,6 +104,15 @@
     </ClInclude>
     <ClInclude Include="elastics2s.h">
       <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="operateand.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="operateor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="interpreter.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

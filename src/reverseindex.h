@@ -8,10 +8,10 @@
 #define QSTARINDEX_H_
 #include "searchstats.h"
 #include "syntaxparser.h"
-#include "dataqueue.h"
+#include "operateand.h"
 #include "filestream.h"
 #include "stopencoder.h"
-#include "exeplan.h"
+#include "interpreter.h"
 #include <mutex>    
 
 using namespace std;

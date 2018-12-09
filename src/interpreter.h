@@ -1,12 +1,13 @@
 ﻿/*
- * exeplan.h
+ *  解释器，根据语法解释生成相应的数据结构
  *
  *  Created on: 2015年2月10日
  *      Author: jkuang
  */
-#ifndef EXEPLAN_H_
-#define EXEPLAN_H_
+#ifndef  INTERPRETER_H_
+#define  INTERPRETER_H_
 #include <unordered_map>
+#include "operateor.h"
 #include "datastore.h"
 #include "dataindex.h"
 namespace qstardb

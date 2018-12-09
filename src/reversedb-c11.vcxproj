@@ -151,13 +151,13 @@
     <ClInclude Include="elastictree.h" />
     <ClInclude Include="classdef.h" />
     <ClInclude Include="dataindex.h" />
-    <ClInclude Include="dataqueue.h" />
+    <ClInclude Include="operateor.h" />
     <ClInclude Include="datastore.h" />
     <ClInclude Include="elastics2s.h" />
     <ClInclude Include="dictionary.h" />
     <ClInclude Include="dxtemplate.h" />
     <ClInclude Include="elastici2i.h" />
-    <ClInclude Include="exeplan.h" />
+    <ClInclude Include="interpreter.h" />
     <ClInclude Include="filestream.h" />
     <ClInclude Include="elasticset.h" />
     <ClInclude Include="nativebase.h" />
@@ -168,6 +168,7 @@
     <ClInclude Include="nativeindex.h" />
     <ClInclude Include="nativeintset.h" />
     <ClInclude Include="nativejni.h" />
+    <ClInclude Include="operateand.h" />
     <ClInclude Include="reverseindex.h" />
     <ClInclude Include="reversebase.h" />
     <ClInclude Include="rwsyslock.h" />
