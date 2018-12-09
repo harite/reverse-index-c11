@@ -182,19 +182,11 @@ int testSet()
 
 }
 int main() {
-	maps2s::dics2s s2s(1);
-	for (int i = 0; i < 1024*1024; i++)
-	{
-		string str = tostring(i);
-		s2s.insert(str.c_str(),str.length(), str.c_str(), str.length());
-		string temp;
-		s2s.get(str.c_str(), str.length(), temp);
-		if (temp.compare(str) != 0) {
-			cout << "temp:" << temp << " str:" << str << " i:" << i << endl;
-			break;
-		}
-	}
-	cout << "ok" << endl;
+
+	stardb<uint> index(true);
+	string file("D:\\works\\dump\\reverse.101.bin");
+	bool result = index.readfile(file);
+	cout << "check:"<< result << endl;
 	int a;
 	cin >> a;
 	return a;

@@ -36,7 +36,6 @@ namespace qstardb
 	const static int LEFT = MAX_INT_VALUE - 3;
 	const static int RIGHT = MAX_INT_VALUE - 4;
 
-	
 	class parserparam
 	{
 	private:

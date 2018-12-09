@@ -376,23 +376,29 @@ namespace qstardb
 		{
 			filereader reader(filename);
 		    //int64 HEAD_MARK+ int32 dicsize
+			cout << "check HEAD_MARK " << endl;
 			if (reader.hasmore(20)&& reader.readInt64()==HEAD_MARK)
 			{
+				cout << "HEAD_MARK OK!" << endl;
 				int64 time = reader.readInt64();
 				//dump 已经超过了两天时间
+				cout << "check FILE date!" << endl;
 				if (this->currentTimeMillis() - time > 86400l * 1000l*2)
 				{
 					reader.close();
+					cout << "file out of date!" << endl;
 					return false;
 				}
+				cout << "checking dic ..." << endl;
 				int dicSize = reader.readInt32();
 				// check dic
+				cout << "dic size:"<< dicSize << endl;
 				char* tempData = new char[32 * 1024 * 4];
 				for (int i = 0; i < dicSize; i++)
 				{
-					if (reader.hasmore(1))
+					if (reader.hasmore(2))
 					{
-						char len = reader.readChar();
+						short len = reader.readShort();
 						if (reader.hasmore(len))
 						{
 							reader.read(tempData,len);
@@ -409,19 +415,22 @@ namespace qstardb
 						return false;
 					}
 				}
+				cout << "dic is ok !" << endl;
 				//check index
-				
+				cout << "check data.doc !" << endl;
+				int docCount = 0;
 				while (reader.hasmore(9)) 
 				{
 					char mark = reader.readChar();
 					int64 key = reader.readInt64();
 					if (mark == NODE_ADD) {
+						
 						if (reader.hasmore(10))
 						{
 							//int64 sort
 							reader.readInt64();
 							short length = reader.readShort();
-							if (reader.hasmore(length*4))
+							if (reader.hasmore(length))
 							{
 								reader.read(tempData,length*4);
 							}
@@ -429,20 +438,27 @@ namespace qstardb
 							{
 								reader.close();
 								delete[] tempData;
-								return true;
+								cout << "doc error key:" << key << endl;
+								return false;
 							}
 						}
 						else
 						{
 							reader.close();
 							delete[] tempData;
-							return true;
+							cout << "doc error key:" << key << endl;
+							return false;
+						}
+						if (docCount++ % 100000 == 100000 - 1)
+						{
+							cout << "checked count:" << docCount << endl;
 						}
 					}
 					else if (mark==FILE_EOF &&  key==TAIL_MARK)
 					{
 						reader.close();
 						delete[] tempData;
+						cout << "file is OK,all doc.count:" << docCount << endl;
 						return true;
 						
 					}
@@ -450,17 +466,20 @@ namespace qstardb
 					{
 						reader.close();
 						delete[] tempData;
+						cout << "file is corrupted !"  << endl;
 						return false;
 					}
 				}
 				reader.close();
 				delete[] tempData;
+				cout << "file is corrupted !" << endl;
 				return false;
 			}
 			else
 			{
 				reader.close();
-				return true;
+				cout << "file HEAD_MARK error !" << endl;
+				return false;
 			}
 		}
 
@@ -476,10 +495,10 @@ namespace qstardb
 				int size = reader.readInt32();
 				int* dicindexs = new int[size];
 				seqmap::seqcache dmap(8);
-				char temp[128];
+				char temp[1024*64];
 				for (int i = 0; i < size; i++)
 				{
-					char len = reader.readChar();
+					short len = reader.readShort();
 					reader.read(temp, len);
 					dmap.add(i, (const char*)temp, len);
 					dicindexs[i] = -1;
@@ -528,6 +547,7 @@ namespace qstardb
 					else if (mark == FILE_EOF && key==TAIL_MARK) {
 						delete[] dicindexs;
 						delete[] tempindexs;
+						cout << "load ok，load count:"<< count << endl;
 						return true;
 					}
 					else
@@ -566,12 +586,12 @@ namespace qstardb
 				string word;
 				if (this->dic->get(i, word))
 				{
-					fileout.writeChar(word.length());
+					fileout.writeShort(word.length());
 					fileout.writeBytes(word.c_str(), word.length());
 				}
 				else
 				{
-					fileout.writeChar(0);
+					fileout.writeShort(0);
 				}
 			}
 			//获取全局排序索引,在进行dump的时候，索引可读但不允许写

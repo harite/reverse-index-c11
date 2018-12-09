@@ -130,6 +130,7 @@ namespace qstardb
 			if (this->in.is_open()) 
 			{
 				this->fileLength = this->in.tellg();
+				this->in.seekg(0, ios_base::beg);
 			}
 			else
 			{
