@@ -54,7 +54,7 @@ namespace qstardb
 		{
 			int size = -1;
 			c* ptr = store->get(intkey, size);
-			if (ptr != null)
+			if (ptr != nullptr)
 			{
 				int len = readProperties(ptr, size, deletebuffer);
 				for (size_t i = 0; i < len; i++)
@@ -68,7 +68,7 @@ namespace qstardb
 
 		int readProperties(uint* chs, int length, uint* buffer)
 		{
-			if (chs != null)
+			if (chs != nullptr)
 			{
 				for (int i = 0; i < length; i++)
 				{
@@ -81,7 +81,7 @@ namespace qstardb
 		int readProperties(char* chs, int length, uint* buffer)
 		{
 			int size = 0;
-			if (chs != null)
+			if (chs != nullptr)
 			{
 				stopdecoder decoder(chs, length, false);
 				while (decoder.hasNext())

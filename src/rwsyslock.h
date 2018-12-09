@@ -27,7 +27,7 @@ namespace qstardb
 	public:
 		rwsyslock()
 		{
-			pthread_rwlock_init(&rwlock, NULL);
+			pthread_rwlock_init(&rwlock,  nullptr);
 		}
 		~rwsyslock()
 		{

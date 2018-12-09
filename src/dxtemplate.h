@@ -106,11 +106,11 @@ namespace qstardb
 	template<class c> inline c* encapacity(c* old, int oldlen, int newlen)
 	{
 		c* temp = new c[newlen];
-		if (oldlen > 0 && old != null)
+		if (oldlen > 0 && old !=  nullptr)
 		{
 			memcpy(temp, old, sizeof(c) * oldlen);
 		}
-		if (old != null)
+		if (old !=  nullptr)
 		{
 			delete[] old;
 		}
@@ -120,7 +120,7 @@ namespace qstardb
 	template<class c> inline c** encapacity(c** old, uint oldlen, uint newlen, uint rows)
 	{
 		c** temp = new c*[newlen];
-		if (oldlen > 0 && old != null)
+		if (oldlen > 0 && old !=  nullptr)
 		{
 			memcpy(temp, old, sizeof(c*) * oldlen);
 		}
@@ -128,7 +128,7 @@ namespace qstardb
 		{
 			temp[i] = new c[rows];
 		}
-		if (old != null)
+		if (old !=  nullptr)
 		{
 			delete[] old;
 		}
@@ -217,7 +217,7 @@ namespace qstardb
 		if (nodes[_index].v2 > 0)
 		{
 			cout << "  insert error! " << endl;
-			return null;
+			return  nullptr;
 		}
 		if (-nodes[_index].v2 >= len)
 		{
@@ -251,7 +251,7 @@ namespace qstardb
 			if (!hasmore && oldsize != property.v1 + odldll)
 			{
 				cout << "error in datacp!" << endl;
-				return null;
+				return  nullptr;
 			}
 			memcpy(mems + property.v1, p, sizeof(c) * len);
 			nodes[_index].v1 = property.v1;

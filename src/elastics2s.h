@@ -319,7 +319,7 @@ namespace maps2s
 		{
 			int vlen = 0;
 			const char* temp = get(key,klen,vlen);
-			if (temp != null) {
+			if (temp != nullptr) {
 				word.append(temp, vlen);
 				return true;
 			}else{

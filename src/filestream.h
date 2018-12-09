@@ -10,9 +10,6 @@
 #include<fstream>
 #include<iostream>
 #include <cstdlib> 
-#ifndef null 
-#define  null nullptr
-#endif
 namespace qstardb
 {
 	using namespace std;
@@ -377,7 +374,7 @@ namespace qstardb
 		~charwriter(void)
 		{
 			delete[] buffer;
-			this->buffer = null;
+			this->buffer = nullptr;
 		}
 	};
 
@@ -486,7 +483,7 @@ namespace qstardb
 		~filewriter(void)
 		{
 			delete[] this->buffer;
-			this->buffer = null;
+			this->buffer = nullptr;
 		}
 	};
 }

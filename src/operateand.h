@@ -22,11 +22,11 @@ namespace qstardb {
 		// 扩展长度
 		int nodelength{ 0 };
 		// 子节点
-		treenode* children{ null };
+		treenode* children{ nullptr };
 
 		uint notfilterlen{ 0 };
 
-		arrays<uint>** notfilters{ null };
+		arrays<uint>** notfilters{ nullptr };
 
 		void set(int ch, bool isLeaf)
 		{
@@ -34,9 +34,9 @@ namespace qstardb {
 			this->isLeaf = isLeaf;
 			this->nodesize = 0;
 			this->nodelength = 0;
-			this->children = null;
+			this->children = nullptr;
 			this->notfilterlen = 0;
-			this->notfilters = null;
+			this->notfilters = nullptr;
 		}
 
 		/*二分查找算法*/
@@ -76,7 +76,7 @@ namespace qstardb {
 				arrays<uint>** temp = new arrays<uint>*[this->notfilterlen + 1];
 				if (this->notfilterlen >= 1)
 				{
-					if (this->notfilters != null)
+					if (this->notfilters != nullptr)
 					{
 						memmove(temp, notfilters, sizeof(arrays<uint>*) * (this->notfilterlen));
 						delete[] this->notfilters;
@@ -421,11 +421,11 @@ namespace qstardb {
 		int shardSize{ 0 };
 		int shardIndex[10];
 		uint buffer[MAX_AND_SIZE];
-		treepool* pool{ null };
-		treenode* root{ null };
+		treepool* pool{ nullptr };
+		treenode* root{ nullptr };
 		~treeanalysis()
 		{
-			if (root != null)
+			if (root != nullptr)
 			{
 				this->recycle(root);
 				delete root;
@@ -434,7 +434,7 @@ namespace qstardb {
 
 		int size()
 		{
-			if (root == null)
+			if (root == nullptr)
 			{
 				return 0;
 			}
@@ -476,7 +476,7 @@ namespace qstardb {
 
 		inline void recycle(treenode* node)
 		{
-			if (node->notfilters != null)
+			if (node->notfilters != nullptr)
 			{
 				for (uint i = 0; i < node->notfilterlen; i++)
 				{

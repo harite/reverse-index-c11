@@ -19,13 +19,13 @@ namespace qstardb
 		bool desc{ true };
 		bool _virtual{ true };
 		stopdecoder decoder;
-		datanode* data{ null };
-		segments<c>* segs{ null };
-		memstore<c>* store{ null };
-		treeanalysis* left{ null };
-		treeanalysis* right{ null };
-		baseiterator<uint>* nodes{ null };
-		baseiterator<arraylist<uint>*>* nodeslist{ null };
+		datanode* data{ nullptr };
+		segments<c>* segs{ nullptr };
+		memstore<c>* store{ nullptr };
+		treeanalysis* left{ nullptr };
+		treeanalysis* right{ nullptr };
+		baseiterator<uint>* nodes{ nullptr };
+		baseiterator<arraylist<uint>*>* nodeslist{ nullptr };
 		static const int MAX_SCAN_COUNT = 512;
 	public:
 		iditerator(segments<c>* segs, memstore<c>* store)
@@ -50,25 +50,25 @@ namespace qstardb
 
 		void reset()
 		{
-			if (this->nodeslist != null)
+			if (this->nodeslist != nullptr)
 			{
 				this->nodeslist->free();
 				delete this->nodeslist;
-				this->nodeslist = null;
+				this->nodeslist = nullptr;
 			}
-			if (this->nodes != null)
+			if (this->nodes != nullptr)
 			{
 				this->nodes->free();
 				delete this->nodes;
-				this->nodes = null;
+				this->nodes = nullptr;
 			}
-			if (this->left != null)
+			if (this->left != nullptr)
 			{
 				delete this->left;
-				this->left = null;
+				this->left = nullptr;
 			}
-			this->data = null;
-			this->right = null;
+			this->data = nullptr;
+			this->right = nullptr;
 		}
 
 		void setright(treeanalysis* right)
@@ -85,7 +85,7 @@ namespace qstardb
 		inline datanode* next()
 		{
 			datanode* temp = data;
-			data = null;
+			data = nullptr;
 			return temp;
 		}
 
@@ -101,13 +101,13 @@ namespace qstardb
 
 		inline bool iterhasnext()
 		{
-			while (this->nodes == null || !this->nodes->hasnext())
+			while (this->nodes == nullptr || !this->nodes->hasnext())
 			{
-				if (this->nodes != null)
+				if (this->nodes != nullptr)
 				{
 					this->nodes->free();
 					delete this->nodes;
-					this->nodes = null;
+					this->nodes = nullptr;
 				}
 				if (this->nodeslist->hasnext())
 				{
@@ -153,7 +153,7 @@ namespace qstardb
 		}
 		inline bool hasnext()
 		{
-			if (data != null)
+			if (data != nullptr)
 			{
 				return true;
 			}
@@ -236,7 +236,7 @@ namespace qstardb
 		iditerator<t>** queue;
 		iditerpool<t>* iterpool;
 		int size{ 0 }, capacity, scansize{ 0 };
-		datanode*tempnode{ null }, *duplicate{ null };
+		datanode*tempnode{ nullptr }, *duplicate{ nullptr };
 
 		bool ensurecapacity()
 		{
@@ -282,12 +282,12 @@ namespace qstardb
 			int s = --this->size;
 			if (s == i)
 			{
-				queue[i] = null;
+				queue[i] = nullptr;
 			}
 			else
 			{
 				iditerator<t>* moved = queue[s];
-				queue[s] = null;
+				queue[s] = nullptr;
 				siftdown(i, moved);
 				if (queue[i] == moved)
 				{
@@ -298,7 +298,7 @@ namespace qstardb
 					}
 				}
 			}
-			return null;
+			return nullptr;
 		}
 
 	public:
@@ -382,7 +382,7 @@ namespace qstardb
 		inline datanode* next()
 		{
 			datanode* tmpe = this->tempnode;
-			this->tempnode = null;
+			this->tempnode = nullptr;
 			return tmpe;
 		}
 	};

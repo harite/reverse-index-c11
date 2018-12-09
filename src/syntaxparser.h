@@ -43,11 +43,11 @@ namespace qstardb
 
 		int mark { 128 };
 		int length { 128 };
-		tarray<int>** listOr { null };
+		tarray<int>** listOr { nullptr };
 
 		//是否发生过扩容
 
-		valuespool* pool { null };
+		valuespool* pool { nullptr };
 	public:
 		int size { 0 };bool changed { false };
 		vector<tarray<int>*> filter;
@@ -59,7 +59,7 @@ namespace qstardb
 		}
 		~parserparam()
 		{
-			if (listOr != null)
+			if (listOr != nullptr)
 			{
 				delete[] listOr;
 			}
@@ -185,7 +185,7 @@ namespace qstardb
 
 		void setFilter(parserparam* param)
 		{
-			if (this->filter.size() == 0 && param != null)
+			if (this->filter.size() == 0 && param != nullptr)
 			{
 				param->size = toResult(this->filter, param->listOr, param->size);
 			}
@@ -392,13 +392,13 @@ namespace qstardb
 	private:
 		int length { 0 };
 		int cursize { 0 };
-		int* elements { null };
+		int* elements { nullptr };
 		int ibracketmark { 0 };
-		dictionary* dic { null };
+		dictionary* dic { nullptr };
 		//分配and存储空间
 		//valuespool* vspool{ null };
 		//分配参数
-		paramspool* pmpool { null };
+		paramspool* pmpool { nullptr };
 		vector<tarray<int>*> filter;
 		vector<tarray<int>*> result;
 		jstack<char> operators;
@@ -493,7 +493,7 @@ namespace qstardb
 			{
 				this->length += 256;
 				int* temp = new int[this->length];
-				if (elements != null)
+				if (elements != nullptr)
 				{
 					memmove(temp, elements, sizeof(int) * this->cursize);
 					delete[] elements;
@@ -826,10 +826,10 @@ namespace qstardb
 
 		~syntaxparser()
 		{
-			if (this->elements != null)
+			if (this->elements != nullptr)
 			{
 				delete[] this->elements;
-				this->elements = null;
+				this->elements = nullptr;
 			}
 			for (auto andVs : this->result)
 			{

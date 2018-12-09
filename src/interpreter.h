@@ -15,11 +15,11 @@ namespace qstardb
 	template<class c> class execution
 	{
 	private:
-		dictionary* dic { null };
-		segments<c>* segs { null };
-		memstore<c>* store { null };
-		treepool* tnodepool { null };
-		iditerpool<c>* iterpool { null };
+		dictionary* dic { nullptr };
+		segments<c>* segs { nullptr };
+		memstore<c>* store { nullptr };
+		treepool* tnodepool { nullptr };
+		iditerpool<c>* iterpool { nullptr };
 	public:
 
 		execution(segments<c>* segs, memstore<c>* store, dictionary* dic)

@@ -87,7 +87,7 @@ namespace qstardb
 			{
 				return this->mems + node->v1;
 			}
-			return null;
+			return nullptr;
 		}
 
 		inline uint xpos(uint id)
@@ -109,7 +109,7 @@ namespace qstardb
 			}
 			else
 			{
-				return null;
+				return  nullptr;
 			}
 		}
 
@@ -139,7 +139,7 @@ namespace qstardb
 			uint pos = xpos(id);
 			this->nodes[pos].set(key, sort);
 			c* temp = datacp(pos, mems, p, len, nodes, nodesps, property, true);
-			if (temp != null)
+			if (temp != nullptr)
 			{
 				this->mems = temp;
 				return 1;
@@ -173,7 +173,7 @@ namespace qstardb
 		}
 		~memstore()
 		{
-			if (this->pages != null)
+			if (this->pages != nullptr)
 			{
 				for (uint i = 0; i < length; i++)
 				{

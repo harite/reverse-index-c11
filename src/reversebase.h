@@ -19,8 +19,8 @@ namespace reverse {
 	{
 	private:
 		bool compress;
-		stardb<char> *chdb{ null };
-		stardb<uint> *uintdb{ null };
+		stardb<char> *chdb{ nullptr };
+		stardb<uint> *uintdb{ nullptr };
 	public:
 		rmindex(bool ignoreCase, bool compress)
 		{

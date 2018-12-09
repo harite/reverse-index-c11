@@ -13,7 +13,7 @@ namespace qstardb
 	using namespace std;
 	class stopdecoder
 	{
-		char* chs { null };
+		char* chs { nullptr };
 		int size { 0 };
 		int offset { 0 };
 		bool reverse { false };

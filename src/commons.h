@@ -13,9 +13,6 @@
 #include <mutex>
 #include <vector>
 #include <chrono>   
-#ifndef null 
-#define  null nullptr
-#endif
 using namespace std;
 using namespace chrono;
 namespace qstardb
@@ -76,7 +73,7 @@ namespace qstardb
 	private:
 		int _size { 0 };
 		int length { 64 };
-		t* elements { null };
+		t* elements { nullptr };
 	public:
 		jstack()
 		{

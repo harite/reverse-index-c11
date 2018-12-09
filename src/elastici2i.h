@@ -71,7 +71,7 @@ namespace elasticsmap
 	public:
 		int size{ 0 };
 		int length{ 0 };
-		node<k, v>* nodes{ null };
+		node<k, v>* nodes{ nullptr };
 		page(int length)
 		{
 			this->length = length;

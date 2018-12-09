@@ -340,7 +340,7 @@ namespace qstardb
 	{
 	public:
 		int length { 0 };
-		arraylist<uint>* list { null };
+		arraylist<uint>* list { nullptr };
 
 		keylist(memstore<c>* store, uint* keys, bool desc, int _s_index, int size)
 		{
@@ -358,23 +358,23 @@ namespace qstardb
 
 		int free()
 		{
-			if (this->list != null)
+			if (this->list != nullptr)
 			{
 				delete this->list;
-				this->list = null;
+				this->list = nullptr;
 			}
 			return type_keylist;
 		}
 
 		bool hasnext()
 		{
-			return list != null && list->hasnext();
+			return list != nullptr && list->hasnext();
 		}
 
 		arraylist<uint>* next()
 		{
 			arraylist<uint>* temp = list;
-			this->list = null;
+			this->list = nullptr;
 			return temp;
 		}
 
@@ -399,8 +399,8 @@ namespace qstardb
 		bool desc { true };
 		int length { 0 };
 		int64 _s_sort_, _e_sort_;
-		memstore<c>* store { null };
-		baseiterator<indexpage<c>*>* list { null };
+		memstore<c>* store { nullptr };
+		baseiterator<indexpage<c>*>* list { nullptr };
 		pageslist(memstore<c>* store, indexpage<c>** pages, int64 _s_sort_, int64 _e_sort_, bool desc, int _s_index, int size)
 		{
 
@@ -422,17 +422,17 @@ namespace qstardb
 
 		int free()
 		{
-			if (this->list != null)
+			if (this->list != nullptr)
 			{
 				delete list;
-				this->list = null;
+				this->list = nullptr;
 			}
 			return type_pageslist;
 		}
 
 		bool hasnext()
 		{
-			return this->list != null && this->list->hasnext();
+			return this->list != nullptr && this->list->hasnext();
 		}
 
 		arraylist<uint>* next()
@@ -468,9 +468,9 @@ namespace qstardb
 		int length { 0 };
 		bool desc { true };
 		datanode* s_temp, *e_temp;
-		memstore<c>* store { null };
-		arraylist<uint>* keys { null };
-		arraylist<indexpage<c>*>* list { null };
+		memstore<c>* store { nullptr };
+		arraylist<uint>* keys { nullptr };
+		arraylist<indexpage<c>*>* list { nullptr };
 		pageskey(memstore<c>* store, indexpage<c>** pages, datanode* _s_sort_, datanode* _e_sort_, bool desc, int _s_index, int size)
 		{
 			this->desc = desc;
@@ -491,29 +491,29 @@ namespace qstardb
 
 		int free()
 		{
-			if (this->list != null)
+			if (this->list != nullptr)
 			{
 				delete this->list;
-				this->list = null;
+				this->list = nullptr;
 			}
-			if (this->keys != null)
+			if (this->keys != nullptr)
 			{
 				delete this->keys;
-				this->keys = null;
+				this->keys = nullptr;
 			}
 			return type_pageskey;
 		}
 
 		bool hasnext()
 		{
-			while (this->keys == null || !this->keys->hasnext())
+			while (this->keys == nullptr || !this->keys->hasnext())
 			{
-				if (this->keys != null)
+				if (this->keys != nullptr)
 				{
 					delete this->keys;
-					this->keys = null;
+					this->keys = nullptr;
 				}
-				if (this->list != null && this->list->hasnext())
+				if (this->list != nullptr && this->list->hasnext())
 				{
 					this->keys = get(this->list->next());
 				}
@@ -558,11 +558,11 @@ namespace qstardb
 	public:
 		indexseg()
 		{
-			this->pages = null;
+			this->pages = nullptr;
 		}
 		~indexseg(void)
 		{
-			if (this->pages != null)
+			if (this->pages != nullptr)
 			{
 				for (int i = 0; i < offset; i++)
 				{
@@ -589,7 +589,7 @@ namespace qstardb
 
 		bool insert(uint pos, memstore<c>* store, memkeys<c>* mkeys, uint key)
 		{
-			if (this->pages == null)
+			if (this->pages == nullptr)
 			{
 				return insertbuffers(pos, store, mkeys, key);
 			}
@@ -631,10 +631,10 @@ namespace qstardb
 		{
 			if (this->offset == 0)
 			{
-				if (this->pages != null)
+				if (this->pages != nullptr)
 				{
 					delete[] this->pages;
-					this->pages = null;
+					this->pages = nullptr;
 					return this->insertbuffers(pos, store, mkeys, key);
 				}
 			}
@@ -668,7 +668,7 @@ namespace qstardb
 
 		bool remove(uint pos, memstore<c>* store, memkeys<c>* mkeys, uint key)
 		{
-			if (this->pages == null)
+			if (this->pages == nullptr)
 			{
 				return mkeys->remove(pos, store, key);
 			}
@@ -715,11 +715,11 @@ namespace qstardb
 				{
 					memmove(this->pages + index, this->pages + index + 1, sizeof(indexpage<c>*) * move);
 				}
-				pages[--this->offset] = null;
+				pages[--this->offset] = nullptr;
 				if (this->offset == 0)
 				{
 					delete[] this->pages;
-					this->pages = null;
+					this->pages = nullptr;
 				}
 				return true;
 			}
@@ -738,7 +738,7 @@ namespace qstardb
 				{
 					memmove(this->pages + pos, this->pages + pos + 1, sizeof(indexpage<c>*) * move);
 				}
-				pages[--this->offset] = null;
+				pages[--this->offset] = nullptr;
 			}
 			return false;
 		}
@@ -777,7 +777,7 @@ namespace qstardb
 			}
 			datanode s_temp(MIN_VALUE, _s_sort_);
 			datanode e_temp(MAX_VALUE, _e_sort_);
-			if (this->pages != null)
+			if (this->pages != nullptr)
 			{
 				int _s_index = indexof(this, pages, &s_temp, store, this->offset, type_ceil);
 				int _e_index = indexof(this, pages, &e_temp, store, this->offset, type_floor);
@@ -795,7 +795,7 @@ namespace qstardb
 		baseiterator<uint>* keys(uint pos, memstore<c>* store, memkeys<c>* mkeys, datanode* s_temp, datanode* e_temp, bool desc)
 		{
 
-			if (this->pages != null)
+			if (this->pages != nullptr)
 			{
 				int _s_index = indexof(this, pages, s_temp, store, this->offset, type_ceil);
 				int _e_index = indexof(this, pages, e_temp, store, this->offset, type_floor);
@@ -818,7 +818,7 @@ namespace qstardb
 			}
 			else if (_s_sort_ == 0 && _e_sort_ == 0)
 			{
-				if (this->pages == null)
+				if (this->pages == nullptr)
 				{
 					threeiss& node = mkeys->nodeat(pos);
 					return node.v3;
@@ -840,7 +840,7 @@ namespace qstardb
 
 		int scansize(uint pos, memstore<c>* store, memkeys<c>* mkeys, datanode& s_temp, datanode& e_temp)
 		{
-			if (this->pages == null)
+			if (this->pages == nullptr)
 			{
 				threeiss& node = mkeys->nodeat(pos);
 				int _s_index = indexof(this, mkeys->keys + node.v1, &s_temp, store, node.v3, type_ceil);
@@ -891,19 +891,19 @@ namespace qstardb
 	public:
 		segments(memstore<c>* store)
 		{
-			this->mkeys = null;
-			this->segs = null;
+			this->mkeys = nullptr;
+			this->segs = nullptr;
 			this->store = store;
 			this->hassegment = false;
 			this->buffer = new arrays<uint>(1024 * 1024);
 		}
 		~segments()
 		{
-			if (buffer != null)
+			if (buffer != nullptr)
 			{
 				delete buffer;
 			}
-			if (this->mkeys != null)
+			if (this->mkeys != nullptr)
 			{
 				for (uint i = 0; i < length; i++)
 				{
@@ -911,7 +911,7 @@ namespace qstardb
 				}
 				delete[] this->mkeys;
 			}
-			if (this->segs != null)
+			if (this->segs != nullptr)
 			{
 				for (uint i = 0; i < length; i++)
 				{
@@ -979,7 +979,7 @@ namespace qstardb
 			{
 				this->segs = encapacity(this->segs, this->length, rowid + 1, this->column);
 				memkeys<c>** temp = new memkeys<c>*[rowid + 1];
-				if (length > 0 && mkeys != null)
+				if (length > 0 && mkeys !=  nullptr)
 				{
 					memcpy(temp, mkeys, sizeof(memkeys<c>*) * length);
 				}
@@ -987,7 +987,7 @@ namespace qstardb
 				{
 					temp[i] = new memkeys<c>(this->column, this->buffer);
 				}
-				if (mkeys != null)
+				if (mkeys !=  nullptr)
 				{
 					delete[] mkeys;
 				}
