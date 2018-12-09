@@ -183,7 +183,7 @@ int testSet()
 }
 int main() {
 
-	stardb<uint> index(true);
+	stardb<char> index(true);
 	string file("D:\\works\\dump\\reverse.101.bin");
 	bool result = index.readfile(file);
 	cout << "check:"<< result << endl;

@@ -340,14 +340,14 @@ namespace elasticsmap
 				return false;
 			}
 		}
-		int get(k key, v& value)
+		bool get(k key, v& value)
 		{
 			int pageno = indexOf(this->pages, this->size, key,  type_index);
 			if (pageno >= 0) {
 				return this->pages[pageno]->get(key, value);
 			}
 			else {
-				return qstardb::MIN_INT_VALUE;
+				return false;
 			}
 		}
 	};
@@ -376,7 +376,7 @@ namespace elasticsmap
 			delete[] this->blocks;
 		}
 	
-		int get(k key, v& value)
+		bool get(k key, v& value)
 		{
 			return this->blocks[ypos(key)].get(key, value);;
 		}
