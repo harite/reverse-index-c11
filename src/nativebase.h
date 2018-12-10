@@ -16,7 +16,7 @@ extern "C"
 	{
 		static rwsyslock rmdblock;
 		static map<int, reverse::rmdb*>* rmdbs = new map<int, reverse::rmdb*>();
-		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_RMDB_create(JNIEnv *, jclass, jint index, jint part,jboolean ignoreCase, jboolean compress)
+		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_RMDB_create(JNIEnv *, jclass, jint index, jboolean ignoreCase, jboolean compress,jint node_avg_length)
 		{
 			rmdblock.wrlock();
 			if (rmdbs->find(index) != rmdbs->end())
@@ -28,7 +28,7 @@ extern "C"
 			}
 			else
 			{
-				(*rmdbs)[index] = new reverse::rmdb(ignoreCase, compress);
+				(*rmdbs)[index] = new reverse::rmdb(ignoreCase, compress, node_avg_length);
 				rmdblock.unwrlock();
 				cout << "create rmdb:" << index << endl;
 				return 1;
@@ -47,6 +47,38 @@ extern "C"
 				return 1;
 			}
 			rmdblock.unwrlock();
+			return 0;
+		}
+
+		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_RMDB_load(JNIEnv *env, jclass, jint index, jstring file)
+		{
+			rmdblock.rdlock();
+			if (rmdbs->find(index) != rmdbs->end())
+			{
+				cout << "load file:" << index << endl;
+				jboolean copy = false;
+				const char* ch = env->GetStringUTFChars(file, &copy);
+				string filename(ch);
+				(*rmdbs)[index]->load(filename);
+				env->ReleaseStringUTFChars(file, ch);
+			}
+			rmdblock.unrdlock();
+			return 0;
+		}
+
+		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_RMDB_dump(JNIEnv *env, jclass, jint index, jstring file)
+		{
+			rmdblock.rdlock();
+			if (rmdbs->find(index) != rmdbs->end())
+			{
+				cout << "dump index:" << index << endl;
+				jboolean copy = false;
+				const char* ch = env->GetStringUTFChars(file, &copy);
+				string filename(ch);
+				(*rmdbs)[index]->dump(filename);
+				env->ReleaseStringUTFChars(file, ch);
+			}
+			rmdblock.unrdlock();
 			return 0;
 		}
 

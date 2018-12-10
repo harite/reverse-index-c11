@@ -58,6 +58,11 @@ namespace reverse {
 			return compress ? chdb->remove(key) : uintdb->remove(key);
 		}
 
+		bool checkfile(string& file)
+		{
+			return compress ? chdb->checkfile(file) : uintdb->checkfile(file);
+		}
+
 		searchstats& query(vector<int64>& keys, searchstats& stat)
 		{
 			return compress ? chdb->query(keys, stat) : uintdb->query(keys, stat);
@@ -75,11 +80,11 @@ namespace reverse {
 	private:
 		rwsyslock lock;
 		rmindex* index;
-		seqmap::seqcache* cache;;
+		btree::concurrentmap* cache;;
 	public:
-		rmdb(bool ignoreCase, bool compress)
+		rmdb(bool ignoreCase, bool compress,int node_avg_size)
 		{
-			this->cache = new seqmap::seqcache(8);
+			this->cache = new btree::concurrentmap(16,1024, node_avg_size);
 			this->index = new rmindex(ignoreCase, compress);
 		}
 		~rmdb()
@@ -92,7 +97,7 @@ namespace reverse {
 		{
 			lock.wrlock();
 			this->index->add(key, sort, terms);
-			this->cache->add(key, data, length);
+			this->cache->insert(key, data, length);
 			lock.unwrlock();
 		}
 
@@ -133,6 +138,37 @@ namespace reverse {
 			}
 			lock.unrdlock();
 			return writer;
+		}
+
+		void dump(string bzname)
+		{
+			lock.rdlock();
+			string indexname = bzname;
+			indexname.append(".ix");
+			this->index->dump(indexname);
+			string cachename = bzname;
+			cachename.append(".dc");
+			this->cache->dump(cachename);
+			lock.unrdlock();
+		}
+
+		bool load(string& bzname) 
+		{
+			lock.wrlock();
+			string indexname = bzname;
+			indexname.append(".ix");
+		
+			string cachename = bzname;
+			cachename.append(".dc");
+			if (this->index->checkfile(indexname) && this->cache->checkfile(cachename)) {
+				this->cache->load(cachename);
+				this->index->load(indexname);
+			}
+			else {
+				return false;
+			}
+			lock.unwrlock();
+
 		}
 	};
 }

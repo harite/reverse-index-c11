@@ -226,7 +226,10 @@ int main() {
 		cmap.insert(i, str.c_str(), str.length());
 	}*/
 	string file("D:\\devtool\\work\\test.bin");
-	cmap.check(file);
+	cmap.load(file);
+	string result;
+	cmap.find(1024, result);
+	cout << "data:" << result << endl;
 	int a;
 	cin >> a;
 	return a;
