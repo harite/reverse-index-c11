@@ -24,7 +24,7 @@ extern "C"
 		 * Method:    create
 		 * Signature: (II)V
 		 */
-		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024I2IMap_create(JNIEnv *, jclass, jint index, jint mode)
+		JNIEXPORT void JNICALL Java_org_jkuang_qstar_commons_jni_I2IMap_create(JNIEnv *, jclass, jint index, jint part)
 		{
 			i2ilock.wrlock();
 			if (intmap->find(index) != intmap->end())
@@ -33,7 +33,7 @@ extern "C"
 			}
 			else
 			{
-				(*intmap)[index] = new emapi2i<int64, int64>(mode);
+				(*intmap)[index] = new emapi2i<int64, int64>(part);
 				cout << "create intmap:" << index << endl;
 			}
 			i2ilock.unwrlock();
@@ -44,7 +44,7 @@ extern "C"
 		 * Method:    destroy
 		 * Signature: (I)V
 		 */
-		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024I2IMap_destroy(JNIEnv *, jclass, jint index)
+		JNIEXPORT void JNICALL Java_org_jkuang_qstar_commons_jni_I2IMap_destroy(JNIEnv *, jclass, jint index)
 		{
 			i2ilock.wrlock();
 			if (intmap->find(index) != intmap->end())
@@ -65,7 +65,7 @@ extern "C"
 		 * Method:    put
 		 * Signature: (IJJ)I
 		 */
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024I2IMap_put(JNIEnv *, jclass, jint index, jlong key, jlong value)
+		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_I2IMap_put(JNIEnv *, jclass, jint index, jlong key, jlong value)
 		{
 			i2ilock.rdlock();
 			if (intmap->find(index) != intmap->end())
@@ -83,7 +83,7 @@ extern "C"
 		 * Method:    get
 		 * Signature: (IJ)[B
 		 */
-		JNIEXPORT jlong JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024I2IMap_get(JNIEnv *, jclass, jint index, jlong key)
+		JNIEXPORT jlong JNICALL Java_org_jkuang_qstar_commons_jni_I2IMap_get(JNIEnv *, jclass, jint index, jlong key)
 		{
 			i2ilock.rdlock();
 			if (intmap->find(index) != intmap->end())
@@ -102,7 +102,7 @@ extern "C"
 		 * Method:    remove
 		 * Signature: (IJ)[B
 		 */
-		JNIEXPORT jlong JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024I2IMap_remove(JNIEnv *, jclass, jint index, jlong key)
+		JNIEXPORT jlong JNICALL Java_org_jkuang_qstar_commons_jni_I2IMap_remove(JNIEnv *, jclass, jint index, jlong key)
 		{
 			i2ilock.rdlock();
 			if (intmap->find(index) != intmap->end())

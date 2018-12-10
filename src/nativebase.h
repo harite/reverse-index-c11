@@ -16,27 +16,26 @@ extern "C"
 	{
 		static rwsyslock rmdblock;
 		static map<int, reverse::rmdb*>* rmdbs = new map<int, reverse::rmdb*>();
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024RMDB_create(JNIEnv *, jclass, jint index, jboolean ignoreCase, jboolean compress,
-			jbyteArray bytes)
+		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_RMDB_create(JNIEnv *, jclass, jint index, jint part,jboolean ignoreCase, jboolean compress)
 		{
 			rmdblock.wrlock();
 			if (rmdbs->find(index) != rmdbs->end())
 			{
 				rmdblock.unwrlock();
 
-				cout << "index exists,index:" << index << endl;
+				cout << "rmdb exists,index:" << index << endl;
 				return 0;
 			}
 			else
 			{
 				(*rmdbs)[index] = new reverse::rmdb(ignoreCase, compress);
 				rmdblock.unwrlock();
-				cout << "create index:" << index << endl;
+				cout << "create rmdb:" << index << endl;
 				return 1;
 			}
 		}
 
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024RMDB_destroy(JNIEnv *, jclass, jint index)
+		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_RMDB_destroy(JNIEnv *, jclass, jint index)
 		{
 			rmdblock.wrlock();
 			if (rmdbs->find(index) != rmdbs->end())
@@ -44,15 +43,16 @@ extern "C"
 				delete (*rmdbs)[index];
 				rmdbs->erase(index);
 				rmdblock.unwrlock();
-				cout << "destroy index:" << index << endl;
+				cout << "destroy rmdb:" << index << endl;
 				return 1;
 			}
 			rmdblock.unwrlock();
 			return 0;
 		}
 
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024RMDB_addDoc(JNIEnv * env, jclass, jint index, jlong key, jlong sort, jobjectArray terms, jbyteArray data)
+		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_RMDB_addDoc(JNIEnv * env, jclass, jint index, jlong key, jlong sort, jobjectArray terms, jbyteArray data)
 		{
+			jboolean copy = false;
 			rmdblock.rdlock();
 			if (rmdbs->find(index) != rmdbs->end())
 			{
@@ -61,7 +61,6 @@ extern "C"
 				for (int i = 0; i < length; i++)
 				{
 					jstring obj = (jstring)env->GetObjectArrayElement(terms, i);
-					jboolean copy = false;
 					const char *ch = env->GetStringUTFChars(obj, &copy);
 					string temp(ch);
 					vl.push_back(temp);
@@ -69,12 +68,9 @@ extern "C"
 				}
 
 				int datalength = env->GetArrayLength(data);
-				jboolean copy1 = false;
-				signed char* ch = env->GetByteArrayElements(data, &copy1);
+				signed char* ch = env->GetByteArrayElements(data, &copy);
 				(*rmdbs)[index]->add(key, sort, vl,(const char*) ch, datalength);
-				//ÊÍ·Ådata
 				env->ReleaseByteArrayElements(data, ch, 0);
-
 				rmdblock.unrdlock();
 				return 1;
 			}
@@ -82,7 +78,7 @@ extern "C"
 			return 0;
 		}
 
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024RMDB_delDoc(JNIEnv * env, jclass, jint index, jlong key)
+		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_RMDB_delDoc(JNIEnv * env, jclass, jint index, jlong key)
 		{
 			rmdblock.rdlock();
 			if (rmdbs->find(index) != rmdbs->end())
@@ -98,7 +94,7 @@ extern "C"
 
 
 
-		JNIEXPORT jbyteArray JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024RMDB_queryByKeys(JNIEnv * env, jclass, jint index, jlongArray array)
+		JNIEXPORT jbyteArray JNICALL Java_org_jkuang_qstar_commons_jni_RMDB_queryByKeys(JNIEnv * env, jclass, jint index, jlongArray array)
 		{
 			rmdblock.rdlock();
 			if (rmdbs->find(index) != rmdbs->end())
@@ -127,7 +123,7 @@ extern "C"
 
 		}
 
-		JNIEXPORT jbyteArray JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024RMDB_query(JNIEnv * env, jclass, jint index, jstring jsyntax, jlong _s_sort_,jlong _e_sort_, jint start, jint rows, jint _count, jboolean desc)
+		JNIEXPORT jbyteArray JNICALL Java_org_jkuang_qstar_commons_jni_RMDB_query(JNIEnv * env, jclass, jint index, jstring jsyntax, jlong _s_sort_,jlong _e_sort_, jint start, jint rows, jint _count, jboolean desc)
 		{
 			rmdblock.rdlock();
 			if (rmdbs->find(index) != rmdbs->end())

@@ -17,8 +17,8 @@ namespace seqmap {
 
 	typedef long long int64;
 	typedef unsigned int uint;
-	const static int NODE_MAX_SIZE = 1024*8;
-	const static int SHARD_COPY_SIZE = 1024 * 1024 * 4;
+	const static int NODE_MAX_SIZE = 1024*4;
+	const static int SHARD_COPY_SIZE = 1024 * 1024;
 	class node
 	{
 	public:
@@ -379,6 +379,14 @@ namespace seqmap {
 	public:
 		seqcache(int partition)
 		{
+			if (partition < 1)
+			{
+				partition = 1;
+			}
+			else if (partition > 16)
+			{
+				partition = 16;
+			}
 			this->partition = partition;
 			this->blocks = new i2b_block*[this->partition];
 			for (int i = 0; i < this->partition; i++)

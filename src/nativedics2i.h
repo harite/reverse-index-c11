@@ -23,7 +23,7 @@ extern "C"
 
 		static map<int, b2imap*>* smap = new map<int, b2imap*>();
 
-		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024SMap_create(JNIEnv *, jclass, jint index,jint part)
+		JNIEXPORT void JNICALL Java_org_jkuang_qstar_commons_jni_DicMap_create(JNIEnv *, jclass, jint index,jint part)
 		{
 			maplock.wrlock();
 			if (smap->find(index) != smap->end())
@@ -38,7 +38,7 @@ extern "C"
 			maplock.unwrlock();
 		}
 
-		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024SMap_destroy(JNIEnv *, jclass, jint index)
+		JNIEXPORT void JNICALL Java_org_jkuang_qstar_commons_jni_DicMap_destroy(JNIEnv *, jclass, jint index)
 		{
 			maplock.wrlock();
 			if (smap->find(index) != smap->end())
@@ -56,7 +56,7 @@ extern "C"
 		}
 
 
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024SMap_put(JNIEnv * env, jclass, jint index, jstring key)
+		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_DicMap_put(JNIEnv * env, jclass, jint index, jstring key)
 		{
 			maplock.rdlock();
 			if (smap->find(index) != smap->end())
@@ -74,7 +74,7 @@ extern "C"
 		}
 
 
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024SMap_get(JNIEnv * env, jclass, jint index, jstring key)
+		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_DicMap_get(JNIEnv * env, jclass, jint index, jstring key)
 		{
 			maplock.rdlock();
 			if (smap->find(index) != smap->end())
@@ -91,7 +91,7 @@ extern "C"
 			return -1;
 		}
 
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024SMap_remove(JNIEnv * env, jclass, jint index, jstring key)
+		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_DicMap_remove(JNIEnv * env, jclass, jint index, jstring key)
 		{
 
 			maplock.rdlock();
@@ -109,7 +109,7 @@ extern "C"
 			return 0;
 		}
 
-		JNIEXPORT jstring JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024SMap_find(JNIEnv * env, jclass, jint index, jint key)
+		JNIEXPORT jstring JNICALL Java_org_jkuang_qstar_commons_jni_DicMap_find(JNIEnv * env, jclass, jint index, jint key)
 		{
 
 			maplock.rdlock();
@@ -125,7 +125,7 @@ extern "C"
 			return charToJString(env,nullptr,0);
 		}
 
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024SMap_maxSeq(JNIEnv * env, jclass, jint index)
+		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_DicMap_maxSeq(JNIEnv * env, jclass, jint index)
 		{
 
 			maplock.rdlock();

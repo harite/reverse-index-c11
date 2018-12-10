@@ -19,25 +19,11 @@ extern "C"
 	
 	namespace btree
 	{
-		class btreemap{
-			
-		public:
-			block* _block;
-			qstardb::rwsyslock lock;
-		public:
-			btreemap(jint node_max_num, jint data_avg_size)
-			{
-				this->_block = new block(node_max_num, data_avg_size);
-			}
-			~btreemap()
-			{
-				delete this->_block;
-			}
-		};
+	
 
 		static qstardb::rwsyslock maplock;
 
-		static map<int, btreemap*>* i2bmap = new map<int, btreemap*>();
+		static map<int, concurrentmap*>* i2bmap = new map<int, concurrentmap*>();
 
 
 
@@ -46,7 +32,7 @@ extern "C"
 		* Method:    create
 		* Signature: (II)V
 		*/
-		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024BTreeMap_create(JNIEnv *, jclass, jint index, jint node_max_num,jint data_avg_size)
+		JNIEXPORT void JNICALL Java_org_jkuang_qstar_commons_jni_CurMap_create(JNIEnv *, jclass, jint index,jint part, jint node_max_num,jint data_avg_size)
 		{
 			maplock.wrlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -55,7 +41,7 @@ extern "C"
 			}
 			else
 			{
-				(*i2bmap)[index] = new btreemap(node_max_num,data_avg_size);
+				(*i2bmap)[index] = new concurrentmap(part,node_max_num,data_avg_size);
 				cout << "create i2bmap:" << index << endl;
 			}
 			maplock.unwrlock();
@@ -66,7 +52,7 @@ extern "C"
 		* Method:    destroy
 		* Signature: (I)V
 		*/
-		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024BTreeMap_destroy(JNIEnv *, jclass, jint index)
+		JNIEXPORT void JNICALL Java_org_jkuang_qstar_commons_jni_CurMap_destroy(JNIEnv *, jclass, jint index)
 		{
 			maplock.wrlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -88,7 +74,7 @@ extern "C"
 		* Method:    put
 		* Signature: (IJ[B)I
 		*/
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024BTreeMap_put(JNIEnv * env, jclass, jint index, jlong key, jbyteArray value)
+		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_CurMap_put(JNIEnv * env, jclass, jint index, jlong key, jbyteArray value)
 		{
 			maplock.rdlock();
 			if (i2bmap->find(index) != i2bmap->end())
@@ -97,9 +83,7 @@ extern "C"
 				int length = env->GetArrayLength(value);
 				jboolean copy1 = false;
 				signed char* ch = env->GetByteArrayElements(value, &copy1);
-				(*i2bmap)[index]->lock.wrlock();
-				(*i2bmap)[index]->_block->insert(key,(const char*) ch, length);
-				(*i2bmap)[index]->lock.unwrlock();
+				(*i2bmap)[index]->insert(key,(const char*) ch, length);
 				env->ReleaseByteArrayElements(value, ch, 0);
 				maplock.unrdlock();
 				return 1;
@@ -113,19 +97,17 @@ extern "C"
 		* Method:    get
 		* Signature: (IJ)[B
 		*/
-		JNIEXPORT jbyteArray JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024BTreeMap_get(JNIEnv * env, jclass, jint index, jlong key)
+		JNIEXPORT jbyteArray JNICALL Java_org_jkuang_qstar_commons_jni_CurMap_get(JNIEnv * env, jclass, jint index, jlong key)
 		{
 			maplock.rdlock();
 			if (i2bmap->find(index) != i2bmap->end())
 			{
 				int vlength = 0;
-				(*i2bmap)[index]->lock.rdlock();
 				qstardb::charwriter writer(256);
-				if ((*i2bmap)[index]->_block->find(key, writer))
+				if ((*i2bmap)[index]->find(key, writer))
 				{
-					(*i2bmap)[index]->lock.unrdlock();
-					jbyteArray data = createJByteArray(env, writer.buffer, writer.size());
 					maplock.unrdlock();
+					jbyteArray data = createJByteArray(env, writer.buffer, writer.size());
 					return data;
 				}
 				else {
@@ -141,15 +123,13 @@ extern "C"
 		* Method:    remove
 		* Signature: (IJ)[B
 		*/
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024BTreeMap_remove(JNIEnv * env, jclass, jint index, jlong key)
+		JNIEXPORT jint JNICALL Java_org_jkuang_qstar_commons_jni_CurMap_remove(JNIEnv * env, jclass, jint index, jlong key)
 		{
 
 			maplock.rdlock();
 			if (i2bmap->find(index) != i2bmap->end())
 			{
-				(*i2bmap)[index]->lock.wrlock();
-				(*i2bmap)[index]->_block->remove(key);
-				(*i2bmap)[index]->lock.unwrlock();
+				(*i2bmap)[index]->remove(key);
 				maplock.unrdlock();
 				return 1;
 			}

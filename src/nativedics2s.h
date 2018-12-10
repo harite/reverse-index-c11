@@ -24,7 +24,7 @@ extern "C"
 		 * Method:    create
 		 * Signature: (II)V
 		 */
-		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024S2SMap_create(JNIEnv *, jclass, jint index, jint mode)
+		JNIEXPORT void JNICALL  Java_org_jkuang_qstar_commons_jni_S2SMap_create(JNIEnv *, jclass, jint index, jint part)
 		{
 			maplock.wrlock();
 			if (dicmaps->find(index) != dicmaps->end())
@@ -33,7 +33,7 @@ extern "C"
 			}
 			else
 			{
-				(*dicmaps)[index] = new maps2s::dics2s(mode);
+				(*dicmaps)[index] = new maps2s::dics2s(part);
 				cout << "create intmap:" << index << endl;
 			}
 			maplock.unwrlock();
@@ -44,7 +44,7 @@ extern "C"
 		 * Method:    destroy
 		 * Signature: (I)V
 		 */
-		JNIEXPORT void JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024S2SMap_destroy(JNIEnv *, jclass, jint index)
+		JNIEXPORT void JNICALL  Java_org_jkuang_qstar_commons_jni_S2SMap_destroy(JNIEnv *, jclass, jint index)
 		{
 			maplock.wrlock();
 			if (dicmaps->find(index) != dicmaps->end())
@@ -65,7 +65,7 @@ extern "C"
 		 * Method:    put
 		 * Signature: (ILjava/lang/String;Ljava/lang/String;)I
 		 */
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024S2SMap_put(JNIEnv *env, jclass, jint index, jstring key, jstring value)
+		JNIEXPORT jint JNICALL  Java_org_jkuang_qstar_commons_jni_S2SMap_put(JNIEnv *env, jclass, jint index, jstring key, jstring value)
 		{
 			maplock.rdlock();
 			if (dicmaps->find(index) != dicmaps->end())
@@ -91,7 +91,7 @@ extern "C"
 		 * Method:    get
 		 * Signature: (ILjava/lang/String;)Ljava/lang/String;
 		 */
-		JNIEXPORT jstring JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024S2SMap_get(JNIEnv * env, jclass, jint index, jstring key)
+		JNIEXPORT jstring JNICALL  Java_org_jkuang_qstar_commons_jni_S2SMap_get(JNIEnv * env, jclass, jint index, jstring key)
 		{
 			maplock.rdlock();
 			if (dicmaps->find(index) != dicmaps->end())
@@ -118,7 +118,7 @@ extern "C"
 		 * Method:    remove
 		 * Signature: (ILjava/lang/String;)Z
 		 */
-		JNIEXPORT jint JNICALL JNICALL Java_org_jkuang_qstar_commons_jni_Native_00024S2SMap_remove(JNIEnv * env, jclass, jint index, jstring key)
+		JNIEXPORT jint JNICALL  Java_org_jkuang_qstar_commons_jni_S2SMap_remove(JNIEnv * env, jclass, jint index, jstring key)
 		{
 			maplock.rdlock();
 			if (dicmaps->find(index) != dicmaps->end())

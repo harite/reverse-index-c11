@@ -8,7 +8,7 @@ namespace btree
 {
 	typedef long long int64;
 	//临时共享空间，用于数据垃圾清理临时存储数据
-	static const int  SHARD_SIZE = 1024 * 1024 * 4;
+	static const int  SHARD_SIZE = 1024 * 1024 ;
 	enum type
 	{
 		type_insert, type_index, type_ceil, type_floor
