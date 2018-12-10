@@ -556,7 +556,7 @@ namespace maps2s
 			bool result = false;
 			if (this->pages[this->size - 1]->rangecontains(key, len) == 0)
 			{
-				bool result = this->pages[this->size - 1]->remove(key, len);
+				result = this->pages[this->size - 1]->remove(key, len);
 				this->combine(this->size - 1);
 			}
 			else
