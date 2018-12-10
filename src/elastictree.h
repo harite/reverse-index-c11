@@ -705,10 +705,10 @@ namespace btree
 			char temp[1024];
 			//长度是否足够 头部校验码 4字节、数据主键 8字节、数据长度4字节
 			if (reader.hasmore(16) && reader.readInt32() == HEAD_NODE) {
-				int64 key = reader.readInt64();
+				/*int64 key =*/ reader.readInt64();
 				int length = reader.readInt32();
 				//数据长度是否足够
-				if (length>=0 && reader.hasmore(length)) {
+				if (length >= 0 && reader.hasmore(length)) {
 					//循环把数据读取完毕
 					while (length > 0)
 					{
@@ -737,12 +737,15 @@ namespace btree
 					return false;
 				}
 			}
+			else
+			{
+				return false;
+			}
 		}
 		bool checkPage(filereader& reader)
 		{
 			if (reader.hasmore(8) && reader.readInt32() == HEAD_PAGE)
 			{
-				char temp[1024];
 				int nodenum = reader.readInt32();
 				for (int i = 0; i < nodenum; i++)
 				{
@@ -770,7 +773,7 @@ namespace btree
 		{
 			if (reader.hasmore(8) && reader.readInt32() == HEAD_BLOCK)
 			{
-	
+
 				int pagenum = reader.readInt32();
 				for (int i = 0; i < pagenum; i++)
 				{
@@ -783,7 +786,49 @@ namespace btree
 					cout << " block is ok!" << endl;
 					return true;
 				}
-				else {
+				else
+				{
+					return false;
+				}
+			}
+			else
+			{
+				return false;
+			}
+		}
+		bool checkfile(filereader& reader)
+		{
+			if (reader.hasmore(20) && HEAD_MARK == reader.readInt64())
+			{
+				//读取文件时间
+				int64 time = reader.readInt64();
+				if (currentTimeMillis() - time > 86400l * 1000l * 3)
+				{
+					cout << "file out of time" << endl;
+					return false;
+				}
+				int partition = reader.readInt32();
+				if (partition < 1 || partition >32 * 1024)
+				{
+					cout << "partition error! value:" << partition << endl;
+
+					return false;
+				}
+
+				for (int i = 0; i < partition; i++)
+				{
+					if (!checkBlock(reader)) {
+
+						return false;
+					}
+				}
+				if (reader.hasmore(8) && reader.readInt64() == TAIL_MARK) {
+
+					cout << "file is ok:" << endl;
+					return true;
+				}
+				else
+				{
 					return false;
 				}
 			}
@@ -796,59 +841,25 @@ namespace btree
 		bool checkfile(string& filename)
 		{
 			filereader reader(filename);
-			//校验文件头是否正确
-			if (reader.hasmore(20) && HEAD_MARK == reader.readInt64())
-			{
-				//读取文件时间
-				int64 time = reader.readInt64();
-				if (currentTimeMillis() - time > 86400l * 1000l * 3)
-				{
-					cout << "file out of time" << endl;
-					reader.close();
-					return false;
-				}
-				int partition = reader.readInt32();
-				if (partition < 1 || partition >32 * 1024)
-				{
-					cout << "partition error! value:" << partition << endl;
-					reader.close();
-					return false;
-				}
-
-				for (int i = 0; i < partition; i++)
-				{
-					if (!checkBlock(reader)) {
-						reader.close();
-						return false;
-					}
-				}
-				if (reader.hasmore(8) && reader.readInt64() == TAIL_MARK) {
-					reader.close();
-					cout << "file is ok:"<<filename << endl;
-					return true;
-				}
-			}
-			else
-			{
-				reader.close();
-				return false;
-			}
+			bool result = checkfile(reader);
+			reader.close();
+			return result;
 		}
 
 
-		bool loadNode(filereader& reader, char* temp,int tempLength)
+		bool loadNode(filereader& reader, char* temp, int tempLength)
 		{
 			//长度是否足够 头部校验码 4字节、数据主键 8字节、数据长度4字节
 			if (reader.hasmore(16) && reader.readInt32() == HEAD_NODE) {
 				int64 key = reader.readInt64();
 				int length = reader.readInt32();
 				//数据长度是否足够
-				if (length>=0 && reader.hasmore(length)) {
+				if (length >= 0 && reader.hasmore(length)) {
 
 					if (length <= tempLength)
 					{
-						reader.read(temp,length);
-						this->insert(key,temp,length);
+						reader.read(temp, length);
+						this->insert(key, temp, length);
 					}
 					else
 					{
@@ -872,6 +883,10 @@ namespace btree
 					return false;
 				}
 			}
+			else
+			{
+				return false;
+			}
 		}
 		bool loadPage(filereader& reader)
 		{
@@ -882,7 +897,7 @@ namespace btree
 				int nodenum = reader.readInt32();
 				for (int i = 0; i < nodenum; i++)
 				{
-					if (!loadNode(reader,temp, tempLength))
+					if (!loadNode(reader, temp, tempLength))
 					{
 						delete[] temp;
 						return false;
@@ -966,12 +981,21 @@ namespace btree
 						cout << "local file ok:" << filename << endl;
 						return true;
 					}
+					else
+					{
+						reader.close();
+						return false;
+					}
 				}
 				else
 				{
 					reader.close();
 					return false;
 				}
+			}
+			else
+			{
+				return false;
 			}
 		}
 

@@ -152,6 +152,11 @@ namespace reverse {
 			lock.unrdlock();
 		}
 
+		/*rmdb的dump和load还存在缺陷，dump和load均分为两个文件，无法保证事务性，
+		  如index部分dump完成时崩溃了，那么dump文件将会变成index(新)+cache（旧），那么加载起来也就是错误的数据了
+		  较好的方式是将 index、cache写到一个文件中 或生产一个事务id或64位指纹（或时间戳），将指纹码分别添加到两个dump文件中
+		  对文件进行校验时候，对比index 和 cache的文件校验码是否相同，相同则证明为同一事务里的
+		*/
 		bool load(string& bzname) 
 		{
 			lock.wrlock();
@@ -160,14 +165,18 @@ namespace reverse {
 		
 			string cachename = bzname;
 			cachename.append(".dc");
+			
 			if (this->index->checkfile(indexname) && this->cache->checkfile(cachename)) {
 				this->cache->load(cachename);
 				this->index->load(indexname);
+				lock.unwrlock();
+				return true;
 			}
 			else {
+				lock.unwrlock();
 				return false;
 			}
-			lock.unwrlock();
+		
 
 		}
 	};
