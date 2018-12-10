@@ -184,8 +184,29 @@ int testSet()
 int main() {
 
 	stardb<char> index(true);
-	string file("D:\\works\\dump\\reverse.101.bin");
+	string file("D:\\devtool\\work\\reverse.101.bin");
 	bool result = index.readfile(file);
+	string testcase("D:\\devtool\\work\\testcase.txt");
+	string out("D:\\devtool\\work\\reverse.txt");
+	filewriter writer(out);
+	filereader reader(testcase);
+	while (true)
+	{
+		string syntax;
+		if (reader.readline(syntax)) {
+			searchstats stats(0,100,100);
+			searchstats& temp= index.query(syntax,0,0,true, stats);
+			vector<int64>& rs=temp.result();
+			string data;
+			for (auto i:rs)
+			{
+				data.append(tostring(i)).append(",");
+			}
+			data.append("\n");
+			writer.write(data.c_str(),0,data.length());
+		}
+	}
+	writer.close();
 	cout << "check:"<< result << endl;
 	int a;
 	cin >> a;
