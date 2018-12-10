@@ -8,7 +8,22 @@ namespace btree
 {
 	typedef long long int64;
 	//临时共享空间，用于数据垃圾清理临时存储数据
-	static const int  SHARD_SIZE = 1024 * 1024 ;
+	static const int  SHARD_SIZE = 1024 * 1024;
+	static const int  HEAD_NODE = 0X12D21;
+	static const int  TAIL_NODE = 0X12F21;
+	static const int  HEAD_PAGE = 0X12345;
+	static const int  TAIL_PAGE = 0X54321;
+	static const int  HEAD_BLOCK = 0X12A21;
+	static const int  TAIL_BLOCK = 0X12B21;
+
+
+	int64 currentTimeMillis()
+	{
+		auto time_now = chrono::system_clock::now();
+		auto duration_in_ms = chrono::duration_cast<chrono::milliseconds>(time_now.time_since_epoch());
+		return duration_in_ms.count();
+	}
+
 	enum type
 	{
 		type_insert, type_index, type_ceil, type_floor
@@ -333,6 +348,20 @@ namespace btree
 			}
 			return 0;
 		}
+
+		void write(filewriter& writer)
+		{
+			//读取页数量
+			writer.writeInt32(this->nodeSize);
+			for (int i = 0; i < nodeSize; i++)
+			{
+				writer.writeInt32(HEAD_NODE);
+				writer.writeInt64(this->nodes[i].key);
+				writer.writeInt32(this->nodes[i].length);
+				writer.write(this->datas + this->nodes[i].offset, this->nodes[i].length);
+				writer.writeInt32(TAIL_NODE);
+			}
+		}
 	};
 
 	class block
@@ -393,6 +422,18 @@ namespace btree
 			}
 			delete[] pages;
 			delete[] shardData;
+		}
+
+		void write(filewriter& writer)
+		{
+			//读取页数量
+			writer.writeInt32(this->size);
+			for (int i = 0; i < size; i++)
+			{
+				writer.writeInt32(HEAD_PAGE);
+				this->pages[i]->write(writer);
+				writer.writeInt32(TAIL_PAGE);
+			}
 		}
 
 		inline bool insertAndSplit(int index, int64 key, const char* data, int length)
@@ -551,9 +592,9 @@ namespace btree
 			if (pageno >= 0)
 			{
 				int length = 0;
-				const char* temp= this->pages[pageno]->find(key, length);
+				const char* temp = this->pages[pageno]->find(key, length);
 				if (temp != nullptr) {
-					str.append(temp,length);
+					str.append(temp, length);
 					result = true;
 				}
 			}
@@ -571,7 +612,7 @@ namespace btree
 				const char* temp = this->pages[pageno]->find(key, length);
 				if (temp != nullptr) {
 					writer.writeInt(length);
-					writer.write(temp,length);
+					writer.write(temp, length);
 					result = true;
 				}
 			}
@@ -618,7 +659,7 @@ namespace btree
 		{
 			this->blocks[_hash(key)]->remove(key);
 		}
-		
+
 		bool find(int64 key, string& word)
 		{
 			return this->blocks[_hash(key)]->find(key, word);
@@ -628,7 +669,178 @@ namespace btree
 		{
 			return this->blocks[_hash(key)]->find(key, writer);
 		}
+		void write(filewriter& writer)
+		{
+			//标记起始
+			writer.writeInt64(HEAD_MARK);
+			//当前时间戳
+			writer.writeInt64(currentTimeMillis());
+			//分区数量
+			writer.writeInt32(this->partition);
+			for (int i = 0; i < partition; i++)
+			{
+				writer.writeInt32(HEAD_BLOCK);
+				this->blocks[i]->write(writer);
+				writer.writeInt32(TAIL_BLOCK);
+			}
+			writer.writeInt64(TAIL_MARK);
+		}
 
+		void dump(string& filename)
+		{
+			string temp = filename;
+			temp.append(".temp");
+			filewriter writer(temp);
+			write(writer);
+			writer.flush();
+			writer.close();
+			//临时文件写完以后，将临时文件重名为正式名称
+			writer.reNameTo(filename);
+			cout << " end of dump ,file name:" << filename << endl;
+		}
+
+
+		bool checkNode(filereader& reader)
+		{
+			char temp[1024];
+			//长度是否足够 头部校验码 4字节、数据主键 8字节、数据长度4字节
+			if (reader.hasmore(16) && reader.readInt32() == HEAD_NODE) {
+				int64 key = reader.readInt64();
+				int length = reader.readInt32();
+				//数据长度是否足够
+				if (reader.hasmore(length)) {
+					//循环把数据读取完毕
+					while (length > 0)
+					{
+						if (length - 1024 > 0) {
+							reader.read(temp, 1024);
+							length -= 1024;
+						}
+						else {
+							reader.read(temp, length);
+							break;
+						}
+					}
+					//单条数据的结尾是否等于标志符
+					if (reader.hasmore(4) && reader.readInt32() == TAIL_NODE)
+					{
+						//数据校验OK
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				}
+				else
+				{
+					return false;
+				}
+			}
+		}
+		bool checkPage(filereader& reader)
+		{
+			if (reader.hasmore(8) && reader.readInt32() == HEAD_PAGE)
+			{
+				char temp[1024];
+				int nodenum = reader.readInt32();
+				for (int i = 0; i < nodenum; i++)
+				{
+					if (!checkNode(reader))
+					{
+						return false;
+					}
+				}
+				if (reader.hasmore(4) && reader.readInt32() == TAIL_PAGE)
+				{
+					//数据校验成功
+					return true;
+				}
+				else {
+					return false;
+				}
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		bool checkBlock(filereader& reader)
+		{
+			if (reader.hasmore(8) && reader.readInt32() == HEAD_BLOCK)
+			{
+	
+				int pagenum = reader.readInt32();
+				for (int i = 0; i < pagenum; i++)
+				{
+					if (!checkPage(reader))
+					{
+						return false;
+					}
+				}
+				if (reader.hasmore(4) && reader.readInt32() == TAIL_BLOCK) {
+					cout << " block is ok!" << endl;
+					return true;
+				}
+				else {
+					return false;
+				}
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		bool check(string& filename)
+		{
+			filereader reader(filename);
+			//校验文件头是否正确
+			if (reader.hasmore(20) && HEAD_MARK == reader.readInt64())
+			{
+				//读取文件时间
+				int64 time = reader.readInt64();
+				if (currentTimeMillis() - time > 86400l * 1000l * 3)
+				{
+					cout << "file out of time" << endl;
+					reader.close();
+					return false;
+				}
+				int partition = reader.readInt32();
+				if (partition < 1 || partition >32 * 1024)
+				{
+					cout << "partition error! value:" << partition << endl;
+					reader.close();
+					return false;
+				}
+
+				for (int i = 0; i < partition; i++)
+				{
+					if (!checkBlock(reader)) {
+						reader.close();
+						return false;
+					}
+				}
+				if (reader.hasmore(8) && reader.readInt64() == TAIL_MARK) {
+					reader.close();
+					cout << "file is ok:"<<filename << endl;
+					return true;
+				}
+			}
+			else
+			{
+				reader.close();
+				return false;
+			}
+		}
+		void load(string& filename)
+		{
+			if (check(filename))
+			{
+				filewriter reader(filename);
+			}
+		}
 
 	};
 }

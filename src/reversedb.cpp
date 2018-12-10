@@ -111,7 +111,7 @@ int test3(string testfile, reverse::rmindex* index101, string outfile)
 				test.append(",");
 			}
 			test.append("\n");
-			writer.writeBytes(test.c_str(), test.size());
+			writer.write(test.c_str(), test.size());
 		}
 		else
 		{
@@ -217,14 +217,16 @@ int maincomapare() {
 	cin >> a;
 	return a;
 }
-
+#include "elastictree.h"
 int main() {
-
-	stardb<char> index(true);
-	string file("D:\\devtool\\work\\reverse.new.101.bin");
-	index.readfile(file);
-	string filenew("D:\\devtool\\work\\reverse.new2.101.bin");
-	index.writefile(filenew);
+	btree::concurrentmap cmap(4,1000,100);
+/*	for (int i = 0; i < 1024*1054; i++)
+	{
+		string str = tostring(i);
+		cmap.insert(i, str.c_str(), str.length());
+	}*/
+	string file("D:\\devtool\\work\\test.bin");
+	cmap.check(file);
 	int a;
 	cin >> a;
 	return a;

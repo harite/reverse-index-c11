@@ -424,7 +424,7 @@ namespace qstardb
 			writeInt32((int) (value >> 32));
 			writeInt32((int) value);
 		}
-		void writeBytes(const char* buffer, int len)
+		void write(const char* buffer, int len)
 		{
 			this->write(buffer, 0, len);
 		}

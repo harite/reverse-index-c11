@@ -587,7 +587,7 @@ namespace qstardb
 				if (this->dic->get(i, word))
 				{
 					fileout.writeShort(word.length());
-					fileout.writeBytes(word.c_str(), word.length());
+					fileout.write(word.c_str(), word.length());
 				}
 				else
 				{
