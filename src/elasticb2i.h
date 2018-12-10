@@ -50,7 +50,7 @@ namespace seqmap
 		uint* keys;
 		seqblock* _block;
 		qstardb::sequence* seq;
-		int indexof(uint* keys, int size, const char* key, int len,  type _type)
+		inline int indexof(uint* keys, int size, const char* key, int len,  type _type)
 		{
 			int fromIndex = 0;
 			int toIndex = size - 1;

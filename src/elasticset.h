@@ -18,7 +18,7 @@ namespace elasticset
 		int size;
 	private:
 		int length;
-		int indexof(k key, qstardb::type _type)
+		inline int indexof(k key, qstardb::type _type)
 		{
 			int fromIndex = 0;
 			int toIndex = this->size - 1;
@@ -46,7 +46,7 @@ namespace elasticset
 			}
 		}
 
-		void ensurecapacity(int minCapacity)
+		inline void ensurecapacity(int minCapacity)
 		{
 			int oldCapacity = this->length;
 			if (minCapacity > oldCapacity)

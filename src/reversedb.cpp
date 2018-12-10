@@ -183,7 +183,7 @@ int testSet()
 }
 int main() {
 
-	stardb<char> index(true);
+	stardb<uint> index(true);
 	string file("D:\\devtool\\work\\reverse.101.bin");
 	bool result = index.readfile(file);
 	string testcase("D:\\devtool\\work\\testcase.txt");

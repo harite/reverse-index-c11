@@ -82,7 +82,7 @@ namespace maps2s
 		int nodeSize;
 		int nodeLength;
 		char* shardCopyData;
-		void ensurenodecapacity(int length)
+		inline void ensurenodecapacity(int length)
 		{
 			if (length > this->nodeLength)
 			{
@@ -93,7 +93,7 @@ namespace maps2s
 				this->nodes = temp;
 			}
 		}
-		void ensuredatacapacity(int length)
+		inline void ensuredatacapacity(int length)
 		{
 			if (length > this->menLength)
 			{
@@ -161,7 +161,7 @@ namespace maps2s
 			delete[] this->nodes;
 		}
 
-		int indexof(const char* key, short klen, type _type)
+	  inline int indexof(const char* key, short klen, type _type)
 		{
 			int fromIndex = 0;
 			int toIndex = this->nodeSize - 1;

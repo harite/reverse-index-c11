@@ -82,7 +82,7 @@ namespace seqmap {
 			}
 		}
 
-		void allocate(const char* ch, int pos, int length)
+		inline void allocate(const char* ch, int pos, int length)
 		{
 			char* tempCopyData;
 			bool useShardData = (this->delSize > length * 10) && (this->usedSize <= SHARD_COPY_SIZE);

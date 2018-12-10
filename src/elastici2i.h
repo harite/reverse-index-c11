@@ -27,7 +27,7 @@ namespace elasticsmap
 	template<class k, class v> class page
 	{
 	private:
-		int indexof(node<k, v>* nodes,int size,k key, qstardb::type _type)
+		inline int indexof(node<k, v>* nodes,int size,k key, qstardb::type _type)
 		{
 			int fromIndex = 0;
 			int toIndex = size - 1;
@@ -152,7 +152,7 @@ namespace elasticsmap
 			return false;
 		}
 
-		int rangecontains(k key)
+		inline int rangecontains(k key)
 		{
 			if (this->nodes[this->size - 1].key < key)
 			{
@@ -258,7 +258,7 @@ namespace elasticsmap
 			return reuslt;
 		}
 
-		bool combine(int index0, int index1)
+		inline bool combine(int index0, int index1)
 		{
 			page<k, v>* temp0 = this->pages[index0];
 			page<k, v>* temp1 = this->pages[index1];
@@ -303,7 +303,7 @@ namespace elasticsmap
 				return false;
 			}
 		}
-		int insert(k key,v value)
+		inline int insert(k key,v value)
 		{
 			if (this->size == 1 || this->pages[0]->rangecontains(key) >= 0)
 			{
@@ -320,7 +320,7 @@ namespace elasticsmap
 			}
 		}
 
-		bool remove(k key)
+		inline bool remove(k key)
 		{
 			if (this->pages[this->size - 1]->rangecontains(key) == 0)
 			{
@@ -340,7 +340,7 @@ namespace elasticsmap
 				return false;
 			}
 		}
-		bool get(k key, v& value)
+		inline bool get(k key, v& value)
 		{
 			int pageno = indexOf(this->pages, this->size, key,  type_index);
 			if (pageno >= 0) {
