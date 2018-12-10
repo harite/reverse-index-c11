@@ -509,17 +509,17 @@ namespace qstardb
 				int count = 0;
 				while (reader.hasmore(9))
 				{
-					if (count++ % 100000 == 99999)
-					{
-						cout << "add nodes:" << count << " avg:" << sum1 / 100000 << " allAvg:" << sum / count << endl;
-						sum1 = 0;
-					}
+
 					char mark = reader.readChar();
 					int64 key = reader.readInt64();
 
 					if (mark == NODE_ADD)
 					{
-					
+						if (count++ % 100000 == 99999)
+						{
+							cout << "add nodes:" << count << " avg:" << sum1 / 100000 << " allAvg:" << sum / count << endl;
+							sum1 = 0;
+						}
 						int64 sort = reader.readInt64();
 						short length = reader.readShort();
 						sum += length;

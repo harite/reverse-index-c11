@@ -181,10 +181,10 @@ int testSet()
 	return 0;
 
 }
-int main() {
+int maincomapare() {
 
-	stardb<uint> index(true);
-	string file("D:\\devtool\\work\\reverse.101.bin");
+	stardb<char> index(true);
+	string file("D:\\devtool\\work\\reverse.new.101.bin");
 	bool result = index.readfile(file);
 	string testcase("D:\\devtool\\work\\testcase.txt");
 	string out("D:\\devtool\\work\\reverse.txt");
@@ -205,9 +205,26 @@ int main() {
 			data.append("\n");
 			writer.write(data.c_str(),0,data.length());
 		}
+		else {
+			break;
+		}
 	}
 	writer.close();
+	string filenew("D:\\devtool\\work\\reverse.new2.101.bin");
+	index.writefile(filenew);
 	cout << "check:"<< result << endl;
+	int a;
+	cin >> a;
+	return a;
+}
+
+int main() {
+
+	stardb<char> index(true);
+	string file("D:\\devtool\\work\\reverse.new.101.bin");
+	index.readfile(file);
+	string filenew("D:\\devtool\\work\\reverse.new2.101.bin");
+	index.writefile(filenew);
 	int a;
 	cin >> a;
 	return a;
