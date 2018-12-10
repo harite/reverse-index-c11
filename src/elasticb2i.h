@@ -57,7 +57,7 @@ namespace seqmap
 			while (fromIndex <= toIndex)
 			{
 				int mid = (fromIndex + toIndex) >> 1;
-				int tempLength;
+				int tempLength = 0;
 				const char* temp = _block->find(keys[mid],tempLength);
 				int cmp = compare(temp, tempLength, key, len);
 				if (cmp < 0)
@@ -204,13 +204,13 @@ namespace seqmap
 		/*判定页的范围是否包含 key*/
 		int rangecontains(const char* key,int len)
 		{
-			int tailLength;
+			int tailLength = 0;
 			const char* tail = _block->find(keys[this->size-1], tailLength);
 			if (compare(tail, tailLength, key, len) < 0)
 			{
 				return -1;
 			}
-			int headLength;
+			int headLength = 0;
 			const char* head = _block->find(keys[0], headLength);
 			if (compare(head, headLength, key,len) > 0)
 			{

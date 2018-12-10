@@ -102,7 +102,6 @@ extern "C"
 			maplock.rdlock();
 			if (i2bmap->find(index) != i2bmap->end())
 			{
-				int vlength = 0;
 				qstardb::charwriter writer(256);
 				if ((*i2bmap)[index]->find(key, writer))
 				{
