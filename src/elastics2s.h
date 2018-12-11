@@ -329,6 +329,10 @@ namespace maps2s
 
 		int rangecontains(const char* key,int klen)
 		{
+			if (this->nodeSize == 0)
+			{
+				return 0;
+			}
 			if (nodes[this->nodeSize-1].compare(mems, key, klen) <0)
 			{
 				return -1;

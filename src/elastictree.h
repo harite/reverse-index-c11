@@ -338,6 +338,10 @@ namespace btree
 		/*判定页的范围是否包含 key*/
 		int rangecontains(int64 key)
 		{
+			if (this->nodeSize == 0)
+			{
+				return 0;
+			}
 			if (this->compare(this->nodes[this->nodeSize - 1].key, key) < 0)
 			{
 				return -1;

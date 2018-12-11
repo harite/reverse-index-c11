@@ -154,6 +154,10 @@ namespace elasticsmap
 
 		inline int rangecontains(k key)
 		{
+			if (this->size == 0)
+			{
+				return 0;
+			}
 			if (this->nodes[this->size - 1].key < key)
 			{
 				return -1;

@@ -204,6 +204,10 @@ namespace seqmap
 		/*判定页的范围是否包含 key*/
 		int rangecontains(const char* key,int len)
 		{
+			if (this->size == 0)
+			{
+				return 0;
+			}
 			int tailLength = 0;
 			const char* tail = _block->find(keys[this->size-1], tailLength);
 			if (compare(tail, tailLength, key, len) < 0)

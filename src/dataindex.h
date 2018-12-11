@@ -120,6 +120,10 @@ namespace qstardb
 		/*判定页的范围是否包含 key*/
 		template<typename t> int rangecontains(memstore<c>* store, t key)
 		{
+			if (this->size ==0)
+			{
+				return 0;
+			}
 			if (this->compare(store, this->keys[this->size - 1], key) < 0)
 			{
 				return -1;

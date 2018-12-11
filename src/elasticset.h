@@ -140,6 +140,10 @@ namespace elasticset
 		/**判定页的范围是否包含 key**/
 		int rangecontains(k key)
 		{
+			if (this->size == 0)
+			{
+				return 0;
+			}
 			if (this->keys[this->size - 1] < key)
 			{
 				return -1;
